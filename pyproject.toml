@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chattoon"
-version = "0.1.0"
+version = "2.0.0"
 description = "Virtual 3D co-host for YouTube live streams, powered by local AI (Ollama) and TTS BigLinux."
 readme = "README.md"
 requires-python = ">=3.11"

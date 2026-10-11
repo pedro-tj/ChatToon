@@ -1,10 +1,13 @@
+# Maintainer: Pedro Bezerra (InfoRecarga) <https://www.youtube.com/@pedro_bezerra>
+# Contributor: Rafael Ruscher <https://github.com/ruscher>
+#
 # Local package from this repository:
 #   cd packaging/arch && makepkg -si
 # Remove: sudo pacman -R chattoon
 
 pkgname=chattoon
-pkgver=0.1.0
-pkgrel=2
+pkgver=2.0.0
+pkgrel=1
 pkgdesc="3D avatar co-host for YouTube live streams, powered by local AI (Ollama) and TTS BigLinux"
 arch=('any')
 license=('GPL-3.0-or-later')

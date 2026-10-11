@@ -13,6 +13,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtWidgets import QApplication
 
+from .. import __version__
 from .backend import Backend
 from .icons import IconProvider
 
@@ -63,6 +64,7 @@ def run(argv: list[str] | None = None) -> int:
         from PySide6.QtWebEngineQuick import QtWebEngineQuick
         QtWebEngineQuick.initialize()  # must happen before the application object exists
     QApplication.setApplicationName("ChatToon")
+    QApplication.setApplicationVersion(__version__)
     QApplication.setOrganizationName("chattoon")
     QApplication.setDesktopFileName("chattoon")
     app = QApplication(argv or sys.argv[:1])

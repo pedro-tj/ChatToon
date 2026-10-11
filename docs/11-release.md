@@ -1,4 +1,4 @@
-# 11 — Release 0.1.0
+# 11 — Release 2.0.0
 
 ## Build and install
 
