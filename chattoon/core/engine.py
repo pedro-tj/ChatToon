@@ -373,11 +373,11 @@ class ChatToonEngine:
         msg = ChatMessage(id=f"test-{uuid.uuid4().hex[:8]}", author=author, text=clean_text(text), platform="demo")
         await self._run_exclusive(self._answer(msg, force_speak=True))
 
-    async def say(self, text: str, emotion: str = "happy") -> None:
+    async def say(self, text: str, emotion: str = "happy", voice_id: str = "") -> None:
         text = clean_text(text, 400)
         if text:
             reply = Reply(text, emotion if emotion in EMOTIONS else "neutral", 0.6, source="manual")
-            await self._run_exclusive(self.speak(reply))
+            await self._run_exclusive(self.speak(reply, voice_id))
 
     async def react(self, emotion: str) -> None:
         if emotion in EMOTIONS:
@@ -393,8 +393,9 @@ class ChatToonEngine:
             return None
         cs = self.settings.character_settings()
         self._set_phase("thinking", author=msg.author, message=msg.text)
+        max_sentences, max_chars = self._reply_limits()
         system = self.brain.system_prompt(character, cs.personality, self.settings.context, ai.reply_language,
-                                          ai.max_sentences, ai.max_chars, catchphrases=cs.catchphrases)
+                                          max_sentences, max_chars, catchphrases=cs.catchphrases)
         messages = self.brain.messages(system, character, msg, ai.reply_language, ai.memory_size)
         started = time.monotonic()
         try:
@@ -408,7 +409,7 @@ class ChatToonEngine:
             self._error("ai", str(e))
             self._set_phase("idle")
             return None
-        reply = self.brain.parse(result.text, character, ai.reply_language, ai.max_sentences, ai.max_chars,
+        reply = self.brain.parse(result.text, character, ai.reply_language, max_sentences, max_chars,
                                  self.settings.context.forbidden_topics)
         promo = self.brain.maybe_promo(self.settings.context) if reply.source == "ai" else ""
         if promo:
@@ -423,19 +424,31 @@ class ChatToonEngine:
                                 "seconds": round(reply.generation_seconds, 2)})
         return reply
 
+    def _reply_limits(self) -> tuple[int, int]:
+        """Personality "length": short keeps the configured limits, medium allows ~60% more."""
+        ai = self.settings.ai
+        if self.settings.character_settings().personality.length == "medium":
+            return ai.max_sentences + 1, int(ai.max_chars * 1.6)
+        return ai.max_sentences, ai.max_chars
+
     # -- speech -----------------------------------------------------------
 
-    async def speak(self, reply: Reply) -> None:
+    async def speak(self, reply: Reply, voice_id: str = "") -> None:
         """Synthesize and play one reply. Holding the lock guarantees a single voice."""
         async with self._speech_lock:
-            await self._speak_locked(reply)
+            await self._speak_locked(reply, voice_id)
 
-    async def _speak_locked(self, reply: Reply) -> None:
+    async def _speak_locked(self, reply: Reply, voice_id: str = "") -> None:
         cs = self.settings.character_settings()
         vs = self.settings.voice
         uid = uuid.uuid4().hex[:12]
         utterance = None
-        voice = self.voice_for() if vs.enabled else None
+        voice = None
+        if vs.enabled:
+            try:
+                voice = (self.tts.find(voice_id) if voice_id else None) or self.voice_for()
+            except TTSError:
+                voice = None
         if voice:
             self._set_phase("thinking", stage="voice")
             try:
@@ -502,7 +515,7 @@ class ChatToonEngine:
             "name": self.character.name, "showBubble": o.show_bubble, "showAuthor": o.show_author,
             "scale": o.scale, "x": o.position_x, "y": o.position_y, "rotation": o.rotation,
             "zoom": o.camera_zoom, "light": o.light, "shadows": o.shadows, "quality": o.quality,
-            "fps": o.fps, "bubbleSeconds": o.bubble_seconds,
+            "fps": o.fps, "bubbleSeconds": o.bubble_seconds, "background": o.background,
         }
         if self._started:
             asyncio.ensure_future(self.server.broadcast(cfg, keep=True))

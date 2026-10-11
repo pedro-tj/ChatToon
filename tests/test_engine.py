@@ -288,3 +288,22 @@ def test_switch_character_updates_selector_names(tmp_path):
         return names
 
     assert "pinguim" in asyncio.run(go())
+
+
+def test_reply_length_setting_changes_limits(tmp_path):
+    engine, _ = build(tmp_path)
+    assert engine._reply_limits() == (3, 240)
+    engine.settings.character_settings().personality.length = "medium"
+    assert engine._reply_limits() == (4, 384)
+
+
+def test_overlay_config_carries_background(tmp_path):
+    async def go():
+        engine, _ = build(tmp_path, overlay__background="green")
+        await engine.startup()
+        await asyncio.sleep(0.05)
+        cfg = engine.server._snapshot["config"]
+        await engine.shutdown()
+        return cfg
+
+    assert asyncio.run(go())["background"] == "green"

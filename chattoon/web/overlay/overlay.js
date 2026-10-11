@@ -135,20 +135,38 @@ function revealBubble(fraction) {
   pending.textContent = full.slice(n);
 }
 
+const _anchor = new THREE.Vector3();
+const _side = new THREE.Vector3();
+
 function placeBubble() {
   if (!character || !bubble.classList.contains("show")) return;
-  const anchor = new THREE.Vector3(0, character.headHeight, 0);
-  character.root.localToWorld(anchor);
-  anchor.project(camera);
   const w = window.innerWidth, h = window.innerHeight;
-  let x = (anchor.x * 0.5 + 0.5) * w;
-  let y = (-anchor.y * 0.5 + 0.5) * h - 10;
-  const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
-  const cx = Math.min(w - bw / 2 - 12, Math.max(bw / 2 + 12, x));
-  y = Math.max(bh + 12, y);
-  bubble.style.left = `${cx}px`;
-  bubble.style.top = `${y}px`;
-  bubble.style.setProperty("--tail", `${Math.min(bw - 24, Math.max(24, bw / 2 + (x - cx)))}px`);
+  const toScreen = (v) => ({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h });
+  _anchor.set(0, character.headHeight, 0);
+  character.root.localToWorld(_anchor).project(camera);
+  _side.set(0.85, character.headHeight - 0.55, 0);
+  character.root.localToWorld(_side).project(camera);
+  const head = toScreen(_anchor), side = toScreen(_side);
+  const bw = bubble.offsetWidth, bh = bubble.offsetHeight, gap = 18, margin = 12;
+  bubble.classList.remove("side-left", "side-right");
+  if (head.y - gap - bh >= margin) {
+    // above the head (preferred)
+    const cx = Math.min(w - bw / 2 - margin, Math.max(bw / 2 + margin, head.x));
+    bubble.style.left = `${cx}px`;
+    bubble.style.top = `${head.y - gap}px`;
+    bubble.style.setProperty("--tail", `${Math.min(bw - 24, Math.max(24, bw / 2 + (head.x - cx)))}px`);
+    return;
+  }
+  // not enough room above: beside the head, never covering the character
+  const halfWidth = Math.max(40, side.x - head.x);
+  const rightRoom = w - (head.x + halfWidth + gap) - margin;
+  const placeRight = rightRoom >= bw || rightRoom >= (head.x - halfWidth - gap - margin);
+  const left = placeRight ? head.x + halfWidth + gap : head.x - halfWidth - gap - bw;
+  const top = Math.min(h - bh - margin, Math.max(margin, side.y - bh / 2));
+  bubble.classList.add(placeRight ? "side-right" : "side-left");
+  bubble.style.left = `${Math.max(margin, left)}px`;
+  bubble.style.top = `${top}px`;
+  bubble.style.setProperty("--tail", `${Math.min(bh - 24, Math.max(24, side.y - top))}px`);
 }
 
 // ---------------------------------------------------------------- speech

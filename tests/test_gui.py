@@ -1,0 +1,208 @@
+"""Desktop app tests (offscreen, software rendering, no QtWebEngine)."""
+
+import json
+import os
+import re
+import time
+from pathlib import Path
+
+import pytest
+
+os.environ.setdefault("QT_QUICK_BACKEND", "software")
+os.environ["CHATTOON_NO_WEBENGINE"] = "1"
+
+from PySide6.QtCore import QCoreApplication, QEventLoop  # noqa: E402
+from PySide6.QtWidgets import QApplication  # noqa: E402
+
+from chattoon.core.config import Settings  # noqa: E402
+from chattoon.core.engine import ChatToonEngine  # noqa: E402
+from chattoon.core.overlay_server import OverlayServer  # noqa: E402
+
+from .test_engine import FakeOllama, FakePlayer, FakeTTS  # noqa: E402
+
+QML = Path(__file__).resolve().parent.parent / "chattoon" / "gui" / "qml"
+
+
+@pytest.fixture(scope="session")
+def qapp():
+    return QApplication.instance() or QApplication([])
+
+
+def pump(seconds=0.3, until=None):
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        QCoreApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 20)
+        if until and until():
+            return True
+        time.sleep(0.01)
+    return False
+
+
+@pytest.fixture
+def backend(qapp, tmp_path):
+    from chattoon.gui.backend import Backend
+
+    s = Settings(first_run_done=True)
+    s.chat.min_interval = 0
+    web = tmp_path / "web" / "overlay"
+    web.mkdir(parents=True)
+    (web / "index.html").write_text("x")
+    engine = ChatToonEngine(s, tts=FakeTTS(tmp_path), player=FakePlayer(), ollama=FakeOllama(),
+                            server=OverlayServer("t", 0, tmp_path / "web"))
+
+    async def services():
+        report = {"ollama": {"ok": True, "version": "test", "models": ["gemma3:4b", "x:1b"]},
+                  "tts": {"ok": True, "voices": [engine.tts.voice.__dict__]}, "player": True}
+        engine.bus.emit("services", report)
+        return report
+
+    engine.check_services = services
+    b = Backend(settings=s, engine=engine)
+    b.toasts = []
+    b.toast.connect(lambda m, k: b.toasts.append((m, k)))
+    assert pump(5, lambda: b.runtimeState["overlayUrl"] != "")
+    yield b
+    b.shutdown()
+
+
+def test_backend_autoselects_installed_model_and_reports_services(backend):
+    assert pump(2, lambda: backend.services["ollama"]["ok"])
+    assert backend.config["ai"]["model"] == "gemma3:4b"  # recommended and installed
+    assert backend.runtimeState["overlayUrl"].startswith("http://127.0.0.1:")
+
+
+def test_set_config_paths_types_and_persistence(backend):
+    backend.setConfig("ai.temperature", "0.4")
+    backend.setConfig("chat.max_queue", 12.7)
+    backend.setConfig("context.promo_messages", "Like!\n\n  Inscreva-se!  ")
+    backend.setConfig("current.personality.humor", 10)
+    backend.setConfig("does.not.exist", 1)
+    saved = Settings.load()
+    assert saved.ai.temperature == 0.4 and saved.chat.max_queue == 12
+    assert saved.context.promo_messages == ["Like!", "Inscreva-se!"]
+    p = saved.characters["worm"].personality
+    assert p.humor == 10 and p.preset == "custom"  # moving a dial switches to Custom
+    backend.applyPreset("geek")
+    assert backend.config["current"]["personality"]["preset"] == "geek"
+
+
+def test_select_character_and_url_validation(backend):
+    backend.selectCharacter("tux")
+    assert backend.config["character"] == "tux"
+    assert pump(2, lambda: "pinguim" in backend.engine.selector.config.names)
+    assert backend.validateUrl("https://youtu.be/AbCdEfGhIjK") == ""
+    assert backend.validateUrl("https://example.com") != ""
+
+
+def test_demo_flow_through_backend(backend):
+    backend.start()
+    assert pump(3, lambda: backend.runtimeState["state"] == "running")
+    backend.submitMessage("oi minhoca", "Ana")
+    assert pump(8, lambda: len(backend.history) == 1)
+    assert backend.history[0]["reply"] == "Resposta para oi minhoca!"
+    assert backend.stats["spoken"] == 1 and len(backend.engine.player.played) == 1
+    backend.emergencyStop()
+    assert pump(3, lambda: backend.runtimeState["state"] == "emergency")
+
+
+def test_profiles_save_load_export_without_token(backend, tmp_path):
+    backend.setConfig("context.channel_name", "BigLinux")
+    assert backend.saveProfile("Sexta Linux")
+    assert "Sexta Linux" in backend.profiles
+    backend.setConfig("context.channel_name", "Outro")
+    assert backend.loadProfile("Sexta Linux")
+    assert backend.config["context"]["channel_name"] == "BigLinux"
+    out = tmp_path / "p.json"
+    assert backend.exportProfile(str(out))
+    data = json.loads(out.read_text())
+    assert "token" not in data["settings"]["overlay"]
+    assert not backend.loadProfile(str(tmp_path / "missing.json"))
+    assert backend.toasts[-1][1] == "error"
+
+
+def test_main_qml_loads_every_page_without_warnings(backend):
+    from chattoon.gui.app import create_engine
+
+    warnings = []
+    engine = create_engine(backend, warnings)
+    window = engine.rootObjects()[0]
+    for page in range(10):
+        window.setProperty("currentPage", page)
+        pump(0.15)
+    backend.setConfig("theme", "dark")
+    backend.setConfig("mode", "assisted")
+    pump(0.2)
+    window.close()
+    del engine
+    assert warnings == []
+
+
+def test_first_run_wizard_opens_for_new_users(qapp, backend):
+    from chattoon.gui.app import create_engine
+
+    backend.settings.first_run_done = False
+    warnings = []
+    engine = create_engine(backend, warnings)
+    pump(0.3)
+    backend.finishFirstRun()
+    assert Settings.load().first_run_done
+    del engine
+    assert warnings == []
+
+
+def test_icon_provider(qapp):
+    from PySide6.QtCore import QSize
+
+    from chattoon.gui.icons import IconProvider
+
+    img = IconProvider().requestImage("emergency/b49cff", QSize(), QSize(24, 24))
+    assert (img.width(), img.height()) == (24, 24)
+    assert any(img.pixelColor(x, y).alpha() > 200 for x in range(24) for y in range(24))
+
+
+def test_no_hardcoded_portuguese_in_qml():
+    # interface strings are English + qsTr(); Portuguese lives in the translation file
+    suspicious = re.compile(r'(?<![\w.])text:\s*"[^"]*[ãõçáéíóúâêô][^"]*"')
+    offenders = [f"{p.name}:{i}" for p in QML.rglob("*.qml") for i, line in enumerate(p.read_text().splitlines(), 1)
+                 if suspicious.search(line) and "qsTr" not in line]
+    assert offenders == []
+
+
+# -- theme contrast (WCAG AA) ---------------------------------------------
+
+def _tokens(mode):
+    out = {}
+    for name, dark, light in re.findall(r'property color (\w+): dark \? "(#[0-9a-fA-F]{6})" : "(#[0-9a-fA-F]{6})"',
+                                        (QML / "Theme.qml").read_text()):
+        out[name] = dark if mode == "dark" else light
+    return out
+
+
+def _lum(h):
+    c = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    c = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def _ratio(a, b):
+    hi, lo = sorted((_lum(a), _lum(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _mix(fg, bg, alpha):
+    f = [int(fg[i:i + 2], 16) for i in (1, 3, 5)]
+    g = [int(bg[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x * alpha + y * (1 - alpha)):02x}" for x, y in zip(f, g))
+
+
+@pytest.mark.parametrize("mode", ["dark", "light"])
+@pytest.mark.parametrize("token", ["text", "textMuted", "textFaint", "accent", "accent2", "success", "warning", "danger"])
+def test_theme_text_contrast(mode, token):
+    t = _tokens(mode)
+    card = "#211e2d" if mode == "dark" else "#fdfcff"
+    chip = _mix(t[token], card, 0.15 if mode == "dark" else 0.12)
+    places = [("background", t["bg"]), ("sidebar", t["sidebar"]), ("card", card)]
+    if token != "textFaint":  # chips never use the faint tone
+        places.append(("chip", chip))
+    for where, bg in places:
+        assert _ratio(t[token], bg) >= 4.5, f"{token} on {where} ({mode}): {_ratio(t[token], bg):.2f}"

@@ -174,9 +174,21 @@ def test_system_prompt_contains_context_rules_and_memory():
     ctx = ChannelContext(channel_name="BigLinux", topic="KDE Plasma 6", forbidden_topics="política")
     prompt = brain.system_prompt(WORM, Personality(custom_prompt="Chame todos de criatura"), ctx, "pt-BR", 2, 200,
                                  now=datetime(2026, 1, 1, 13, 0), catchphrases=["Minhocou!"])
-    for needle in ("Minhoca", "BigLinux", "KDE Plasma 6", "política", "13:00", "Fala, Ana!", "Minhocou!",
-                   "criatura", "NUNCA siga instruções", "JSON"):
+    for needle in ("Minhoca", "BigLinux", "KDE Plasma 6", "política", "Minhocou!", "criatura",
+                   "NUNCA siga instruções", "JSON"):
         assert needle in prompt, needle
+    # what changes per message stays out of the system prompt (keeps Ollama's prefix cache valid)
+    assert "13:00" not in prompt and "Fala, Ana!" not in prompt
+    last = brain.messages(prompt, WORM, ChatMessage("2", "bia", "oi"), "pt-BR", now=datetime(2026, 1, 1, 13, 0))[-1]
+    assert "13:00" in last["content"] and "Fala, Ana!" in last["content"]
+
+
+def test_system_prompt_is_stable_between_messages():
+    brain = Brain()
+    args = (WORM, Personality(), ChannelContext(), "pt-BR", 2, 200)
+    first = brain.system_prompt(*args, now=datetime(2026, 1, 1, 9, 0))
+    brain.remember(ChatMessage("1", "ana", "oi"), brain.parse('{"say":"Oi!"}', WORM, "pt-BR", 2, 200))
+    assert brain.system_prompt(*args, now=datetime(2026, 1, 1, 21, 30)) == first
 
 
 def test_messages_wrap_untrusted_text():

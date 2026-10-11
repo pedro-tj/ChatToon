@@ -83,10 +83,10 @@ class AISettings:
     context_window: int = 4096
     timeout: int = 60
     keep_alive: str = "15m"
-    max_sentences: int = 2
+    max_sentences: int = 3
     max_chars: int = 240
     reply_language: str = "pt-BR"
-    memory_size: int = 8  # recent interactions sent as context
+    memory_size: int = 4  # recent exchanges sent as context (each costs prompt-eval time)
 
 
 @dataclass
@@ -127,6 +127,7 @@ class OverlaySettings:
     quality: str = "high"  # low | medium | high
     fps: int = 60
     bubble_seconds: float = 2.5  # bubble stays this long after speech ends
+    background: str = "transparent"  # transparent | green (chroma key)
 
     def __post_init__(self) -> None:
         if not self.token:
