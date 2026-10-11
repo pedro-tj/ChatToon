@@ -1,6 +1,7 @@
 import time
 import pytchat
 import os
+import subprocess
 import pytchat
 from google import genai
 
@@ -62,7 +63,7 @@ try:
 
             # 2. Fala usando a voz da Letícia (spd-say) em segundo plano
             texto_para_falar = resposta_cobra.replace("Cobra: ", "").replace('"', '')
-            os.system(f"spd-say -l pt -t female1 '{texto_para_falar}' &")
+            subprocess.Popen(['spd-say', '-l', 'pt', '-t', 'female1', '--', texto_para_falar])  # sem shell: sem injeção
 
         time.sleep(1.5)
 
