@@ -1,9 +1,10 @@
-import fnmatch
 import re
 import shutil
 import subprocess
 import tomllib
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 PKG = ROOT / "chattoon"
@@ -13,11 +14,24 @@ def _cfg():
     return tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
 
-def test_package_data_covers_runtime_files():
-    patterns = _cfg()["tool"]["setuptools"]["package-data"]["chattoon"]
-    runtime = [p.relative_to(PKG).as_posix() for d in ("gui/qml", "web", "i18n") for p in (PKG / d).rglob("*")
+def test_wheel_contains_every_runtime_file(tmp_path):
+    """Build the real wheel: fnmatch-style checks miss files in subfolders (setuptools globs don't recurse)."""
+    import zipfile
+
+    if shutil.which("python") is None:
+        pytest.skip("python not on PATH")
+    result = subprocess.run(["python", "-m", "build", "--wheel", "--no-isolation", "--outdir", str(tmp_path)],
+                            cwd=ROOT, capture_output=True, text=True)
+    for leftover in ("build", "chattoon.egg-info"):
+        shutil.rmtree(ROOT / leftover, ignore_errors=True)
+    if result.returncode != 0 and "No module named build" in result.stderr:
+        pytest.skip("python-build not installed")
+    assert result.returncode == 0, result.stderr[-2000:]
+    (wheel,) = tmp_path.glob("*.whl")
+    names = set(zipfile.ZipFile(wheel).namelist())
+    runtime = [p.relative_to(ROOT).as_posix() for d in ("gui/qml", "web", "i18n") for p in (PKG / d).rglob("*")
                if p.is_file() and p.suffix != ".ts" and "__pycache__" not in p.parts]
-    missing = [f for f in runtime if not any(fnmatch.fnmatch(f, pat) for pat in patterns)]
+    missing = [f for f in runtime if f not in names]
     assert runtime and missing == []
 
 

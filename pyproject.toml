@@ -21,7 +21,7 @@ chattoon = "chattoon.cli:main"
 include = ["chattoon*"]
 
 [tool.setuptools.package-data]
-chattoon = ["gui/qml/*.qml", "gui/qml/qmldir", "gui/qml/assets/*", "i18n/*.qm",
+chattoon = ["gui/qml/*.qml", "gui/qml/pages/*.qml", "gui/qml/qmldir", "gui/qml/assets/*", "i18n/*.qm",
             "web/overlay/*", "web/overlay/characters/*", "web/vendor/three/*"]
 
 [tool.pytest.ini_options]

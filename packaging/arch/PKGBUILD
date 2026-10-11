@@ -4,7 +4,7 @@
 
 pkgname=chattoon
 pkgver=0.1.0
-pkgrel=1
+pkgrel=2
 pkgdesc="3D avatar co-host for YouTube live streams, powered by local AI (Ollama) and TTS BigLinux"
 arch=('any')
 license=('GPL-3.0-or-later')
