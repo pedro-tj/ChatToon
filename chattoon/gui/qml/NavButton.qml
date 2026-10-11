@@ -28,7 +28,7 @@ ItemDelegate {
             anchors.verticalCenter: parent.verticalCenter
             width: Math.max(18, badgeText.implicitWidth + 10); height: 18; radius: 9
             color: Theme.accent2
-            Text { id: badgeText; anchors.centerIn: parent; text: control.badge; color: "white"; font.pixelSize: 10; font.weight: Font.Bold }
+            Text { id: badgeText; anchors.centerIn: parent; text: control.badge; color: Theme.accentText; font.pixelSize: 10; font.weight: Font.Bold }
         }
     }
     background: Rectangle {

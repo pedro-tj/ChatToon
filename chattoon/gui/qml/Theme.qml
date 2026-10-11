@@ -21,7 +21,7 @@ QtObject {
     readonly property color textFaint: dark ? "#8d89a3" : "#635d7a"
     readonly property color accent: dark ? "#b49cff" : "#6233c9"
     readonly property color accent2: dark ? "#ff8fc4" : "#b3175f"
-    readonly property color accentText: "#ffffff"
+    readonly property color accentText: dark ? "#1a1033" : "#ffffff"  // text on the accent gradient
     readonly property color success: dark ? "#4ade80" : "#14632f"
     readonly property color warning: dark ? "#fbbf24" : "#8a3b0a"
     readonly property color danger: dark ? "#fb7185" : "#a3122f"

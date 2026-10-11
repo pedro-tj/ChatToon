@@ -31,7 +31,7 @@ Page {
         Text {
             Layout.fillWidth: true
             visible: ollama.ok === false
-            text: qsTr("Start it with:  systemctl --user start ollama   (or install it in BigLinux Settings → AI).")
+            text: qsTr("Start it with:  sudo systemctl start ollama   (or install it in BigLinux Settings → AI).")
             color: Theme.warning; font.pixelSize: 12; font.family: Theme.mono; wrapMode: Text.WordWrap
         }
     }

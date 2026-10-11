@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -24,11 +25,7 @@ APP_ICON = QML_DIR / "assets" / "chattoon.svg"
 def webengine_available() -> bool:
     if os.environ.get("CHATTOON_NO_WEBENGINE"):
         return False
-    try:
-        import PySide6.QtWebEngineQuick  # noqa: F401
-        return True
-    except ImportError:
-        return False
+    return importlib.util.find_spec("PySide6.QtWebEngineQuick") is not None
 
 
 def install_translator(app: QApplication, language: str) -> QTranslator | None:

@@ -299,6 +299,7 @@ export class Character {
 
   dispose() {
     this.root.traverse((o) => {
+      if (o.isSkinnedMesh) o.skeleton.dispose(); // frees the bone-matrix DataTexture
       if (o.geometry) o.geometry.dispose();
       if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose());
     });

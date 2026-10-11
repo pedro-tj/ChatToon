@@ -57,7 +57,7 @@ class Backend(QObject):
         self._event.connect(self._on_event)
         self.bus.subscribe(lambda kind, data: self._event.emit(kind, data))
         self.runtime.start()
-        self.runtime.submit(self._boot())
+        self._boot_future = self.runtime.submit(self._boot())
 
     async def _boot(self) -> None:
         try:
@@ -68,6 +68,7 @@ class Backend(QObject):
 
     def shutdown(self) -> None:
         self.settings.save()
+        self._boot_future.cancel()  # closing during start-up must not leave a dangling task
         self.runtime.stop(self.engine.shutdown())
 
     # -- events from the engine (GUI thread) -------------------------------

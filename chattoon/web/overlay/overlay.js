@@ -311,6 +311,12 @@ function runDemo() {
   setInterval(tick, emotion === "cycle" ? 3200 : 4000);
 }
 
+// read-only diagnostics (used by the soak test; exposes no control)
+window.chattoonDiagnostics = () => ({
+  geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures,
+  heap: performance.memory ? performance.memory.usedJSHeapSize : null, character: config.character,
+});
+
 window.addEventListener("resize", resize);
 window.addEventListener("pointerdown", () => badge(""), { once: true });
 setupScene();

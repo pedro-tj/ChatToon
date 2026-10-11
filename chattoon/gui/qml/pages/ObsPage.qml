@@ -67,7 +67,7 @@ Page {
             LabeledSlider { label: qsTr("Vertical position"); from: -1; to: 1; stepSize: 0.02; decimals: 2; value: o.position_y; onMoved: v => backend.setConfig("overlay.position_y", v) }
             LabeledSlider { label: qsTr("Rotation"); from: -60; to: 60; value: o.rotation; suffix: "°"; onMoved: v => backend.setConfig("overlay.rotation", v) }
             LabeledSlider { label: qsTr("Camera zoom"); from: 0.5; to: 2.5; stepSize: 0.05; decimals: 2; value: o.camera_zoom; onMoved: v => backend.setConfig("overlay.camera_zoom", v) }
-            LabeledSlider { label: qsTr("Light"); from: 0.3; to: 2; stepSize: 0.05; decimals: 2; value: o.light; onMoved: v => backend.setConfig("overlay.light", v) }
+            LabeledSlider { label: qsTr("Lighting"); from: 0.3; to: 2; stepSize: 0.05; decimals: 2; value: o.light; onMoved: v => backend.setConfig("overlay.light", v) }
             SettingRow { label: qsTr("Speech bubble"); AppSwitch { checked: o.show_bubble; onToggled: backend.setConfig("overlay.show_bubble", checked) } }
             SettingRow { label: qsTr("Show the viewer's name"); AppSwitch { checked: o.show_author; onToggled: backend.setConfig("overlay.show_author", checked) } }
             SettingRow { label: qsTr("Soft shadow"); AppSwitch { checked: o.shadows; onToggled: backend.setConfig("overlay.shadows", checked) } }

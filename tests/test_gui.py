@@ -206,3 +206,33 @@ def test_theme_text_contrast(mode, token):
         places.append(("chip", chip))
     for where, bg in places:
         assert _ratio(t[token], bg) >= 4.5, f"{token} on {where} ({mode}): {_ratio(t[token], bg):.2f}"
+
+
+@pytest.mark.parametrize("mode", ["dark", "light"])
+def test_text_on_accent_buttons_is_readable(mode):
+    src = (QML / "Theme.qml").read_text()
+    ink = re.search(r'accentText: dark \? "(#\w{6})" : "(#\w{6})"', src).groups()[0 if mode == "dark" else 1]
+    t = _tokens(mode)
+    for stop in ("accent", "accent2"):  # both ends of the primary gradient
+        assert _ratio(ink, t[stop]) >= 4.5, f"button text on {stop} ({mode}): {_ratio(ink, t[stop]):.2f}"
+
+
+def test_shutdown_right_after_start_is_clean(qapp, tmp_path, capfd):
+    from chattoon.gui.backend import Backend
+
+    web = tmp_path / "web" / "overlay"
+    web.mkdir(parents=True)
+    (web / "index.html").write_text("x")
+    engine = ChatToonEngine(Settings(), tts=FakeTTS(tmp_path), player=FakePlayer(), ollama=FakeOllama(),
+                            server=OverlayServer("t", 0, tmp_path / "web"))
+
+    async def slow_services():
+        import asyncio
+        await asyncio.sleep(5)
+
+    engine.check_services = slow_services
+    b = Backend(settings=Settings(), engine=engine)
+    b.shutdown()  # boot still running
+    import gc
+    gc.collect()
+    assert "Task was destroyed but it is pending" not in capfd.readouterr().err

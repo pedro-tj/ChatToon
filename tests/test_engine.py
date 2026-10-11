@@ -1,8 +1,6 @@
 import asyncio
 import json
 
-import pytest
-
 from chattoon.core.config import Settings
 from chattoon.core.engine import ChatToonEngine
 from chattoon.core.events import EventBus
