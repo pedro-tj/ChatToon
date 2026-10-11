@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chattoon"
+version = "2.0.0"
+description = "Virtual 3D co-host for YouTube live streams, powered by local AI (Ollama) and TTS BigLinux."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+dependencies = ["PySide6>=6.6", "aiohttp>=3.9"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+chattoon = "chattoon.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["chattoon*"]
+
+[tool.setuptools.package-data]
+chattoon = ["gui/qml/*.qml", "gui/qml/pages/*.qml", "gui/qml/qmldir", "gui/qml/assets/*", "i18n/*.qm",
+            "web/overlay/*", "web/overlay/characters/*", "web/vendor/three/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

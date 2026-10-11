@@ -1,7 +1,9 @@
 const fs = require('fs');
 
 // Substitua pela URL da API de Live Stream fornecida pelo painel do Rumble
-const rumbleApiUrl = 'https://rumble.com/-livestream-api/get-data?key=dzQkOLTgdFrJGNQIFkb7tbdOrvDceDjS0A9zASrYuYk2mkU93Lbou5NOqi8f-DF9ncu8X12YmtfR5IHATMMI_g';
+// A chave antiga foi exposta no commit e29b51a e deve ser REVOGADA no painel do Rumble.
+const rumbleApiUrl = process.env.RUMBLE_API_URL;
+if (!rumbleApiUrl) { console.error('Defina RUMBLE_API_URL com a URL da API (não versionar).'); process.exit(1); }
 
 let ultimaMensagemID = "";
 
