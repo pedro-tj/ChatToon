@@ -23,7 +23,10 @@ PT_BR = {
         "Aceita: watch?v=…, /live/…, youtu.be/…, live_chat?v=… e o link do chat em janela.",
     "Add the avatar to your scene as a Browser Source. The address only works on this computer.":
         "Adicione o avatar à sua cena como fonte de Navegador. O endereço só funciona neste computador.",
+    "Access from another computer": "Acesso de outro computador",
     "Address": "Endereço",
+    "Anyone with this link sees the avatar and hears its voice. Keep it private.":
+        "Quem tiver este link vê o avatar e ouve a voz dele. Não compartilhe.",
     "All set!": "Tudo pronto!",
     "All — in arrival order, within the limits": "Todas — por ordem de chegada, dentro dos limites",
     "And never more often than": "E nunca com intervalo menor que",
@@ -204,6 +207,8 @@ PT_BR = {
     "One per line, e.g. Drop a like!": "Uma por linha, ex.: Deixa o like!",
     "Open in the browser": "Abrir no navegador",
     "Open the dashboard": "Abrir o painel",
+    "Optional. Run an HTTPS reverse proxy on this computer (Caddy, nginx…) that forwards to %1, then type its public address here.":
+        "Opcional. Rode neste computador um proxy reverso HTTPS (Caddy, nginx…) que encaminhe para %1 e digite aqui o endereço público dele.",
     "Overlay address": "Endereço do overlay",
     "Paste the address above in URL. Width 1920, height 1080.": "Cole o endereço acima em URL. Largura 1920, altura 1080.",
     "Paste the link of your live stream. ChatToon reads the chat like the pop-out window does — no login needed.":
@@ -227,6 +232,8 @@ PT_BR = {
     "Profile loaded": "Perfil carregado",
     "Profile name, e.g. Linux Friday": "Nome do perfil, ex.: Sexta do Linux",
     "Profile saved": "Perfil salvo",
+    "Public address": "Endereço público",
+    "Public overlay address": "Endereço público do overlay",
     "Quality": "Qualidade",
     "Questions first": "Perguntas primeiro",
     "Queue size": "Tamanho da fila",
@@ -314,6 +321,7 @@ PT_BR = {
     "Unavailable": "Indisponível",
     "Up next": "A seguir",
     "Use %1": "Usar %1",
+    "Use an https:// address, like https://example.org:8443.": "Use um endereço https://, como https://example.org:8443.",
     "Version %1": "Versão %1",
     "Vertical position": "Posição vertical",
     "Viewer": "Espectador",

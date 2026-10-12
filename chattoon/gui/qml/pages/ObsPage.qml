@@ -47,6 +47,42 @@ Page {
         }
     }
 
+    Section {
+        title: qsTr("Access from another computer")
+        iconName: "globe"
+        description: qsTr("Optional. Run an HTTPS reverse proxy on this computer (Caddy, nginx…) that forwards to %1, then type its public address here.")
+                     .arg(rt.overlayUrl.split("/o/")[0])
+        AppTextField {
+            Layout.fillWidth: true
+            iconName: "link"
+            font.family: Theme.mono
+            placeholderText: "https://example.org:8443"
+            text: o.public_address
+            onEditingFinished: backend.setConfig("overlay.public_address", text.trim())
+            Accessible.name: qsTr("Public address")
+        }
+        Text {
+            Layout.fillWidth: true
+            visible: o.public_address !== "" && rt.publicOverlayUrl === ""
+            text: qsTr("Use an https:// address, like https://example.org:8443.")
+            color: Theme.danger; font.pixelSize: 12; wrapMode: Text.WordWrap
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            visible: rt.publicOverlayUrl !== ""
+            spacing: 8
+            AppTextField { Layout.fillWidth: true; readOnly: true; text: rt.publicOverlayUrl; font.family: Theme.mono; Accessible.name: qsTr("Public overlay address") }
+            AppButton { iconName: "copy"; text: qsTr("Copy"); onClicked: backend.copyText(rt.publicOverlayUrl) }
+            AppButton { iconName: "external"; tip: qsTr("Open in the browser"); onClicked: backend.openUrl(rt.publicOverlayUrl) }
+        }
+        Text {
+            Layout.fillWidth: true
+            visible: rt.publicOverlayUrl !== ""
+            text: qsTr("Anyone with this link sees the avatar and hears its voice. Keep it private.")
+            color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.WordWrap
+        }
+    }
+
     RowLayout {
         Layout.fillWidth: true
         spacing: 16

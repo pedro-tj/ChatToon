@@ -12,6 +12,9 @@ import { Dog } from "./characters/dog.js";
 const CHARACTERS = { worm: Worm, alien: Alien, tux: Tux, cat: Cat, owl: Owl, dog: Dog };
 const params = new URLSearchParams(location.search);
 const role = params.get("role") === "preview" ? "preview" : "obs";
+// OBS (and other obs-browser hosts) inject window.obsstudio; a plain browser tab shows the same
+// overlay but joins as "browser", so opening the link to check it never takes the voice from OBS
+const socketRole = role === "obs" && !window.obsstudio && params.get("role") !== "obs" ? "browser" : role;
 const demo = params.get("demo"); // standalone mode: ?demo=worm&emotion=happy&talk=1
 if ((role === "preview" || demo) && !params.has("transparent")) document.body.classList.add("preview");
 if (params.get("theme") === "light") document.body.classList.add("light");
@@ -407,7 +410,7 @@ function onState(msg) {
 }
 
 function connect() {
-  const url = new URL(`ws?role=${role}`, location.href);
+  const url = new URL(`ws?role=${socketRole}`, location.href);
   url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
   ws = new WebSocket(url);
   ws.onopen = () => { retry = 0; state.connected = true; badge(""); };

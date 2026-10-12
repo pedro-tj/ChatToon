@@ -1519,6 +1519,30 @@
       <translation>O fundo é transparente. Redimensione e posicione a fonte na cena como quiser.</translation>
     </message>
     <message>
+      <source>Access from another computer</source>
+      <translation>Acesso de outro computador</translation>
+    </message>
+    <message>
+      <source>Optional. Run an HTTPS reverse proxy on this computer (Caddy, nginx…) that forwards to %1, then type its public address here.</source>
+      <translation>Opcional. Rode neste computador um proxy reverso HTTPS (Caddy, nginx…) que encaminhe para %1 e digite aqui o endereço público dele.</translation>
+    </message>
+    <message>
+      <source>Public address</source>
+      <translation>Endereço público</translation>
+    </message>
+    <message>
+      <source>Use an https:// address, like https://example.org:8443.</source>
+      <translation>Use um endereço https://, como https://example.org:8443.</translation>
+    </message>
+    <message>
+      <source>Public overlay address</source>
+      <translation>Endereço público do overlay</translation>
+    </message>
+    <message>
+      <source>Anyone with this link sees the avatar and hears its voice. Keep it private.</source>
+      <translation>Quem tiver este link vê o avatar e ouve a voz dele. Não compartilhe.</translation>
+    </message>
+    <message>
       <source>Appearance</source>
       <translation>Aparência</translation>
     </message>

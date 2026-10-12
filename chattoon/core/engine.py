@@ -92,6 +92,7 @@ class ChatToonEngine:
         self.ollama = ollama or OllamaClient(settings.ai.host, settings.ai.timeout)
         self.chat_factory = chat_factory
         self.server = server or OverlayServer(settings.overlay.token, settings.overlay.port)
+        self.server.set_public_address(settings.overlay.public_address)
         self.server.on_clients_changed = lambda counts: self.bus.emit("overlay_clients", counts)
         self.brain = Brain()
         self.selector = MessageSelector(self._selector_config())
@@ -155,6 +156,10 @@ class ChatToonEngine:
         self.streams.configure(self.settings.stream_sources())
         self.ollama.host = self.settings.ai.host.rstrip("/")
         self.ollama.timeout = self.settings.ai.timeout
+        public_url = self.server.public_url
+        self.server.set_public_address(self.settings.overlay.public_address)
+        if self._started and self.server.public_url != public_url:
+            self._emit_overlay_address()
         self._emit_overlay_config()
 
     async def startup(self) -> None:
@@ -164,7 +169,7 @@ class ChatToonEngine:
         await self.server.start()
         self._started = True
         self._worker = asyncio.create_task(self._work(), name="chattoon-worker")
-        self.bus.emit("overlay", {"url": self.server.url})
+        self._emit_overlay_address()
         self._emit_overlay_config()
         await self.server.broadcast({"type": "state", "phase": "idle", "state": self.state}, keep=True)
 
@@ -925,6 +930,9 @@ class ChatToonEngine:
         if not info:
             return {}
         return {"platform": msg.platform, "platformLabel": info["label"], "platformColor": info["color"]}
+
+    def _emit_overlay_address(self) -> None:
+        self.bus.emit("overlay", {"url": self.server.url, "publicUrl": self.server.public_url})
 
     def _emit_overlay_config(self) -> None:
         o = self.settings.overlay

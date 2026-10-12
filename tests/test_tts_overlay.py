@@ -5,7 +5,7 @@ import aiohttp
 import pytest
 
 from chattoon.core import tts as tts_mod
-from chattoon.core.overlay_server import OverlayServer
+from chattoon.core.overlay_server import OverlayServer, public_base
 from chattoon.core.tts import AudioPlayer, BigLinuxTTS, TTSError, analyse_wav
 
 from .conftest import make_wav
@@ -133,6 +133,47 @@ def test_overlay_security_and_routes(tmp_path):
     assert url.startswith("http://127.0.0.1:") and url.endswith("/o/tok123/")
 
 
+@pytest.mark.parametrize("typed, expected", [
+    ("", ""),
+    ("https://Stream.Example.org:8443/", "https://stream.example.org:8443"),
+    ("stream.example.org", "https://stream.example.org"),
+    ("https://stream.example.org:443", "https://stream.example.org"),
+    ("https://stream.example.org:8443/o/tok123/", "https://stream.example.org:8443"),  # pasted overlay link
+    ("http://stream.example.org:8765", ""),  # never plain HTTP over the internet
+    ("https://user:pw@stream.example.org", ""),
+    ("https://localhost:8443", ""),
+    ("https://stream.example.org:99999", ""),
+])
+def test_public_base(typed, expected):
+    assert public_base(typed) == expected
+
+
+def test_overlay_behind_https_proxy(tmp_path):
+    async def go():
+        server = await started_server(tmp_path, public_address="https://stream.example.org:8443")
+        base = f"http://127.0.0.1:{server.port}"
+        async with aiohttp.ClientSession() as s:
+            async with s.get(f"{base}/o/tok123/", headers={"Host": "stream.example.org:8443"}) as r:
+                proxied = (r.status, r.headers.get("Content-Security-Policy", ""))
+            async with s.get(f"{base}/o/tok123/") as r:
+                local_csp = r.headers.get("Content-Security-Policy", "")
+            async with s.get(f"{base}/o/tok123/", headers={"Host": "evil.example:8443"}) as r:
+                other = r.status
+            async with s.ws_connect(f"{base}/o/tok123/ws", headers={"Host": "stream.example.org:8443"}) as ws:
+                ws_ok = not ws.closed
+            server.set_public_address("")
+            async with s.get(f"{base}/o/tok123/", headers={"Host": "stream.example.org:8443"}) as r:
+                disabled = r.status
+        public = server.public_url
+        await server.stop()
+        return proxied, local_csp, other, ws_ok, disabled, public
+
+    proxied, local_csp, other, ws_ok, disabled, public = asyncio.run(go())
+    assert proxied[0] == 200 and "wss://stream.example.org:8443" in proxied[1]
+    assert "wss://" not in local_csp
+    assert other == 403 and ws_ok and disabled == 403 and public == ""
+
+
 def test_overlay_binds_loopback_only(tmp_path):
     async def go():
         server = await started_server(tmp_path)
@@ -152,6 +193,7 @@ def test_overlay_audio_goes_to_one_sink_and_ws_is_read_only(tmp_path):
             preview = await s.ws_connect(ws_url + "?role=preview")
             obs1 = await s.ws_connect(ws_url)
             obs2 = await s.ws_connect(ws_url)
+            browser = await s.ws_connect(ws_url + "?role=browser")  # newest, yet never the sink
             await asyncio.sleep(0.1)
             counts = server.counts()
             await server.broadcast({"type": "config", "character": "tux"}, keep=True)
@@ -159,7 +201,7 @@ def test_overlay_audio_goes_to_one_sink_and_ws_is_read_only(tmp_path):
             await obs1.send_str("not json")
             ended = await server.speak({"type": "speak", "id": "u1", "text": "oi"}, wav, play_in_overlay=True)
             received = {}
-            for name, ws in (("preview", preview), ("obs1", obs1), ("obs2", obs2)):
+            for name, ws in (("preview", preview), ("obs1", obs1), ("obs2", obs2), ("browser", browser)):
                 while True:
                     msg = await ws.receive_json(timeout=2)
                     if msg["type"] == "speak":
@@ -174,13 +216,13 @@ def test_overlay_audio_goes_to_one_sink_and_ws_is_read_only(tmp_path):
             await asyncio.wait_for(ended.wait(), 2)
             late = await s.ws_connect(ws_url + "?role=preview")
             snapshot = await late.receive_json(timeout=2)
-            for ws in (preview, obs1, obs2, late):
+            for ws in (preview, obs1, obs2, browser, late):
                 await ws.close()
         await server.stop()
         return counts, received, audio_status, ignored, snapshot
 
     counts, received, audio_status, ignored, snapshot = asyncio.run(go())
-    assert counts == {"obs": 2, "preview": 1}
-    assert received == {"preview": None, "obs1": None, "obs2": "audio/u1.wav"}  # exactly one player
+    assert counts == {"obs": 2, "preview": 1, "browser": 1}
+    assert received == {"preview": None, "obs1": None, "obs2": "audio/u1.wav", "browser": None}  # one player
     assert audio_status == 200 and ignored is False
     assert snapshot == {"type": "config", "character": "tux"}  # late clients get current config

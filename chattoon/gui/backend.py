@@ -67,7 +67,8 @@ class Backend(QObject):
         self.runtime = Runtime()
         self._services: dict = {"ollama": {"ok": None, "models": []}, "tts": {"ok": None, "voices": []}}
         self._state = {"state": "stopped", "phase": "idle", "chat": "stopped", "chatDetail": "",
-                       "overlayUrl": "", "obs": 0, "preview": 0, "lastError": "", "lastErrorSource": ""}
+                       "overlayUrl": "", "publicOverlayUrl": "", "obs": 0, "preview": 0,
+                       "lastError": "", "lastErrorSource": ""}
         self._stats: dict = {}
         self._queue: dict = {"pending": [], "suggestions": []}
         self._history: list[dict] = []
@@ -128,6 +129,7 @@ class Backend(QObject):
                 self.toast.emit(data.get("detail", ""), "error")
         elif kind == "overlay":
             self._state["overlayUrl"] = data.get("url", "")
+            self._state["publicOverlayUrl"] = data.get("publicUrl", "")
             self.runtimeChanged.emit()
         elif kind == "overlay_clients":
             self._state["obs"] = data.get("obs", 0)
