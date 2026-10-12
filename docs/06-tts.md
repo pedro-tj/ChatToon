@@ -28,7 +28,21 @@ ChatToon imports those modules (appended to `sys.path`, so they never shadow its
    lip sync;
 5. plays it **once**, either with `pw-play`/`paplay`/`aplay` (desktop) or in the OBS source.
 
-Kokoro is listed by TTS BigLinux but not synthesized by ChatToon yet (reported as unsupported).
+### Kokoro (since 2.1)
+
+Kokoro voices (package `biglinux-kokoro-tts`, binary `koko`) are rendered with TTS BigLinux's
+own command builder in **`koko text`** mode — the mode that writes a WAV without playing it.
+The app's `koko pipe` mode plays every sentence by itself and is never used (ChatToon would be
+heard twice). Before each render `koko_problem()` checks the binary, model, voices.bin and the
+chosen voice; `prepare_koko_text()` fixes punctuation koko cannot read; `kokoro_speed()` maps
+the speed. The float/stereo WAV koko writes is converted to mono 16-bit PCM (with the volume
+gain, limited to the peak). Kokoro has no pitch control, so the pitch slider is disabled for
+its voices. Renders run in their own process group: interrupt/emergency kill them at once,
+and a timeout guards against hangs.
+
+Kokoro renders about as fast as it speaks, so its lines are voiced **sentence by sentence**:
+each sentence plays while the next one renders. Details and measurements in
+[12-character-tts-upgrade.md](12-character-tts-upgrade.md).
 
 ## Measured (this machine)
 
@@ -37,6 +51,8 @@ Kokoro is listed by TTS BigLinux but not synthesized by ChatToon yet (reported a
 | Letícia (RHVoice) | 3.1 s | 0.49 s |
 | Faber (Piper, medium) | 1.9 s | 1.6 s cold, 0.07 s warm |
 | espeak-ng pt-br | 2.4 s | 0.01 s |
+| Dora (Kokoro, pf_dora) | 2.95 s | 2.9 s (≈ 1 s of it loading the model) |
+| Alex (Kokoro, pm_alex) | 8.95 s | 8.3 s |
 
 Piper models are prewarmed on Start, so the first viewer does not wait 1.6 s.
 

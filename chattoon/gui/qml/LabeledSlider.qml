@@ -17,6 +17,8 @@ ColumnLayout {
 
     Layout.fillWidth: true
     spacing: 4
+    opacity: enabled ? 1 : 0.45
+    Behavior on opacity { NumberAnimation { duration: Theme.anim } }
 
     RowLayout {
         Layout.fillWidth: true

@@ -93,6 +93,13 @@ Page {
             label: qsTr("Super Chats jump the queue")
             AppSwitch { checked: cfg.chat.superchat_priority; onToggled: backend.setConfig("chat.superchat_priority", checked) }
         }
+        SettingRow {
+            label: qsTr("Read the viewer's name and message before replying")
+            description: cfg.reading.mode === "off" ? qsTr("Off — the avatar answers directly.")
+                       : cfg.reading.mode === "name" ? qsTr("On — reads who wrote, then answers.")
+                       : qsTr("On — reads who wrote and the message, then answers.")
+            AppButton { compact: true; iconName: "quote"; text: qsTr("Configure"); onClicked: win.currentPage = 5 }
+        }
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 6

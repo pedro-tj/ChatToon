@@ -1,5 +1,7 @@
 // Shared rig for the procedural characters: eyes with lids, brows, a morph-target
-// mouth, emotion presets with smooth interpolation, blinking, gaze and reactions.
+// mouth, emotion presets with smooth interpolation, blinking, gaze and reactions —
+// plus the Director, the behaviour layer that keeps every avatar alive (state machine,
+// idle motion, random gestures, head/eye coordination, speech beats).
 import * as THREE from "../vendor/three/three.module.js";
 
 export const EMOTIONS = ["neutral", "happy", "laugh", "surprised", "confused", "annoyed", "celebrate", "thinking"];
@@ -21,6 +23,28 @@ export function expression(name) {
 }
 
 export const damp = (current, target, lambda, dt) => THREE.MathUtils.lerp(current, target, 1 - Math.exp(-lambda * dt));
+export const clamp01 = (v) => Math.max(0, Math.min(1, v));
+// angle in (-π, π]: after a full spin the body eases back the short way, never rewinds
+export const wrapAngle = (a) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2));
+export const smooth = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+// 0 → 1 → 0 over p in [0, 1] with eased shoulders (a gesture's weight over its lifetime)
+export const bell = (p, rise = 0.25, fall = 0.3) => smooth(0, rise, p) * (1 - smooth(1 - fall, 1, p));
+
+// Critically damped-ish spring: secondary motion (tails, ears, antennae, hats).
+export class Spring {
+  constructor(stiffness = 60, damping = 7) { this.x = 0; this.v = 0; this.k = stiffness; this.d = damping; }
+  step(target, dt) {
+    // sub-steps keep it stable at 30 fps and after a slow frame
+    const n = Math.max(1, Math.ceil(dt / 0.012));
+    const h = dt / n;
+    for (let i = 0; i < n; i++) {
+      const a = (target - this.x) * this.k - this.v * this.d;
+      this.v += a * h;
+      this.x += this.v * h;
+    }
+    return this.x;
+  }
+}
 
 export function skin(color, extra = {}) {
   return new THREE.MeshPhysicalMaterial({
@@ -170,7 +194,281 @@ export class Mouth {
   }
 }
 
-// Base class: subclasses build the body and call setupFace(); this class drives expressions.
+// Small glossy bead eye (Tux, Owl pupils…): no white, gaze moves the bead inside its socket.
+export class BeadEye {
+  constructor({ radius = 0.07, color = 0x101014, lid = 0xffffff, depth = 0.55, quality = 2 } = {}) {
+    const seg = [12, 18, 28][quality];
+    this.radius = radius;
+    this.group = new THREE.Group();
+    this.ball = new THREE.Group();
+    this.group.add(this.ball);
+    const bead = new THREE.Mesh(new THREE.SphereGeometry(radius, seg, seg * 0.75),
+      new THREE.MeshPhysicalMaterial({ color, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 }));
+    bead.scale.z = depth;
+    this.ball.add(bead);
+    const shine = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.26, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    shine.position.set(radius * 0.3, radius * 0.38, radius * depth * 0.92);
+    const shine2 = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.12, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    shine2.position.set(-radius * 0.28, -radius * 0.3, radius * depth * 0.9);
+    this.group.add(shine, shine2);
+    this.shines = [shine, shine2];
+    const lidMat = new THREE.MeshStandardMaterial({ color: lid, roughness: 0.6, side: THREE.DoubleSide });
+    const lidGeo = (top) => {
+      const g = new THREE.SphereGeometry(radius * 1.07, seg, seg / 2, 0, Math.PI * 2, top ? 0 : Math.PI / 2, Math.PI / 2);
+      g.scale(1, 1, depth * 1.12); // hugs the bead: a closing lid blends into the face, no rim
+      return g;
+    };
+    this.upper = new THREE.Mesh(lidGeo(true), lidMat);
+    this.lower = new THREE.Mesh(lidGeo(false), lidMat);
+    this.group.add(this.upper, this.lower);
+    // happy closed eyes: a cartoon "∩" arc replaces the bead when the cheeks push up
+    const arc = new THREE.TorusGeometry(radius * 0.78, radius * 0.2, 8, [12, 18, 24][quality], Math.PI);
+    this.arc = new THREE.Mesh(arc, new THREE.MeshPhysicalMaterial({ color, roughness: 0.3, clearcoat: 0.8 }));
+    this.arc.position.set(0, -radius * 0.25, radius * depth * 0.55);
+    this.arc.scale.set(1, 0.85, 0.6);
+    this.arc.visible = false;
+    this.group.add(this.arc);
+  }
+
+  // Bead eyes have no visible lids at rest (like a toy): the relaxed "neutral" lid values
+  // map to fully open, and lids only appear to blink, squint or smile with the eyes.
+  setLids(upper, lower, tilt = 0) {
+    const u = clamp01((upper - 0.15) / 0.85), l = clamp01((lower - 0.08) / 0.92);
+    const happy = l > 0.55 && u < 0.9; // laughing: show the arc instead of a half-covered bead
+    this.arc.visible = happy;
+    this.ball.visible = !happy;
+    this.upper.visible = !happy && u > 0.02;
+    this.lower.visible = !happy && l > 0.02;
+    this.upper.rotation.set(THREE.MathUtils.lerp(-1.3, 1.6, u), 0, tilt);
+    this.lower.rotation.set(THREE.MathUtils.lerp(1.2, -0.2, l), 0, 0);
+    // highlights disappear under a lid instead of floating over it
+    this.shines[0].visible = !happy && u < 0.3 && l < 0.85;
+    this.shines[1].visible = !happy && l < 0.3 && u < 0.85;
+  }
+
+  look(x, y) {
+    this.ball.position.set(x * this.radius * 0.28, y * this.radius * 0.22, 0);
+  }
+}
+
+// ---------------------------------------------------------------------- Director
+//
+// One behaviour layer for every avatar. It never touches meshes: it produces smooth
+// values (state weights, where to look, posture, breathing, the current gesture, speech
+// beats) that each character maps onto its own anatomy. Everything is time based
+// (dt in seconds, exponential damping), so 30 and 60 fps look the same.
+
+export const STATES = ["idle", "listening", "reading", "thinking", "speaking", "reacting", "celebrating", "paused", "emergency"];
+const INTENSITY = { subtle: 0.55, normal: 1, lively: 1.45 };
+const FREQUENCY = { low: 1.8, normal: 1, high: 0.55 };
+
+// Generic gestures every character understands (through look/lean); species add their own.
+const BASE_GESTURES = {
+  glance: { duration: 1.6, weight: 2, cooldown: 4 },
+  lookAround: { duration: 3.6, weight: 1.2, cooldown: 14 },
+  shift: { duration: 2.4, weight: 1.4, cooldown: 8 },
+  curious: { duration: 2.2, weight: 0.8, cooldown: 16 },
+};
+
+export class Director {
+  constructor(rng = Math.random) {
+    this.rng = rng;
+    this.cfg = { idle: true, intensity: "normal", frequency: "normal", reduceMotion: false };
+    this.state = "idle";
+    this.since = 0; // seconds in the current state
+    this.w = Object.fromEntries(STATES.map((s) => [s, s === "idle" ? 1 : 0]));
+    this.gestures = { ...BASE_GESTURES };
+    this.gesture = null; // { name, t, duration, def }
+    this.cooldowns = {};
+    this.recent = [];
+    this.nextGesture = 2.5 + rng() * 3;
+    this.target = { x: 0, y: 0 }; // where the avatar wants to look (-1..1)
+    this.eyes = { x: 0, y: 0 }; // eyes lead…
+    this.head = { x: 0, y: 0 }; // …the head follows
+    this.nextLook = 0.5;
+    this.lean = { x: 0, z: 0, tx: 0, tz: 0, next: 3 };
+    this.breath = 0; // -1..1
+    this.breathPhase = rng() * 6;
+    this.beat = 0; // decaying impulse on speech onsets (nods, hand beats)
+    this.prevSpeak = 0;
+    this.micro = { smile: 0, brow: 0, ts: 0, tb: 0, next: 6 };
+    this.blinkRequest = false;
+    this.scan = 0; // reading: eyes sweep the line
+  }
+
+  configure(cfg = {}) {
+    for (const k of ["idle", "intensity", "frequency", "reduceMotion"]) if (cfg[k] !== undefined) this.cfg[k] = cfg[k];
+  }
+
+  get amp() { return (this.cfg.reduceMotion ? 0.45 : 1) * (INTENSITY[this.cfg.intensity] ?? 1); }
+  get pace() { return (this.cfg.reduceMotion ? 1.6 : 1) * (FREQUENCY[this.cfg.frequency] ?? 1); }
+  get still() { return this.state === "emergency"; }
+
+  register(defs) { Object.assign(this.gestures, defs); }
+
+  setState(name) {
+    if (name === this.state) return;
+    this.state = name;
+    this.since = 0;
+    // a random gesture that does not belong to the new state fades out early; one that was
+    // asked for (preview button, a reaction to the message) plays to the end
+    if (this.gesture && !this.gesture.forced && !(this.gesture.def.states || ["idle"]).includes(name)) this.gesture.cut = true;
+    this.nextLook = 0;
+  }
+
+  // Start a gesture now (preview buttons, reactions to emotions). Returns false if unknown.
+  play(name, force = true) {
+    const def = this.gestures[name];
+    if (!def || (def.big && this.cfg.reduceMotion && !force)) return false;
+    this.gesture = { name, t: 0, duration: def.duration, def, cut: false, forced: force };
+    this.cooldowns[name] = (def.cooldown ?? 8) * this.pace;
+    this.recent = [name, ...this.recent].slice(0, 3);
+    return true;
+  }
+
+  // Current gesture as { name, p (0..1 progress), s (eased weight), t (seconds) }
+  curve() {
+    const g = this.gesture;
+    if (!g) return { name: "", p: 0, s: 0, t: 0 };
+    const p = clamp01(g.t / g.duration);
+    return { name: g.name, p, s: bell(p, g.def.rise ?? 0.2, g.def.fall ?? 0.28) * (g.fade ?? 1), t: g.t };
+  }
+
+  is(name) { return this.gesture?.name === name; }
+
+  _pick() {
+    const allowed = Object.entries(this.gestures).filter(([name, def]) =>
+      (def.states || ["idle"]).includes(this.state) && !(this.cooldowns[name] > 0) &&
+      !(def.big && this.cfg.reduceMotion) && name !== this.recent[0]);
+    const total = allowed.reduce((sum, [, d]) => sum + (d.weight ?? 1), 0);
+    if (!total) return null;
+    let r = this.rng() * total;
+    for (const [name, d] of allowed) { r -= d.weight ?? 1; if (r <= 0) return name; }
+    return allowed[allowed.length - 1][0];
+  }
+
+  update(dt, t, speak = 0) {
+    const rng = this.rng;
+    this.since += dt;
+    for (const s of STATES) this.w[s] = damp(this.w[s], s === this.state ? 1 : 0, 4.5, dt);
+    for (const k in this.cooldowns) this.cooldowns[k] -= dt;
+
+    // breathing: slower when paused, faster when excited or talking
+    const rate = { paused: 0.17, emergency: 0.2, speaking: 0.36, celebrating: 0.55, reacting: 0.45 }[this.state] ?? 0.25;
+    this.breathPhase += dt * rate * Math.PI * 2;
+    this.breath = Math.sin(this.breathPhase);
+
+    // speech beats: a quick rise of the voice envelope makes a nod/gesture impulse
+    if (speak - this.prevSpeak > 0.28 && speak > 0.45) this.beat = 1;
+    this.prevSpeak = damp(this.prevSpeak, speak, 10, dt);
+    this.beat = Math.max(0, this.beat - dt * 3.2);
+
+    // gestures: idle life (and talk gestures while speaking)
+    const g = this.gesture;
+    if (g) {
+      g.t += dt * (g.cut ? 2.5 : 1);
+      if (g.cut) g.fade = Math.max(0, (g.fade ?? 1) - dt * 3);
+      if (g.t >= g.duration || g.fade === 0) this.gesture = null;
+    } else if (!this.still && this.cfg.idle && this.state !== "paused") {
+      this.nextGesture -= dt;
+      if (this.nextGesture <= 0) {
+        const name = this._pick();
+        if (name) this.play(name, false);
+        const base = this.state === "speaking" ? 2.5 + rng() * 3 : 3.5 + rng() * 5.5;
+        this.nextGesture = base * this.pace;
+      }
+    }
+
+    this._updateLook(dt, t);
+    this._updateLean(dt);
+    this._updateMicro(dt);
+  }
+
+  _updateLook(dt, t) {
+    const rng = this.rng, a = this.cfg.idle ? Math.min(1.2, this.amp) : 0.35;
+    this.nextLook -= dt;
+    const tg = this.target;
+    const curve = this.curve();
+    switch (this.state) {
+      case "listening": tg.x = 0.05 * Math.sin(t * 0.7); tg.y = 0.08; break;
+      case "reading": {
+        // eyes sweep along the bubble like reading a line, then jump back
+        this.scan = (this.scan + dt * 0.75) % 1;
+        tg.x = -0.35 + this.scan * 0.7; tg.y = 0.42;
+        break;
+      }
+      case "thinking": if (this.nextLook <= 0) { tg.x = -0.5 + rng() * 0.2; tg.y = 0.5 + rng() * 0.1; this.nextLook = 1.4 + rng(); } break;
+      case "emergency": tg.x = 0; tg.y = 0; break;
+      case "paused": if (this.nextLook <= 0) { tg.x = (rng() - 0.5) * 0.4; tg.y = -0.25; this.nextLook = 3 + rng() * 3; } break;
+      case "speaking":
+        if (this.nextLook <= 0) {
+          const away = rng() < 0.18; // now and then a short glance away, like people do
+          tg.x = away ? (rng() < 0.5 ? -1 : 1) * (0.3 + rng() * 0.2) : (rng() - 0.5) * 0.18;
+          tg.y = away ? (rng() - 0.3) * 0.25 : (rng() - 0.5) * 0.1;
+          this.nextLook = away ? 0.5 + rng() * 0.4 : 0.9 + rng() * 1.6;
+        }
+        break;
+      default:
+        if (this.nextLook <= 0) {
+          const nx = (rng() - 0.5) * 1.1 * a, ny = (rng() - 0.45) * 0.55 * a;
+          if (Math.hypot(nx - tg.x, ny - tg.y) > 0.5 && rng() < 0.45) this.blinkRequest = true; // blink on big shifts
+          tg.x = nx; tg.y = ny;
+          this.nextLook = (0.9 + rng() * 2.6) * this.pace;
+        }
+    }
+    // generic gestures steer the look
+    let gx = 0, gy = 0;
+    if (curve.name === "glance") gx = (this.gesture.side ??= rng() < 0.5 ? -1 : 1) * 0.8 * curve.s;
+    if (curve.name === "lookAround") { gx = Math.sin(curve.p * Math.PI * 2) * 0.9 * curve.s; gy = 0.1 * curve.s; }
+    if (curve.name === "curious") gy = 0.15 * curve.s;
+    const ex = THREE.MathUtils.clamp(tg.x + gx, -1, 1), ey = THREE.MathUtils.clamp(tg.y + gy, -1, 1);
+    const eyeSpeed = this.state === "reading" ? 9 : 18;
+    this.eyes.x = damp(this.eyes.x, ex, eyeSpeed, dt);
+    this.eyes.y = damp(this.eyes.y, ey, eyeSpeed, dt);
+    const follow = this.state === "reading" ? 0.25 : 0.6; // the head turns less than the eyes
+    const headSpeed = this.cfg.reduceMotion ? 1.8 : 3.2;
+    this.head.x = damp(this.head.x, ex * follow, headSpeed, dt);
+    this.head.y = damp(this.head.y, ey * follow, headSpeed, dt);
+  }
+
+  _updateLean(dt) {
+    const l = this.lean, rng = this.rng;
+    l.next -= dt;
+    if (l.next <= 0 && (this.state === "idle" || this.state === "speaking")) {
+      l.tx = (rng() - 0.5) * 2 * this.amp;
+      l.tz = (rng() - 0.5) * 0.6 * this.amp;
+      l.next = (4 + rng() * 6) * this.pace;
+    }
+    let tx = l.tx, tz = l.tz;
+    if (this.state === "listening") { tx = 0; tz = 0.8; } // leans in to listen
+    if (this.state === "paused" || this.state === "emergency") { tx = 0; tz = 0; }
+    const c = this.curve();
+    if (c.name === "shift") tx += (this.gesture.side ??= rng() < 0.5 ? -1 : 1) * 0.9 * c.s;
+    if (!this.cfg.idle && this.state === "idle") { tx *= 0.3; tz *= 0.3; }
+    l.x = damp(l.x, tx, 1.6, dt);
+    l.z = damp(l.z, tz, 1.6, dt);
+  }
+
+  _updateMicro(dt) {
+    const m = this.micro, rng = this.rng;
+    m.next -= dt;
+    if (m.next <= 0 && this.state === "idle" && this.cfg.idle) {
+      const r = rng();
+      m.ts = r < 0.4 ? 0.35 + rng() * 0.3 : 0; // a little smile…
+      m.tb = r > 0.7 ? 0.5 + rng() * 0.5 : 0; // …or a brow raise
+      m.next = (5 + rng() * 7) * this.pace;
+      m.until = 1.2 + rng() * 1.5;
+    }
+    if (m.until !== undefined) { m.until -= dt; if (m.until <= 0) { m.ts = 0; m.tb = 0; m.until = undefined; } }
+    if (this.state !== "idle") { m.ts = 0; m.tb = 0; }
+    m.smile = damp(m.smile, m.ts, 3, dt);
+    m.brow = damp(m.brow, m.tb, 4, dt);
+  }
+}
+
+// ---------------------------------------------------------------------- Character
+// Base class: subclasses build the body and call setupFace(); this class drives
+// expressions, lip sync, blinking and gaze, and owns a Director for the rest.
 export class Character {
   constructor(options = {}) {
     this.options = options;
@@ -183,82 +481,111 @@ export class Character {
     this.cur = { ...this.expr, speak: 0 };
     this.emotion = "neutral";
     this.emotionUntil = 0;
-    this.gaze = { x: 0, y: 0, tx: 0, ty: 0, next: 0 };
-    this.blink = { next: 1.5, t: -1, double: false };
+    this.gaze = { x: 0, y: 0 };
+    this.blink = { next: 1.5, t: -1, double: false, slow: false };
     this.action = null; // one-shot reaction {name, t, duration}
-    this.headHeight = 2.0; // world height of the speech bubble anchor
+    this.headHeight = 2.0; // world height of the speech bubble anchor (fallback)
+    this.bubbleAnchor = null; // Object3D on the head: the bubble follows the animation
+    this.director = new Director();
+    this.extent = { width: 1.6, height: 2.2 }; // rough size, for framing and the bubble
   }
+
+  configure(cfg) { this.director.configure(cfg); }
 
   setEmotion(name, intensity = 0.7, seconds = 4) {
     if (!EMOTIONS.includes(name)) name = "neutral";
     this.emotion = name;
     this.intensity = Math.max(0.2, Math.min(1, intensity));
-    this.emotionUntil = performance.now() / 1000 + seconds;
+    this.emotionUntil = (this.now ?? performance.now() / 1000) + seconds;
   }
 
   react(name) {
     this.setEmotion(name, 1, 3);
-    const duration = { laugh: 1.6, surprised: 0.9, celebrate: 1.8, annoyed: 1.0, confused: 1.2, happy: 0.9 }[name] || 0.8;
-    this.action = { name, t: 0, duration };
+    const big = this.director.cfg.reduceMotion;
+    const duration = { laugh: 1.6, surprised: 0.9, celebrate: big ? 1.2 : 1.8, annoyed: 1.0, confused: 1.2, happy: 0.9 }[name] || 0.8;
+    this.action = { name, t: 0, duration, gentle: big };
   }
 
-  // Shared per-frame logic. state: { phase, mouth (0..1 lip-sync level), time }
+  // A gesture by name (species gestures or the generic ones). Used by the preview.
+  gesture(name) { return this.director.play(name, true); }
+
+  // Called with the viewer's message when the avatar starts paying attention to it.
+  // Characters override it to react to words (the owl perks up at "Linux"…).
+  hear(text) {}
+
+  static mentionsTech(text) {
+    return /\b(linux|kernel|biglinux|tux|kde|plasma|gnome|ubuntu|arch|manjaro|debian|fedora|pacman|terminal|bash|python|c\+\+|rust|programa|program|c[oó]digo|code|software livre|open ?source|github|git|servidor|server|cpu|gpu|placa de v[ií]deo|computador|computer|pc|tecnologia|tech|ia\b|ai\b)/i.test(text || "");
+  }
+
+  gestureNames() { return Object.keys(this.director.gestures); }
+
+  resolveState(state) {
+    if (state.app === "emergency") return "emergency";
+    if (this.action) return this.action.name === "celebrate" ? "celebrating" : "reacting";
+    if (state.app === "paused" && state.phase === "idle") return "paused";
+    return { listening: "listening", reading: "reading", thinking: "thinking", speaking: "speaking" }[state.phase] || "idle";
+  }
+
+  // Shared per-frame logic. state: { phase, app, mouth (0..1 lip-sync level) }
   update(dt, t, state) {
-    if (this.emotion !== "neutral" && t > this.emotionUntil && state.phase !== "speaking") this.emotion = "neutral";
+    this.now = t;
+    const d = this.director;
+    const talking = state.phase === "speaking" || state.phase === "reading";
+    if (this.emotion !== "neutral" && t > this.emotionUntil && !talking) this.emotion = "neutral";
+    if (state.app === "emergency" && this.emotion !== "neutral") this.emotion = "neutral";
     const mood = state.phase === "thinking" && this.emotion === "neutral" ? "thinking" : this.emotion;
     const target = expression(mood);
     const k = mood === "neutral" ? 1 : (this.intensity ?? 0.7);
     for (const key of Object.keys(target)) {
       const neutral = EXPRESSIONS.neutral[key] ?? 0;
-      const goal = neutral + (target[key] - neutral) * k;
+      let goal = neutral + (target[key] - neutral) * k;
+      if (key === "smile") goal += d.micro.smile * 0.5;
+      if (key === "browY") goal += d.micro.brow * 0.03 + d.w.listening * 0.025;
+      if (key === "lidUp") goal = goal * (1 - d.w.listening * 0.6) + d.w.paused * 0.35;
       this.cur[key] = damp(this.cur[key], goal, 7, dt);
     }
     // Lip sync: the loudness envelope opens the jaw; quick attack, slower release.
-    const speak = state.phase === "speaking" ? state.mouth : 0;
+    const speak = talking ? state.mouth : 0;
     this.cur.speak = damp(this.cur.speak, speak, speak > this.cur.speak ? 28 : 14, dt);
 
     if (this.action) {
       this.action.t += dt;
       if (this.action.t > this.action.duration) this.action = null;
     }
-    this.updateBlink(dt, t, mood);
-    this.updateGaze(dt, t, state.phase, mood);
+    d.setState(this.resolveState(state));
+    d.update(dt, t, this.cur.speak);
+    this.updateBlink(dt);
+    this.gaze.x = d.eyes.x;
+    this.gaze.y = d.eyes.y;
     this.applyFace(t);
     this.animate(dt, t, state);
   }
 
-  updateBlink(dt, t, mood) {
-    const b = this.blink;
+  updateBlink(dt) {
+    const b = this.blink, d = this.director;
     b.next -= dt;
-    if (b.t < 0 && b.next <= 0) {
+    const want = d.blinkRequest || (b.next <= 0);
+    if (b.t < 0 && want && !d.still) {
       b.t = 0;
-      b.double = Math.random() < 0.2;
-      b.next = 2 + Math.random() * 4.5;
+      b.double = Math.random() < 0.18;
+      b.slow = d.state === "paused" || (d.state === "idle" && Math.random() < 0.12); // lazy, slow blinks
+      b.next = (d.state === "speaking" ? 1.8 : 2.2) + Math.random() * 4.5;
     }
+    d.blinkRequest = false;
     if (b.t >= 0) {
       b.t += dt;
-      const length = b.double ? 0.42 : 0.18;
-      if (b.t > length) b.t = -1;
+      if (b.t > this.blinkLength()) b.t = -1;
     }
   }
+
+  blinkLength() { return this.blink.double ? 0.42 : this.blink.slow ? 0.5 : 0.18; }
 
   blinkAmount() {
     const b = this.blink;
     if (b.t < 0) return 0;
-    const phase = b.double ? (b.t % 0.21) / 0.21 : b.t / 0.18;
-    return Math.sin(Math.min(1, phase) * Math.PI);
-  }
-
-  updateGaze(dt, t, phase, mood) {
-    const g = this.gaze;
-    if (t > g.next) {
-      if (mood === "thinking") { g.tx = -0.55 + Math.random() * 0.2; g.ty = 0.55; g.next = t + 1.2 + Math.random(); }
-      else if (phase === "speaking") { g.tx = (Math.random() - 0.5) * 0.25; g.ty = (Math.random() - 0.5) * 0.15; g.next = t + 0.6 + Math.random() * 1.2; }
-      else { g.tx = (Math.random() - 0.5) * 0.9; g.ty = (Math.random() - 0.5) * 0.5; g.next = t + 0.8 + Math.random() * 2.5; }
-    }
-    // saccades are fast
-    g.x = damp(g.x, g.tx, 18, dt);
-    g.y = damp(g.y, g.ty, 18, dt);
+    if (b.double) return Math.sin(Math.min(1, (b.t % 0.21) / 0.21) * Math.PI);
+    if (b.slow) return Math.min(1, Math.sin(Math.min(1, b.t / 0.5) * Math.PI) * 1.25);
+    return Math.sin(Math.min(1, b.t / 0.18) * Math.PI);
   }
 
   applyFace(t) {
@@ -271,7 +598,8 @@ export class Character {
       const side = i === 0 ? -1 : 1;
       eye.setLids(upper, lower, -side * c.browTilt * 0.18);
       eye.look(this.gaze.x, this.gaze.y);
-      eye.group.scale.setScalar(1 + wide * 0.12);
+      if (eye.group.userData.baseScale === undefined) eye.group.userData.baseScale = eye.group.scale.clone();
+      eye.group.scale.copy(eye.group.userData.baseScale).multiplyScalar(1 + wide * 0.12);
     });
     this.brows.forEach((brow, i) => {
       const asym = i === 0 ? c.browAsym * 0.05 : -c.browAsym * 0.02;
@@ -284,6 +612,7 @@ export class Character {
         smile: c.smile * (1 - talk * 0.35),
         frown: c.frown * (1 - talk * 0.4),
         round: Math.min(1, c.round + talk * 0.25 * (0.5 + 0.5 * Math.sin(t * 11))),
+        talk,
       });
     }
   }
@@ -292,7 +621,7 @@ export class Character {
   actionCurve() {
     if (!this.action) return { name: "", p: 0, s: 0 };
     const p = this.action.t / this.action.duration;
-    return { name: this.action.name, p, s: Math.sin(p * Math.PI) };
+    return { name: this.action.name, p, s: Math.sin(p * Math.PI), gentle: !!this.action.gentle };
   }
 
   animate() {}
@@ -301,7 +630,12 @@ export class Character {
     this.root.traverse((o) => {
       if (o.isSkinnedMesh) o.skeleton.dispose(); // frees the bone-matrix DataTexture
       if (o.geometry) o.geometry.dispose();
-      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose());
+      if (o.material) {
+        (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
+          for (const key of ["map", "alphaMap", "roughnessMap", "normalMap", "emissiveMap"]) m[key]?.dispose();
+          m.dispose();
+        });
+      }
     });
   }
 }

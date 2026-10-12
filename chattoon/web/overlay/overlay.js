@@ -5,20 +5,29 @@ import { RoomEnvironment } from "../vendor/three/RoomEnvironment.js";
 import { Worm } from "./characters/worm.js";
 import { Alien } from "./characters/alien.js";
 import { Tux } from "./characters/tux.js";
+import { Cat } from "./characters/cat.js";
+import { Owl } from "./characters/owl.js";
+import { Dog } from "./characters/dog.js";
 
-const CHARACTERS = { worm: Worm, alien: Alien, tux: Tux };
+const CHARACTERS = { worm: Worm, alien: Alien, tux: Tux, cat: Cat, owl: Owl, dog: Dog };
 const params = new URLSearchParams(location.search);
 const role = params.get("role") === "preview" ? "preview" : "obs";
 const demo = params.get("demo"); // standalone mode: ?demo=worm&emotion=happy&talk=1
-if (role === "preview" || demo) document.body.classList.add("preview");
+if ((role === "preview" || demo) && !params.has("transparent")) document.body.classList.add("preview");
 if (params.get("theme") === "light") document.body.classList.add("light");
 
 const config = {
-  character: demo || "worm", color: "", showBubble: params.get("bubble") !== "0", showAuthor: true,
-  scale: 1, x: 0, y: -0.15, rotation: 0, light: 1, shadows: true, quality: params.get("quality") || "high",
-  fps: 60, bubbleSeconds: 2.5, background: "transparent", zoom: Number(params.get("zoom") || 1),
+  character: demo || "worm", color: params.get("color") || "", showBubble: params.get("bubble") !== "0", showAuthor: true,
+  scale: 1, x: 0, y: -0.15, rotation: Number(params.get("rot") || 0), light: 1, shadows: true, quality: params.get("quality") || "high",
+  fps: Number(params.get("fps") || 60), bubbleSeconds: 2.5, background: "transparent", zoom: Number(params.get("zoom") || 1),
+  idle: params.get("idle") !== "0", intensity: params.get("intensity") || "normal",
+  frequency: params.get("frequency") || "normal", reduceMotion: params.get("reduce") === "1", language: "pt-BR",
 };
-const state = { phase: "idle", speech: null, connected: false };
+// phase: what the avatar is doing (idle/listening/reading/thinking/speaking); app: running/paused/stopped/emergency
+const state = { phase: "idle", app: "stopped", speech: null, connected: false };
+const capture = params.has("capture");
+let captureClock = performance.now() / 1000;
+const clock = () => (capture ? captureClock : performance.now() / 1000);
 
 // ---------------------------------------------------------------- renderer
 const canvas = document.getElementById("stage");
@@ -81,6 +90,7 @@ function applyConfig(next) {
   Object.assign(config, next);
   if (qualityChanged) createRenderer();
   if (characterChanged || !character || qualityChanged) loadCharacter();
+  character?.configure(animationConfig());
   stage.position.set(config.x * 2.4, config.y * 1.6, 0);
   stage.scale.setScalar(config.scale);
   stage.rotation.y = THREE.MathUtils.degToRad(config.rotation);
@@ -95,40 +105,94 @@ function applyConfig(next) {
   if (role === "obs" && !demo) document.body.style.background = bg === "green" ? "#00ff00" : (bg && bg !== "transparent" ? bg : "transparent");
 }
 
+let loadToken = 0;
+
 function loadCharacter() {
-  if (character) {
-    stage.remove(character.root);
-    character.dispose();
-  }
-  const Cls = CHARACTERS[config.character] || Worm;
-  character = new Cls({ color: config.color || undefined, quality: config.quality });
-  stage.add(character.root);
-  rimLight.color.set(config.color || { worm: "#ff9ccd", alien: "#9dff8a", tux: "#ffd36b" }[config.character] || "#8fd8ff");
-  document.documentElement.style.setProperty("--accent", config.color || { worm: "#e0559a", alien: "#3fae52", tux: "#e8a400" }[config.character]);
+  const token = ++loadToken;
+  const id = config.character;
+  const Cls = CHARACTERS[id] || Worm;
+  const next = new Cls({ color: config.color || undefined, quality: config.quality });
+  next.configure(animationConfig());
+  const swap = () => {
+    if (token !== loadToken) { next.dispose(); return; } // a newer switch won
+    if (character) {
+      stage.remove(character.root);
+      character.dispose();
+    }
+    character = next;
+    stage.add(character.root);
+    rimLight.color.set(config.color || RIM[id] || "#8fd8ff");
+    document.documentElement.style.setProperty("--accent", config.color || ACCENT[id] || "#7c5cff");
+  };
+  if (!character || capture) { swap(); return; }
+  // Switching during a live: compile the new character's shaders while the current one
+  // keeps animating, then swap — no frozen frame on stream.
+  let done = false;
+  const finish = () => { if (!done) { done = true; swap(); } };
+  renderer.compileAsync(next.root, camera, scene).then(finish, finish);
+  setTimeout(finish, 4000); // never wait forever (e.g. a lost GPU context)
+}
+
+const RIM = { worm: "#ff9ccd", alien: "#9dff8a", tux: "#ffd36b", cat: "#ffc07a", owl: "#e27bff", dog: "#ffd2a1" };
+const ACCENT = { worm: "#e0559a", alien: "#3fae52", tux: "#e8a400", cat: "#e8781c", owl: "#7650e0", dog: "#b06a2a" };
+
+function animationConfig() {
+  return { idle: config.idle !== false, intensity: config.intensity, frequency: config.frequency,
+           reduceMotion: !!config.reduceMotion };
 }
 
 // ---------------------------------------------------------------- bubble
+// Two looks: the viewer's message being read ("viewer") and the avatar's reply. A new
+// line swaps the content with a short cross-fade instead of hiding the bubble.
 const bubble = document.getElementById("bubble");
 const bubbleText = bubble.querySelector(".text");
 const bubbleAuthor = bubble.querySelector(".author");
+const bubbleLabel = bubble.querySelector(".label");
 let bubbleHideAt = 0;
+let swapTimer = 0;
+const LABELS = {
+  pt: { said: "no chat", asked: "pergunta", superchat: "Super Chat" },
+  en: { said: "in chat", asked: "question", superchat: "Super Chat" },
+};
 
-function showBubble(text, author) {
-  if (!config.showBubble) return;
-  bubbleAuthor.textContent = config.showAuthor && author ? author : "";
+function labels() { return LABELS[(config.language || "pt").toLowerCase().startsWith("pt") ? "pt" : "en"]; }
+
+function fillBubble(text, author, kind, extra = {}) {
+  bubble.classList.toggle("viewer", kind === "reading");
+  bubble.classList.remove("waiting");
+  bubbleAuthor.textContent = (kind === "reading" || config.showAuthor) && author ? author : "";
+  bubbleLabel.textContent = kind === "reading"
+    ? (extra.superchat ? `${labels().superchat} ${extra.superchat}` : extra.question ? labels().asked : labels().said) : "";
   bubbleText.textContent = "";
   const shown = document.createElement("span");
   const pending = document.createElement("span");
   pending.className = "pending";
   pending.textContent = text; // textContent: chat text is never parsed as HTML
   bubbleText.append(shown, pending);
-  bubble.classList.add("show");
+  if (extra.reveal === false) revealBubble(1);
+}
+
+function showBubble(text, author, kind = "reply", extra = {}) {
+  if (!config.showBubble) return;
+  clearTimeout(swapTimer);
+  bubbleHideAt = Infinity;
+  if (bubble.classList.contains("show") && !capture) {
+    bubble.classList.add("swap"); // fade the old line out, then the new one in
+    swapTimer = setTimeout(() => { fillBubble(text, author, kind, extra); bubble.classList.remove("swap"); }, 150);
+  } else {
+    fillBubble(text, author, kind, extra);
+    bubble.classList.add("show");
+  }
+}
+
+function hideBubble() {
+  bubble.classList.remove("show", "waiting");
   bubbleHideAt = Infinity;
 }
 
 function revealBubble(fraction) {
   const [shown, pending] = bubbleText.children;
-  if (!shown) return;
+  if (!shown || bubble.classList.contains("swap")) return;
   const full = shown.textContent + pending.textContent;
   const n = Math.min(full.length, Math.ceil(full.length * Math.min(1, fraction * 1.15)));
   shown.textContent = full.slice(0, n);
@@ -137,19 +201,27 @@ function revealBubble(fraction) {
 
 const _anchor = new THREE.Vector3();
 const _side = new THREE.Vector3();
+let bubbleAbove = true;
 
 function placeBubble() {
   if (!character || !bubble.classList.contains("show")) return;
   const w = window.innerWidth, h = window.innerHeight;
   const toScreen = (v) => ({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h });
-  _anchor.set(0, character.headHeight, 0);
-  character.root.localToWorld(_anchor).project(camera);
-  _side.set(0.85, character.headHeight - 0.55, 0);
-  character.root.localToWorld(_side).project(camera);
+  // the anchor rides on the head: the bubble follows hats, ears and jumps, never covering the face
+  if (character.bubbleAnchor) character.bubbleAnchor.getWorldPosition(_anchor);
+  else character.root.localToWorld(_anchor.set(0, character.headHeight, 0));
+  _side.copy(_anchor);
+  _side.x += 0.85 * stage.scale.x;
+  _side.y -= 0.55 * stage.scale.y;
+  _anchor.project(camera);
+  _side.project(camera);
   const head = toScreen(_anchor), side = toScreen(_side);
   const bw = bubble.offsetWidth, bh = bubble.offsetHeight, gap = 18, margin = 12;
+  // hysteresis: a head bobbing near the limit must not flip the bubble back and forth
+  const roomAbove = head.y - gap - bh - margin;
+  bubbleAbove = bubbleAbove ? roomAbove >= -6 : roomAbove >= 18;
   bubble.classList.remove("side-left", "side-right");
-  if (head.y - gap - bh >= margin) {
+  if (bubbleAbove) {
     // above the head (preferred)
     const cx = Math.min(w - bw / 2 - margin, Math.max(bw / 2 + margin, head.x));
     bubble.style.left = `${cx}px`;
@@ -160,7 +232,10 @@ function placeBubble() {
   // not enough room above: beside the head, never covering the character
   const halfWidth = Math.max(40, side.x - head.x);
   const rightRoom = w - (head.x + halfWidth + gap) - margin;
-  const placeRight = rightRoom >= bw || rightRoom >= (head.x - halfWidth - gap - margin);
+  const leftRoom = head.x - halfWidth - gap - margin;
+  const wasRight = bubble.dataset.side !== "left";
+  const placeRight = rightRoom >= bw ? (wasRight || leftRoom < bw) : rightRoom >= leftRoom;
+  bubble.dataset.side = placeRight ? "right" : "left";
   const left = placeRight ? head.x + halfWidth + gap : head.x - halfWidth - gap - bw;
   const top = Math.min(h - bh - margin, Math.max(margin, side.y - bh / 2));
   bubble.classList.add(placeRight ? "side-right" : "side-left");
@@ -173,13 +248,28 @@ function placeBubble() {
 let audioUnlockHint = false;
 
 function startSpeech(msg) {
-  stopSpeech(false);
-  const speech = { id: msg.id, envelope: msg.envelope || [], fps: msg.fps || 50, duration: msg.duration || 2,
-                   started: performance.now() / 1000, audio: null };
+  const kind = msg.kind === "reading" ? "reading" : "reply";
+  const group = msg.group || msg.id;
+  // the next segment of the same line: same bubble, same emotion — only audio and timing change
+  const continuing = msg.continue && state.speech?.group === group;
+  if (!continuing) stopSpeech(false);
+  else if (state.speech.audio) state.speech.audio.onended = state.speech.audio.onerror = null;
+  const speech = { id: msg.id, group, kind, envelope: msg.envelope || [], fps: msg.fps || 50, duration: msg.duration || 2,
+                   started: clock(), audio: null, simulate: !!msg.simulate, progress: msg.progress || [0, 1] };
   state.speech = speech;
-  state.phase = "speaking";
-  character?.setEmotion(msg.emotion || "neutral", msg.intensity ?? 0.7, speech.duration + 2.5);
-  showBubble(msg.text || "", msg.author || "");
+  state.phase = kind === "reading" ? "reading" : "speaking";
+  if (continuing) { playAudio(msg, speech); return; }
+  if (kind === "reading" && msg.superchat) character?.react("celebrate"); // a Super Chat deserves a party
+  if (kind === "reply") {
+    character?.setEmotion(msg.emotion || "neutral", msg.intensity ?? 0.7, speech.duration + 2.5);
+    // strong emotions get a short body reaction at the start of the line
+    if (["laugh", "surprised", "celebrate"].includes(msg.emotion) && (msg.intensity ?? 0) >= 0.75) character?.react(msg.emotion);
+  }
+  showBubble(msg.text || "", msg.author || "", kind, { reveal: msg.reveal, question: msg.question, superchat: msg.superchat });
+  playAudio(msg, speech);
+}
+
+function playAudio(msg, speech) {
   if (msg.audio) {
     const audio = new Audio(msg.audio);
     speech.audio = audio;
@@ -199,20 +289,31 @@ function stopSpeech(hard) {
   const s = state.speech;
   if (s?.audio && hard) s.audio.pause();
   state.speech = null;
-  bubbleHideAt = performance.now() / 1000 + (hard ? 0.2 : config.bubbleSeconds);
+  if (hard) { clearTimeout(swapTimer); bubbleHideAt = clock() + 0.2; return; }
+  // after the viewer's message the bubble stays while the reply is being prepared
+  if (s?.kind === "reading") { bubbleHideAt = Infinity; bubble.classList.add("waiting"); }
+  else bubbleHideAt = clock() + config.bubbleSeconds;
+}
+
+// how much of the whole line has been said (segments carry their share of the text)
+function lineProgress(s) {
+  const [a, b] = s.progress;
+  return a + (b - a) * Math.min(1, speechTime(s) / Math.max(0.3, s.duration));
 }
 
 function speechTime(s) {
   if (s.audio && !s.audio.paused && s.audio.currentTime > 0) return s.audio.currentTime;
-  return performance.now() / 1000 - s.started;
+  return clock() - s.started;
 }
 
-function mouthLevel(now) {
+function mouthLevel() {
   const s = state.speech;
   if (!s) return 0;
   const t = speechTime(s);
   if (t > s.duration + 0.3) return 0;
-  if (!s.envelope.length) { // no audio: plausible syllable rhythm
+  if (!s.envelope.length) {
+    // No real audio: the mouth stays closed. Only the demo page simulates a syllable rhythm.
+    if (!s.simulate) return 0;
     return t < s.duration ? 0.45 + 0.4 * Math.abs(Math.sin(t * 13)) * (0.6 + 0.4 * Math.sin(t * 3.1)) : 0;
   }
   const f = t * s.fps;
@@ -225,23 +326,24 @@ function mouthLevel(now) {
 const timer = new THREE.Timer();
 let lastFrame = 0;
 
+
 function frame(now) {
   requestAnimationFrame(frame);
   if (document.hidden) return; // OBS hides inactive sources: no work at all
   const minDelta = 1000 / Math.max(10, config.fps) - 1;
-  if (now - lastFrame < minDelta) return;
+  if (!capture && now - lastFrame < minDelta) return;
   lastFrame = now;
   timer.update(now);
-  const dt = Math.min(timer.getDelta(), 0.1);
-  const seconds = performance.now() / 1000;
+  // capture mode (screenshots/tests): fixed steps, so animation time is deterministic
+  const dt = capture ? 1 / 60 : Math.min(timer.getDelta(), 0.1);
+  if (capture) captureClock += dt;
+  const seconds = clock();
   const s = state.speech;
-  if (s) revealBubble(speechTime(s) / Math.max(0.5, s.duration));
-  if (!s && seconds > bubbleHideAt) {
-    bubble.classList.remove("show");
-    bubbleHideAt = Infinity;
-  }
-  const phase = s ? "speaking" : (state.phase === "speaking" ? "idle" : state.phase);
-  character?.update(dt, seconds, { phase, mouth: mouthLevel(seconds) });
+  if (s) revealBubble(lineProgress(s));
+  if (!s && seconds > bubbleHideAt) hideBubble();
+  const phase = s ? (s.kind === "reading" ? "reading" : "speaking")
+    : (state.phase === "speaking" || state.phase === "reading" ? "idle" : state.phase);
+  character?.update(dt, seconds, { phase, app: state.app, mouth: mouthLevel() });
   if (character && shadow) {
     const lift = Math.max(0, character.root.position.y);
     shadow.scale.setScalar(1 - Math.min(0.5, lift * 0.4));
@@ -265,6 +367,23 @@ function badge(text) {
   el.hidden = !text || role === "obs" && !text.startsWith("Click");
 }
 
+let lastHeard = "";
+
+function onState(msg) {
+  if (msg.state) state.app = msg.state;
+  // a message was picked: let the character react to what it says (once per message)
+  if (msg.message && msg.message !== lastHeard && (msg.phase === "listening" || msg.phase === "thinking")) {
+    lastHeard = msg.message;
+    character?.hear(msg.message);
+  }
+  if (state.speech) return;
+  const before = state.phase;
+  state.phase = msg.phase || "idle";
+  // the viewer's message stays up while the avatar thinks; it goes if no reply comes
+  if (state.phase === "idle" && before !== "idle" && bubble.classList.contains("viewer") && bubbleHideAt === Infinity)
+    bubbleHideAt = clock() + 0.8;
+}
+
 function connect() {
   const url = new URL(`ws?role=${role}`, location.href);
   url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -276,11 +395,15 @@ function connect() {
     if (!msg || typeof msg !== "object") return;
     switch (msg.type) {
       case "config": applyConfig(msg); break;
-      case "state": if (!state.speech) state.phase = msg.phase || "idle"; break;
+      case "state": onState(msg); break;
       case "speak": startSpeech(msg); break;
-      case "done": if (state.speech?.id === msg.id) stopSpeech(false); state.phase = "idle"; break;
+      case "done":
+        if (state.speech && (state.speech.group === msg.id || state.speech.id === msg.id)) stopSpeech(false);
+        if (msg.kind !== "reading") state.phase = "idle";
+        break;
       case "stop": stopSpeech(true); state.phase = "idle"; character?.setEmotion("neutral"); break;
       case "react": character?.react(msg.emotion); break;
+      case "gesture": if (typeof msg.name === "string") character?.gesture(msg.name); break;
     }
   };
   ws.onclose = () => {
@@ -292,29 +415,85 @@ function connect() {
 }
 
 // ---------------------------------------------------------------- demo (no server)
+// Standalone page for the character cards and the enlarged preview. Lip movement here is
+// simulated (there is no audio) — the app labels these previews as animation demos.
 function runDemo() {
-  const emotion = params.get("emotion") || "happy";
+  const emotion = params.get("emotion") || "idle";
   const talk = params.get("talk") === "1";
   const cycle = ["happy", "laugh", "surprised", "confused", "annoyed", "celebrate", "thinking", "neutral"];
+  state.app = "running";
   let i = 0;
   const tick = () => {
     const e = emotion === "cycle" ? cycle[i++ % cycle.length] : emotion;
-    if (e === "thinking") { state.phase = "thinking"; character.setEmotion("neutral"); }
+    if (e === "idle") return;
+    if (e === "thinking") { state.phase = "thinking"; character.setEmotion("neutral"); setTimeout(() => { state.phase = "idle"; }, 2400); }
     else {
       state.phase = "idle";
-      if (talk) startSpeech({ id: "demo", text: params.get("text") || "", emotion: e, intensity: 0.9, duration: 2.6 });
+      if (talk) startSpeech({ id: "demo", text: params.get("text") || "", emotion: e, intensity: 0.9, duration: 2.6, simulate: true });
       else character.setEmotion(e, 0.9, 999);
       if (["laugh", "surprised", "celebrate"].includes(e) && emotion === "cycle") character.react(e);
     }
   };
   tick();
-  setInterval(tick, emotion === "cycle" ? 3200 : 4000);
+  if (emotion !== "idle") setInterval(tick, emotion === "cycle" ? 3200 : 4000);
+  const gesture = params.get("gesture");
+  if (gesture) { const play = () => (character.gesture(gesture) || character.react(gesture)); setTimeout(play, 300); setInterval(play, 4500); }
+  // used by the enlarged preview in the app (local page, no server, no authority)
+  window.chattoonDemo = {
+    emotion: (name) => { character.setEmotion(name, 0.9, 4); if (["laugh", "surprised", "celebrate", "annoyed", "confused", "happy"].includes(name)) character.react(name); },
+    gesture: (name) => character.gesture(name),
+    talk: (text, seconds = 3) => startSpeech({ id: `demo${Date.now()}`, text, emotion: "happy", intensity: 0.6, duration: seconds, simulate: true }),
+    read: (author, text, seconds = 2.5) => startSpeech({ id: `demo${Date.now()}`, kind: "reading", author, text, duration: seconds, simulate: true }),
+    phase: (name) => { state.phase = name; },
+    configure: (cfg) => applyConfig(cfg),
+    gestures: () => character.gestureNames(),
+    hear: (text) => character.hear(text),
+  };
+}
+
+// capture mode (screenshots and rendering tests): step the animation by exact amounts
+if (capture) {
+  document.body.classList.add("capture"); // no CSS transitions: what is measured is the final layout
+  window.chattoonCapture = {
+    advance(seconds) {
+      for (let i = 0, n = Math.round(seconds * 60); i < n; i++) {
+        captureClock += 1 / 60;
+        const s = state.speech;
+        if (s) revealBubble(lineProgress(s));
+        if (!s && captureClock > bubbleHideAt) hideBubble();
+        const phase = s ? (s.kind === "reading" ? "reading" : "speaking") : state.phase;
+        character?.update(1 / 60, captureClock, { phase, app: state.app, mouth: mouthLevel() });
+      }
+      renderer.render(scene, camera);
+      placeBubble();
+      return window.chattoonDiagnostics();
+    },
+    state: (phase, app) => { state.phase = phase; if (app) state.app = app; },
+    hear: (text) => character.hear(text),
+    speak: (msg) => startSpeech(msg),
+    done: () => stopSpeech(false),
+    config: (cfg) => applyConfig(cfg),
+    bubble: () => (bubble.classList.contains("show")
+      ? { ...bubble.getBoundingClientRect().toJSON(), viewer: bubble.classList.contains("viewer"),
+          waiting: bubble.classList.contains("waiting"), text: bubbleText.textContent, author: bubbleAuthor.textContent }
+      : null),
+    headScreen: () => {
+      const v = new THREE.Vector3();
+      if (character.bubbleAnchor) character.bubbleAnchor.getWorldPosition(v);
+      else character.root.localToWorld(v.set(0, character.headHeight, 0));
+      v.project(camera);
+      return { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (-v.y * 0.5 + 0.5) * window.innerHeight };
+    },
+    character: () => character,
+  };
 }
 
 // read-only diagnostics (used by the soak test; exposes no control)
 window.chattoonDiagnostics = () => ({
   geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures,
   heap: performance.memory ? performance.memory.usedJSHeapSize : null, character: config.character,
+  state: character?.director.state, gesture: character?.director.gesture?.name || "", phase: state.phase,
+  calls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
 });
 
 window.addEventListener("resize", resize);

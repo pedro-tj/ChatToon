@@ -84,32 +84,45 @@ Popup {
             ColumnLayout {
                 spacing: 12
                 Text { text: qsTr("Who joins your stream?"); color: Theme.text; font.pixelSize: 22; font.weight: Font.Bold }
-                Repeater {
-                    model: backend.characters
-                    Rectangle {
-                        required property var modelData
-                        readonly property bool selected: wizard.cfg.character === modelData.id
-                        Layout.fillWidth: true
-                        implicitHeight: 64
-                        radius: Theme.radiusSmall
-                        color: selected ? Theme.tint(modelData.color, 0.18) : Theme.hover
-                        border.width: selected ? 2 : 0
-                        border.color: modelData.color
-                        RowLayout {
-                            anchors { fill: parent; margins: 12 }
-                            spacing: 12
-                            Rectangle { width: 36; height: 36; radius: 18; color: modelData.color }
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Text { text: modelData.name; color: Theme.text; font.pixelSize: 15; font.weight: Font.DemiBold }
-                                Text { Layout.fillWidth: true; text: modelData.example; color: Theme.textMuted; font.pixelSize: 12; elide: Text.ElideRight }
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 10
+                    rowSpacing: 10
+                    uniformCellWidths: true
+                    Repeater {
+                        model: backend.characters
+                        Rectangle {
+                            required property var modelData
+                            readonly property bool selected: wizard.cfg.character === modelData.id
+                            Layout.fillWidth: true
+                            implicitHeight: 70
+                            radius: Theme.radiusSmall
+                            color: selected ? Theme.tint(Qt.lighter(modelData.color, 1), 0.18) : Theme.hover
+                            border.width: selected ? 2 : 0
+                            border.color: modelData.color
+                            RowLayout {
+                                anchors { fill: parent; margins: 8 }
+                                spacing: 10
+                                Image {
+                                    Layout.preferredWidth: 48; Layout.preferredHeight: 54
+                                    source: "assets/characters/" + modelData.id + ".png"
+                                    sourceSize: Qt.size(96, 108)
+                                    fillMode: Image.PreserveAspectFit
+                                    asynchronous: true
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text { text: modelData.name; color: Theme.text; font.pixelSize: 15; font.weight: Font.DemiBold }
+                                    Text { Layout.fillWidth: true; text: modelData.tagline; color: Theme.textMuted; font.pixelSize: 12; elide: Text.ElideRight }
+                                }
                             }
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: backend.selectCharacter(modelData.id) }
+                            Accessible.role: Accessible.RadioButton
+                            Accessible.name: modelData.name
                         }
-                        HoverHandler { cursorShape: Qt.PointingHandCursor }
-                        TapHandler { onTapped: backend.selectCharacter(modelData.id) }
-                        Accessible.role: Accessible.RadioButton
-                        Accessible.name: modelData.name
                     }
                 }
             }

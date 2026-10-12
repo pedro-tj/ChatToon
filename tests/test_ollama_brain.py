@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import random
 from datetime import datetime
 
@@ -255,7 +256,8 @@ def test_real_ollama_reply():
     async def go():
         async with OllamaClient() as c:
             models = [m.name for m in await c.list_models()]
-            model = "gemma3:4b" if "gemma3:4b" in models else models[0]
+            from chattoon.core.ollama import RECOMMENDED_MODELS
+            model = os.environ.get("CHATTOON_LIVE_MODEL") or next((m for m in RECOMMENDED_MODELS if m in models), models[0])
             brain = Brain()
             msg = ChatMessage("1", "João", "Bom dia! Cheguei!")
             system = brain.system_prompt(WORM, WORM.personality, ChannelContext(topic="Linux"), "pt-BR", 2, 240)

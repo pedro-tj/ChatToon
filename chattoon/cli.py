@@ -19,7 +19,7 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_parser("doctor", help="check Ollama, TTS BigLinux and audio")
     say = sub.add_parser("ask", help="ask the current character something (prints, does not speak)")
     say.add_argument("text")
-    say.add_argument("--character", choices=["worm", "alien", "tux"])
+    say.add_argument("--character", choices=["worm", "alien", "tux", "cat", "owl", "dog"])
     return p
 
 
@@ -42,6 +42,10 @@ async def _doctor() -> int:
     if t.get("ok"):
         pt = [v["name"] for v in t["voices"] if v["language"].lower().startswith("pt")]
         print(f"✔ TTS BigLinux — {len(t['voices'])} voices ({len(pt)} in Portuguese)")
+        names = {"rhvoice": "RHVoice", "espeak-ng": "espeak-ng", "piper": "Piper", "kokoro": "Kokoro"}
+        for engine_id, label in names.items():
+            count = sum(v["backend"] == engine_id for v in t["voices"])
+            print(f"  ✔ {label}: {count} voice(s)" if count else f"  · {label}: not installed")
     else:
         ok = False
         print(f"✘ TTS BigLinux: {t.get('error')}")

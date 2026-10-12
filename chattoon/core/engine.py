@@ -1,9 +1,10 @@
-"""Application controller: chat → selection → AI → validation → voice → animation → history."""
+"""Application controller: chat → selection → reading → AI → validation → voice → animation → history."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 import uuid
 from collections import deque
@@ -16,13 +17,30 @@ from .events import EventBus
 from .messages import ChatMessage, MessageSelector, SelectorConfig, clean_text
 from .ollama import OllamaClient, OllamaError
 from .overlay_server import OverlayServer
-from .tts import AudioPlayer, BigLinuxTTS, TTSError, Voice
+from .reading import Reading, build_reading
+from .tts import AudioPlayer, BigLinuxTTS, TTSCancelled, TTSError, Utterance, Voice
 from .youtube_chat import ChatError, ChatStatus, LiveChatClient
 
 log = logging.getLogger(__name__)
 
 STATES = ("stopped", "running", "paused", "emergency")
-PHASES = ("idle", "thinking", "speaking")
+
+
+@dataclass
+class Line:
+    """Text about to be spoken, split into segments; the first one is already rendered.
+
+    Kokoro renders about as fast as it speaks, so its lines are voiced sentence by
+    sentence: each segment plays while the next one is rendered, and the viewer hears
+    the first words after one short sentence instead of after the whole reply."""
+
+    parts: list[str]
+    first: Utterance | None = None
+    voice: Voice | None = None
+    rate: int = 0
+    pitch: int = 0
+# listening: a message was picked (attention) · reading: the viewer's message is read aloud
+PHASES = ("idle", "listening", "reading", "thinking", "speaking")
 
 
 @dataclass
@@ -31,6 +49,7 @@ class Stats:
     dropped: int = 0
     answered: int = 0
     spoken: int = 0
+    read: int = 0
     ai_failures: int = 0
     tts_failures: int = 0
     chat_failures: int = 0
@@ -44,7 +63,7 @@ class Stats:
 
         return {
             "received": self.received, "dropped": self.dropped, "answered": self.answered,
-            "spoken": self.spoken, "ai_failures": self.ai_failures, "tts_failures": self.tts_failures,
+            "spoken": self.spoken, "read": self.read, "ai_failures": self.ai_failures, "tts_failures": self.tts_failures,
             "chat_failures": self.chat_failures, "avg_generation": avg(self.generation),
             "avg_synthesis": avg(self.synthesis), "avg_speech": avg(self.speech),
         }
@@ -142,9 +161,10 @@ class ChatToonEngine:
             report["ollama"] = {"ok": False, "error": str(e), "models": []}
         try:
             voices = await asyncio.to_thread(self.tts.voices)
-            report["tts"] = {"ok": True, "voices": [v.__dict__ for v in voices]}
+            report["tts"] = {"ok": True, "voices": [v.to_dict() for v in voices],
+                             "engines": sorted({v.backend for v in voices})}
         except TTSError as e:
-            report["tts"] = {"ok": False, "error": str(e), "voices": []}
+            report["tts"] = {"ok": False, "error": str(e), "voices": [], "engines": []}
         self.bus.emit("services", report)
         return report
 
@@ -157,10 +177,25 @@ class ChatToonEngine:
         except TTSError:
             return None
 
+    def reading_voice(self) -> tuple[Voice | None, int, int]:
+        """Voice, rate and pitch used to read viewers' messages."""
+        cs = self.settings.character_settings()
+        wanted = self.settings.reading.voice_id
+        if wanted:
+            try:
+                voice = self.tts.find(wanted)
+            except TTSError:
+                voice = None
+            if voice:
+                return voice, 0, 0
+        return self.voice_for(), cs.voice_rate, cs.voice_pitch
+
     async def warm_up(self) -> None:
         """Load the model and the voice so the first reply is fast."""
-        voice = self.voice_for()
-        if voice:
+        voices = {self.voice_for()}
+        if self.settings.reading.mode != "off":
+            voices.add(self.reading_voice()[0])
+        for voice in voices - {None}:
             try:
                 await asyncio.to_thread(self.tts.prewarm, voice)
             except TTSError:
@@ -223,9 +258,10 @@ class ChatToonEngine:
         self._emit_queue()
 
     async def interrupt(self) -> None:
-        """Cancel the current generation/speech (the queue is kept)."""
+        """Cancel the current generation/reading/speech (the queue is kept)."""
         task, self._current = self._current, None
         self.player.stop()
+        self.tts.cancel()  # a long Kokoro render stops now, not when it finishes
         if task and not task.done():
             task.cancel()
             try:
@@ -302,7 +338,10 @@ class ChatToonEngine:
             "pending": [m.to_dict() for m in self.selector.pending()[:30]],
             "suggestions": [{"id": k, "text": r.text, "emotion": r.emotion,
                              "author": r.message.author if r.message else "",
-                             "message": r.message.text if r.message else ""} for k, r in self.suggestions.items()],
+                             "message": r.message.text if r.message else "",
+                             "reading": (self.reading_for(r.message).spoken
+                                         if r.message and self.reading_for(r.message) else "")}
+                            for k, r in self.suggestions.items()],
         })
         self.bus.emit("stats", self.stats.to_dict())
 
@@ -331,22 +370,27 @@ class ChatToonEngine:
                 self._current = None
 
     async def _answer(self, msg: ChatMessage, force_speak: bool = False) -> Reply | None:
-        reply = await self.generate(msg)
-        if reply is None:
-            return None
         if self.settings.mode == "assisted" and msg.platform == "youtube" and not force_speak:
-            self.suggestions[msg.id] = reply
-            self._emit_queue()
+            # Nothing is read or spoken before the streamer approves the suggestion.
+            reply = await self.generate(msg)
+            if reply is not None:
+                self.suggestions[msg.id] = reply
+                self._emit_queue()
             return reply
-        await self.speak(reply)
-        return reply
+        async with self._speech_lock:
+            return await self._converse(msg)
+
+    async def deliver(self, reply: Reply) -> None:
+        """Speak an approved reply, reading the viewer's message first when enabled."""
+        async with self._speech_lock:
+            await self._converse(reply.message, reply)
 
     async def approve(self, item_id: str) -> None:
         """Assisted mode: speak a suggestion. Manual selection: answer a queued message."""
         reply = self.suggestions.pop(item_id, None)
         if reply:
             self._emit_queue()
-            await self._run_exclusive(self.speak(reply))
+            await self._run_exclusive(self.deliver(reply))
             return
         msg = self.selector.take(item_id)
         if msg:
@@ -370,6 +414,7 @@ class ChatToonEngine:
             self._current = None
 
     async def test_reply(self, text: str, author: str = "You") -> None:
+        """Simulate a viewer message (read + reply), whatever the mode."""
         msg = ChatMessage(id=f"test-{uuid.uuid4().hex[:8]}", author=author, text=clean_text(text), platform="demo")
         await self._run_exclusive(self._answer(msg, force_speak=True))
 
@@ -383,16 +428,51 @@ class ChatToonEngine:
         if emotion in EMOTIONS:
             await self.server.broadcast({"type": "react", "emotion": emotion, "intensity": 1.0})
 
+    async def gesture(self, name: str) -> None:
+        """Play one of the character's gestures on every overlay (preview buttons)."""
+        if re.fullmatch(r"[A-Za-z]{1,24}", name or ""):
+            await self.server.broadcast({"type": "gesture", "name": name})
+
+    def reading_sample(self, author: str = "Maria", text: str = "") -> str:
+        """The line the current settings would read for a sample message ("" when off)."""
+        pt = self.settings.ai.reply_language.lower().startswith("pt")
+        text = text or ("Qual distribuição Linux vocês recomendam?" if pt else "Which Linux distro do you recommend?")
+        reading = self.reading_for(ChatMessage("sample", author, clean_text(text)))
+        return reading.spoken if reading else ""
+
+    async def preview_reading(self) -> None:
+        """Read a sample viewer message with the reading voice (no AI involved)."""
+        pt = self.settings.ai.reply_language.lower().startswith("pt")
+        msg = ChatMessage(f"preview-{uuid.uuid4().hex[:8]}", "Maria",
+                          "Qual distribuição Linux vocês recomendam?" if pt else "Which Linux distro do you recommend?",
+                          platform="demo")
+        reading = build_reading(msg, self.settings.reading.mode if self.settings.reading.mode != "off" else "name_message",
+                                self.settings.reading.max_chars, self.settings.ai.reply_language)
+
+        async def run() -> None:
+            async with self._speech_lock:
+                voice, rate, pitch = self.reading_voice() if self.settings.voice.enabled else (None, 0, 0)
+                line = await self._prepare_line(reading.spoken, voice, rate, pitch)
+                try:
+                    await self._play_reading(msg, reading, line)
+                finally:
+                    self._set_phase("idle")
+
+        await self._run_exclusive(run())
+
     # -- generation -------------------------------------------------------
 
-    async def generate(self, msg: ChatMessage) -> Reply | None:
+    async def generate(self, msg: ChatMessage, announce: bool = True) -> Reply | None:
+        """Ask the model for a reply. ``announce=False`` leaves the phase alone (the reading
+        is on screen while the reply is generated in the background)."""
         ai = self.settings.ai
         character = self.character
         if not ai.model:
-            self._error("ai", "Choose an Ollama model first.")
+            self._error("ai", "Choose an Ollama model first.", code="no-model")
             return None
         cs = self.settings.character_settings()
-        self._set_phase("thinking", author=msg.author, message=msg.text)
+        if announce:
+            self._set_phase("thinking", author=msg.author, message=msg.text)
         max_sentences, max_chars = self._reply_limits()
         system = self.brain.system_prompt(character, cs.personality, self.settings.context, ai.reply_language,
                                           max_sentences, max_chars, catchphrases=cs.catchphrases)
@@ -407,7 +487,8 @@ class ChatToonEngine:
         except OllamaError as e:
             self.stats.ai_failures += 1
             self._error("ai", str(e))
-            self._set_phase("idle")
+            if announce:
+                self._set_phase("idle")
             return None
         reply = self.brain.parse(result.text, character, ai.reply_language, max_sentences, max_chars,
                                  self.settings.context.forbidden_topics)
@@ -433,41 +514,177 @@ class ChatToonEngine:
 
     # -- speech -----------------------------------------------------------
 
+    def reading_for(self, msg: ChatMessage | None) -> Reading | None:
+        """What is read aloud before replying to ``msg`` (None = reply directly)."""
+        r = self.settings.reading
+        if msg is None or r.mode == "off":
+            return None
+        mode = r.mode
+        if self.brain.violates(msg.text, self.settings.context.forbidden_topics):
+            mode = "name"  # the AI will steer away; the off-limits words are never read aloud
+        return build_reading(msg, mode, r.max_chars, self.settings.ai.reply_language)
+
     async def speak(self, reply: Reply, voice_id: str = "") -> None:
         """Synthesize and play one reply. Holding the lock guarantees a single voice."""
         async with self._speech_lock:
             await self._speak_locked(reply, voice_id)
 
-    async def _speak_locked(self, reply: Reply, voice_id: str = "") -> None:
+    async def _converse(self, msg: ChatMessage | None, reply: Reply | None = None) -> Reply | None:
+        """Read the viewer's message (when enabled), then speak the reply — in that order,
+        never overlapping. The reply is generated and voiced while the reading plays, so
+        reading first adds little waiting time. Call with the speech lock held."""
+        reading = self.reading_for(msg)
+        if reading is None:
+            if reply is None:
+                reply = await self.generate(msg)
+            if reply is not None:
+                await self._speak_locked(reply)
+            return reply
+        gen = asyncio.create_task(self.generate(msg, announce=False)) if reply is None else None
+        voiced: asyncio.Task | None = None
+        rendered = asyncio.Event()  # the reading is fully rendered: the reply may use the engine
+        try:
+            self._set_phase("listening", author=reading.author, message=reading.text)
+            voice, rate, pitch = self.reading_voice() if self.settings.voice.enabled else (None, 0, 0)
+            read_line = await self._prepare_line(reading.spoken, voice, rate, pitch)
+            if gen is not None and gen.done() and gen.result() is None:
+                self._set_phase("idle")  # the AI already failed: a message is never read without a reply
+                return None
+            voiced = asyncio.create_task(self._prepare_reply(gen, reply, rendered))  # voiced during the reading
+            await self._play_reading(msg, reading, read_line, rendered)
+            await self._gap(self.settings.reading.pause)
+            if not voiced.done():
+                self._set_phase("thinking", author=msg.author, message=msg.text)
+            reply, line = await voiced
+            if reply is not None:
+                await self._speak_locked(reply, line=line, read=True)
+            elif not self._current_cancelled():
+                self._set_phase("idle")
+            return reply
+        finally:
+            for task in (gen, voiced):
+                if task is not None and not task.done():
+                    task.cancel()
+
+    async def _prepare_reply(self, gen: asyncio.Task | None, reply: Reply | None,
+                             after: asyncio.Event | None = None) -> tuple[Reply | None, Line | None]:
+        if reply is None and gen is not None:
+            reply = await gen
+        if reply is None:
+            return None, None
+        if after is not None:
+            await after.wait()  # the reading's own segments come first
+        return reply, await self._prepare_line(reply.text, *self._reply_voice())
+
+    def _reply_voice(self, voice_id: str = "") -> tuple[Voice | None, int, int]:
+        if not self.settings.voice.enabled:
+            return None, 0, 0
         cs = self.settings.character_settings()
-        vs = self.settings.voice
+        try:
+            voice = (self.tts.find(voice_id) if voice_id else None) or self.voice_for()
+        except TTSError:
+            voice = None
+        return voice, cs.voice_rate, cs.voice_pitch
+
+    @staticmethod
+    def segments(text: str, voice: Voice | None) -> list[str]:
+        """Split a line for engines that render slowly (Kokoro); fast engines get one piece."""
+        if voice is None or voice.backend != "kokoro" or len(text) < 60:
+            return [text]
+        parts: list[str] = []
+        for sentence in (m.strip() for m in re.findall(r"[^.!?…]+(?:[.!?…]+|$)", text)):
+            if not sentence:
+                continue
+            if parts and (len(parts[-1]) < 18 or len(sentence) < 12):
+                parts[-1] = f"{parts[-1]} {sentence}"  # tiny pieces sound choppy: keep them together
+            else:
+                parts.append(sentence)
+        return parts or [text]
+
+    async def _prepare_line(self, text: str, voice: Voice | None, rate: int, pitch: int) -> Line:
+        parts = self.segments(text, voice)
+        first = await self._synthesize(parts[0], voice, rate, pitch) if voice else None
+        return Line(parts, first, voice, rate, pitch)
+
+    def _current_cancelled(self) -> bool:
+        task = asyncio.current_task()
+        return bool(task and task.cancelling())
+
+    async def _gap(self, seconds: float) -> None:
+        """Pause between the reading and the reply; a paused stream holds the reply."""
+        await asyncio.sleep(max(0.0, min(5.0, seconds)))
+        while self.state == "paused":
+            await asyncio.sleep(0.1)
+
+    async def _synthesize(self, text: str, voice: Voice, rate: int, pitch: int) -> Utterance | None:
+        """Render text to audio in a worker thread. Failures are reported, never raised."""
+        try:
+            utterance = await asyncio.to_thread(self.tts.synthesize, text, voice, rate, pitch,
+                                                self.settings.voice.volume, uuid.uuid4().hex[:12])
+        except TTSCancelled:
+            return None
+        except TTSError as e:
+            self.stats.tts_failures += 1
+            self._error("tts", str(e), code=e.code, detail=e.detail)
+            return None
+        self.stats.synthesis.append(utterance.synth_seconds)
+        return utterance
+
+    async def _play_reading(self, msg: ChatMessage, reading: Reading, line: Line,
+                            rendered: asyncio.Event | None = None) -> None:
         uid = uuid.uuid4().hex[:12]
-        utterance = None
-        voice = None
-        if vs.enabled:
-            try:
-                voice = (self.tts.find(voice_id) if voice_id else None) or self.voice_for()
-            except TTSError:
-                voice = None
-        if voice:
-            self._set_phase("thinking", stage="voice")
-            try:
-                utterance = await asyncio.to_thread(self.tts.synthesize, reply.text, voice, cs.voice_rate,
-                                                    cs.voice_pitch, vs.volume, uid)
-                self.stats.synthesis.append(utterance.synth_seconds)
-            except TTSError as e:
-                self.stats.tts_failures += 1
-                self._error("tts", str(e))
-        duration = utterance.duration if utterance else max(2.0, len(reply.text) / 14)
+        # Without audio the bubble stays long enough to be read; the mouth does not move.
+        fallback = min(6.0, max(2.0, len(reading.text) / 16))
         event = {
-            "type": "speak", "id": uid, "text": reply.text, "emotion": reply.emotion,
-            "intensity": reply.intensity, "duration": round(duration, 3),
-            "author": reply.message.author if reply.message else "",
-            "envelope": utterance.envelope if utterance else [], "fps": 50,
+            "type": "speak", "kind": "reading", "id": uid, "text": reading.text, "author": reading.author,
+            "emotion": "neutral", "intensity": 0.5, "fps": 50,
+            "reveal": reading.mode == "name_message", "question": reading.question,
+            "superchat": reading.superchat,
         }
+        self._set_phase("reading", author=reading.author, message=reading.text)
+        try:
+            if await self._play_line(event, line, fallback, rendered):
+                self.stats.read += 1
+        finally:
+            if rendered is not None:
+                rendered.set()
+            await self.server.broadcast({"type": "done", "id": uid, "kind": "reading"})
+
+    async def _play_line(self, event: dict, line: Line, fallback: float,
+                         rendered: asyncio.Event | None = None) -> bool:
+        """Play a line segment by segment (one "speak" event each, all in the same group);
+        the next segment renders while the current one plays. True if audio was heard."""
+        total = sum(len(p) for p in line.parts) or 1
+        group, done_chars, heard = event["id"], 0, False
+        audio, upcoming = line.first, None
+        try:
+            for i, part in enumerate(line.parts):
+                if i > 0:
+                    audio = await upcoming
+                if i + 1 < len(line.parts) and line.voice is not None:
+                    upcoming = asyncio.create_task(self._synthesize(line.parts[i + 1], line.voice, line.rate, line.pitch))
+                elif rendered is not None:
+                    rendered.set()
+                share = len(part) / total
+                duration = audio.duration if audio else fallback * share
+                segment = dict(event, id=group if i == 0 else f"{group}-{i}", group=group, segment=i,
+                               duration=round(duration, 3), envelope=audio.envelope if audio else [],
+                               audio_real=bool(audio), progress=[done_chars / total, (done_chars + len(part)) / total])
+                if i > 0:
+                    segment["continue"] = True  # same bubble, same emotion: only the audio changes
+                await self._play(segment, audio, duration)
+                heard = heard or bool(audio)
+                done_chars += len(part)
+        finally:
+            if upcoming is not None and not upcoming.done():
+                upcoming.cancel()
+        return heard
+
+    async def _play(self, event: dict, utterance: Utterance | None, duration: float) -> None:
+        """Play one utterance in exactly one place (this computer or the OBS source) and
+        animate every overlay; returns when the audio ended."""
+        vs = self.settings.voice
         play_in_overlay = vs.audio_output == "overlay" and self.server.has_audio_sink
-        self._set_phase("speaking", text=reply.text, emotion=reply.emotion)
-        started = time.monotonic()
         try:
             if utterance and play_in_overlay:
                 ended = await self.server.speak(event, utterance.path, play_in_overlay=True)
@@ -476,7 +693,7 @@ class ChatToonEngine:
                         await asyncio.wait_for(ended.wait(), duration + 5)
                     except asyncio.TimeoutError:
                         pass
-                    self.server.forget_utterance(uid)
+                    self.server.forget_utterance(event["id"])
             else:
                 if utterance:
                     self.player.play(utterance.path)
@@ -485,20 +702,38 @@ class ChatToonEngine:
                     await asyncio.to_thread(self.player.wait, duration + 5)
                 else:
                     await asyncio.sleep(duration)
-            self.stats.spoken += 1 if utterance else 0
-            self.stats.speech.append(time.monotonic() - started)
         except asyncio.CancelledError:
             self.player.stop()
             raise
+
+    async def _speak_locked(self, reply: Reply, voice_id: str = "", line: Line | None = None,
+                            read: bool = False) -> None:
+        if line is None:
+            voice, rate, pitch = self._reply_voice(voice_id)
+            if voice:
+                self._set_phase("thinking", stage="voice")
+            line = await self._prepare_line(reply.text, voice, rate, pitch)
+        uid = uuid.uuid4().hex[:12]
+        event = {
+            "type": "speak", "kind": "reply", "id": uid, "text": reply.text, "emotion": reply.emotion,
+            "intensity": reply.intensity, "author": reply.message.author if reply.message else "", "fps": 50,
+        }
+        self._set_phase("speaking", text=reply.text, emotion=reply.emotion)
+        started = time.monotonic()
+        heard = False
+        try:
+            heard = await self._play_line(event, line, max(2.0, len(reply.text) / 14))
+            self.stats.spoken += 1 if heard else 0
+            self.stats.speech.append(time.monotonic() - started)
         finally:
             self._last_speech_end = time.monotonic()
-            await self.server.broadcast({"type": "done", "id": uid})
+            await self.server.broadcast({"type": "done", "id": uid, "kind": "reply"})
             self._set_phase("idle")
             self.tts.cleanup()
         entry = {
             "time": time.time(), "author": reply.message.author if reply.message else "",
             "message": reply.message.text if reply.message else "", "reply": reply.text,
-            "emotion": reply.emotion, "source": reply.source, "voice": bool(utterance),
+            "emotion": reply.emotion, "source": reply.source, "voice": heard, "read": read,
             "generation": round(reply.generation_seconds, 2),
         }
         self.history.append(entry)
@@ -516,16 +751,21 @@ class ChatToonEngine:
             "scale": o.scale, "x": o.position_x, "y": o.position_y, "rotation": o.rotation,
             "zoom": o.camera_zoom, "light": o.light, "shadows": o.shadows, "quality": o.quality,
             "fps": o.fps, "bubbleSeconds": o.bubble_seconds, "background": o.background,
+            "idle": self.settings.animation.idle, "intensity": self.settings.animation.intensity,
+            "frequency": self.settings.animation.frequency, "reduceMotion": self.settings.animation.reduce_motion,
+            "language": self.settings.ai.reply_language,
         }
         if self._started:
             asyncio.ensure_future(self.server.broadcast(cfg, keep=True))
 
     async def set_character(self, character_id: str) -> None:
         self.settings.character = get_character(character_id).id
+        if self._current:
+            await self.interrupt()  # the old character never finishes a line with the new voice
         self.brain.forget()
         self.apply_settings()
         asyncio.create_task(self.warm_up())
 
-    def _error(self, source: str, message: str) -> None:
+    def _error(self, source: str, message: str, code: str = "", detail: str = "") -> None:
         log.warning("%s: %s", source, message)
-        self.bus.emit("error", {"source": source, "message": message})
+        self.bus.emit("error", {"source": source, "message": message, "code": code, "detail": detail})

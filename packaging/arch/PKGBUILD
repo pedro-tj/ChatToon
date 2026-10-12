@@ -6,13 +6,14 @@
 # Remove: sudo pacman -R chattoon
 
 pkgname=chattoon
-pkgver=2.0.0
+pkgver=2.1.0
 pkgrel=1
 pkgdesc="3D avatar co-host for YouTube live streams, powered by local AI (Ollama) and TTS BigLinux"
 arch=('any')
 license=('GPL-3.0-or-later')
 depends=('python' 'pyside6' 'python-aiohttp' 'qt6-svg' 'qt6-webengine')
 optdepends=('tts-biglinux: speech synthesis (BigLinux repository) — without it replies are shown only as text'
+            'biglinux-kokoro-tts: Kokoro neural voices for TTS BigLinux (pf_dora, pm_alex…)'
             'ollama: local AI engine (or point ChatToon to an Ollama server on your network)'
             'pipewire-audio: plays the voice on the desktop (pw-play); pulseaudio-utils or alsa-utils also work'
             'obs-studio: to show the avatar on your stream')

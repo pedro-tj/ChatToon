@@ -42,15 +42,16 @@ class FakeOllama:
 
 
 class FakeTTS:
-    def __init__(self, tmp):
-        self.tmp, self.texts = tmp, []
+    def __init__(self, tmp, delay=0.0):
+        self.tmp, self.texts, self.delay, self.cancels = tmp, [], delay, 0
         self.voice = Voice("v1", "Teste", "pt-BR", "piper")
+        self.voice2 = Voice("kokoro:pf_dora", "Dora", "pt-BR", "kokoro")
 
     def voices(self):
         return [self.voice]
 
     def find(self, vid):
-        return self.voice if vid == "v1" else None
+        return {"v1": self.voice, "kokoro:pf_dora": self.voice2}.get(vid)
 
     def suggest(self, hints, language="pt-BR"):
         return self.voice
@@ -59,12 +60,18 @@ class FakeTTS:
         pass
 
     def synthesize(self, text, voice, rate=0, pitch=0, volume=85, utterance_id=""):
+        import time
+        time.sleep(self.delay)
         self.texts.append(text)
+        self.voices_used = getattr(self, "voices_used", []) + [voice.id]
         path = make_wav(self.tmp / f"{utterance_id}.wav", seconds=0.2)
         return Utterance(utterance_id, text, path, 0.2, [0.0, 1.0, 0.5])
 
     def cleanup(self, keep=20):
         pass
+
+    def cancel(self):
+        self.cancels += 1
 
     def shutdown(self):
         pass
@@ -104,8 +111,9 @@ class FakeChat:
         await asyncio.Event().wait()
 
 
-def build(tmp_path, mode="demo", ollama=None, **settings_kw):
+def build(tmp_path, mode="demo", ollama=None, tts=None, reading="off", **settings_kw):
     s = Settings(mode=mode)
+    s.reading.mode = reading  # most tests check the reply path alone; reading has its own tests
     s.ai.model = "fake"
     s.chat.min_interval = 0
     s.chat.url = "https://youtu.be/AbCdEfGhIjK"
@@ -118,7 +126,7 @@ def build(tmp_path, mode="demo", ollama=None, **settings_kw):
     events = []
     bus = EventBus()
     bus.subscribe(lambda k, d: events.append((k, d)))
-    engine = ChatToonEngine(s, bus=bus, tts=FakeTTS(tmp_path), player=FakePlayer(), ollama=ollama or FakeOllama(),
+    engine = ChatToonEngine(s, bus=bus, tts=tts or FakeTTS(tmp_path), player=FakePlayer(), ollama=ollama or FakeOllama(),
                             chat_factory=FakeChat, server=OverlayServer("t", 0, tmp_path / "web"))
     return engine, events
 
