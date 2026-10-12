@@ -20,7 +20,8 @@ Page {
         return cfg.mode === "demo" ? qsTr("Demo mode (no YouTube)") : (map[rt.chat] || qsTr("Not connected"))
     }
     function phaseLabel(p) {
-        return { idle: qsTr("Listening"), thinking: qsTr("Thinking…"), speaking: qsTr("Speaking") }[p] || p
+        return { idle: qsTr("Waiting for messages"), listening: qsTr("Paying attention"), reading: qsTr("Reading the message"),
+                 thinking: qsTr("Thinking…"), speaking: qsTr("Speaking") }[p] || p
     }
 
     RowLayout {
@@ -172,7 +173,7 @@ Page {
                     onClicked: {
                         if (!win.running && cfg.mode === "demo") backend.start()
                         if (cfg.mode === "demo") backend.submitMessage(message.text, author.text)
-                        else backend.testReply(message.text)
+                        else backend.testReply(message.text, author.text)
                         message.text = ""
                     }
                 }
@@ -221,6 +222,13 @@ Page {
                         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
                         spacing: 4
                         Text { Layout.fillWidth: true; text: modelData.author + ": " + modelData.message; color: Theme.textFaint; font.pixelSize: 11; elide: Text.ElideRight }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: !!modelData.reading
+                            spacing: 6
+                            Icon { name: "quote"; size: 12; color: Theme.textFaint }
+                            Text { Layout.fillWidth: true; text: qsTr("Reads first: %1").arg(modelData.reading || ""); color: Theme.textFaint; font.pixelSize: 11; font.italic: true; elide: Text.ElideRight }
+                        }
                         Text { Layout.fillWidth: true; text: modelData.text; color: Theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
                         RowLayout {
                             Item { Layout.fillWidth: true }

@@ -32,19 +32,25 @@ def test_tts_missing_package(monkeypatch, tmp_path):
 def test_text_goes_through_stdin_not_shell(monkeypatch, tmp_path):
     seen = {}
 
-    def fake_run(cmd, input, capture_output, timeout):
-        seen["cmd"], seen["input"] = cmd, input
+    class Proc:
+        pid, returncode = 4242, 0
 
-        class R:
-            returncode = 0
-            stderr = b""
-        return R()
+        def __init__(self, cmd, **kw):
+            seen["cmd"], seen["kw"] = cmd, kw
+
+        def communicate(self, data, timeout=None):
+            seen["input"] = data
+            return b"", b""
+
+        def poll(self):
+            return 0
 
     monkeypatch.setattr(tts_mod.shutil, "which", lambda name: "/usr/bin/" + name)
-    monkeypatch.setattr(tts_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(tts_mod.subprocess, "Popen", Proc)
     evil = "'; rm -rf ~ #"
-    BigLinuxTTS._run(["RHVoice-test", "-p", "x"], evil)
+    BigLinuxTTS(tmp_path / "w")._run(["RHVoice-test", "-p", "x"], evil)
     assert seen["cmd"] == ["RHVoice-test", "-p", "x"] and seen["input"] == evil.encode()
+    assert "shell" not in seen["kw"] and seen["kw"]["start_new_session"] is True  # killable as a group
 
 
 def test_player_plays_one_at_a_time(monkeypatch, tmp_path):

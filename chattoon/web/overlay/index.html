@@ -9,8 +9,9 @@
 <body>
   <canvas id="stage" aria-label="Animated avatar"></canvas>
   <div id="bubble" role="status" aria-live="polite">
-    <div class="author"></div>
+    <div class="head"><span class="author"></span><span class="label"></span></div>
     <div class="text"></div>
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
   </div>
   <div id="badge" hidden></div>
   <script type="module" src="static/overlay/overlay.js"></script>

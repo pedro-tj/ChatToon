@@ -1,16 +1,17 @@
-# ChatToon 2.0.0
+# ChatToon 2.1.0
 
-**Um personagem 3D que participa da sua live no YouTube:** ele lê o chat, responde com humor
-próprio usando a **IA local do BigLinux** (Ollama), fala com voz de verdade pelo
-**TTS BigLinux** e se mexe no ritmo da fala — tudo num overlay com fundo transparente para o
-OBS Studio. Fora o chat do YouTube, tudo roda no seu computador: sem nuvem, sem chave de API,
+**Um personagem 3D que participa da sua live no YouTube:** ele lê o chat — inclusive em voz
+alta, dizendo quem escreveu e o quê —, responde com humor próprio usando a **IA local do
+BigLinux** (Ollama), fala com voz de verdade pelo **TTS BigLinux** (agora também com as vozes
+neurais **Kokoro**) e continua vivo entre uma mensagem e outra: respira, olha em volta e faz
+gestos do seu jeito — tudo num overlay com fundo transparente para o OBS Studio. Fora o chat do YouTube, tudo roda no seu computador: sem nuvem, sem chave de API,
 sem mensalidade.
 
 > **Autor:** Pedro Bezerra — canal **InfoRecarga** ([youtube.com/@pedro_bezerra](https://www.youtube.com/@pedro_bezerra))
 > **Colaborador:** Rafael Ruscher ([github.com/ruscher](https://github.com/ruscher))
 > Os dois são voluntários do projeto [BigLinux](https://www.biglinux.com.br).
 
-![O elenco: Minhoca, E.T. e Tux](docs/screenshots/cast.png)
+![O elenco: Minhoca, E.T., Tux de cartola, Gata, Coruja e Cachorro](docs/screenshots/cast.png)
 
 | Painel | Personagens |
 |---|---|
@@ -92,8 +93,26 @@ original e resolvendo um por um os problemas encontrados (a auditoria está em
 - **segurança de verdade**: nada que vem do chat é executado, o overlay só escuta no próprio
   computador, e quem está no chat não consegue "reprogramar" o personagem.
 
-O protótipo foi a versão 1. Este aplicativo é a **versão 2.0.0** — e o InfoRecarga é, com
-orgulho, o canal onde tudo começou.
+O protótipo foi a versão 1. O aplicativo nasceu como **versão 2.0.0** — e o InfoRecarga é,
+com orgulho, o canal onde tudo começou.
+
+### O elenco cresce (a versão 2.1.0)
+
+Com o aplicativo no ar, vieram os pedidos de quem usa: "e se ele lesse a mensagem antes de
+responder, pra live inteira saber do que se trata?", "a voz Kokoro do TTS BigLinux é tão
+natural, por que não funciona no ChatToon?", "o pinguim precisa de mais charme" e "quero mais
+bichinhos!". A versão 2.1.0 responde a tudo isso:
+
+- **leitura das mensagens**: "Carlos perguntou: qual distribuição Linux vocês recomendam?" —
+  exatamente como foi escrito, sem a IA mexer —, e só depois a resposta com a personalidade do
+  personagem;
+- **vozes Kokoro funcionando de verdade**, sem áudio duplicado e falando frase por frase para
+  começar rápido;
+- um **Tux novo, de cartola**, redondinho como um brinquedo de vinil, que tira o chapéu para
+  cumprimentar a live;
+- três personagens novos: a **Gata** sarcástica, a **Coruja** sabichona do kernel e o
+  **Cachorro** que abana o rabo para qualquer atualização do pacman;
+- e um **sistema de animação** que deixa todos vivos mesmo quando ninguém está falando.
 
 ### Software livre, feito por voluntários
 
@@ -105,11 +124,22 @@ melhorias. É assim que o projeto cresce.
 
 ## Recursos
 
-- **Três personagens 3D procedurais** (Three.js, sem downloads nem modelos de terceiros):
-  **Minhoca**, uma minhoca atrevida saindo da terra, com pele articulada; **E.T.**, um alienígena
-  que levita com antenas de mola; **Tux**, um pinguim geek com bico articulado. Expressões
-  (feliz, rindo, surpreso, confuso, irritado, comemorando, pensando), piscadas, olhar, gestos e
-  **sincronia labial pelo envelope de volume do áudio real**.
+- **Seis personagens 3D procedurais** (Three.js, sem downloads nem modelos de terceiros):
+  **Minhoca**, irônica e provocadora, saindo da terra; **E.T.**, curioso e imprevisível, que
+  levita com antenas de mola; **Tux**, o pinguim geek e elegante **de cartola**; **Gata**,
+  sarcástica e independente, com cauda articulada; **Coruja**, sábia e observadora, pousada num
+  galho; **Cachorro**, alegre e brincalhão, de orelhas caídas. Expressões (feliz, rindo,
+  surpreso, confuso, irritado, comemorando, pensando), piscadas, olhar, gestos próprios de cada
+  espécie e **sincronia labial pelo envelope de volume do áudio real** — a boca só se mexe
+  quando existe áudio de verdade.
+- **Vivos o tempo todo**: um motor de animação com estados (aguardando, prestando atenção,
+  lendo, pensando, falando, reagindo, comemorando, pausado, emergência), respiração, olhar
+  coordenado com a cabeça, mudanças de postura e gestos aleatórios sem repetição. Dá para
+  ajustar intensidade e frequência, desligar ou **reduzir o movimento** para quem é sensível.
+- **Leitura das mensagens** antes da resposta: desativada, só o nome ou nome + mensagem,
+  com limite de caracteres, pausa e voz própria opcional. Links e emojis são ignorados, nomes
+  estranhos ficam pronunciáveis e mensagens bloqueadas nunca são lidas. O balão mostra a
+  mensagem do espectador e troca suavemente para a resposta.
 - **Motor de personalidade com IA local**: predefinições (Amigável, Comediante, Zoeiro,
   Geek, Caos controlado, Personalizado), nove ajustes de humor, contexto do canal, noção do
   horário real, memória de curto prazo, bordões e chamadas para ação ocasionais. As mensagens
@@ -122,8 +152,9 @@ melhorias. É assim que o projeto cresce.
   bloqueadas e prioridade para Super Chat.
 - **Três modos**: Demonstração (sem YouTube), Assistido (você aprova cada resposta) e
   Automático.
-- **Uma voz por resposta, sempre**: vozes do TTS BigLinux (Piper, RHVoice, espeak-ng) geradas
-  uma única vez e tocadas pelo aplicativo **ou** pela fonte do OBS — nunca pelos dois.
+- **Uma voz de cada vez, sempre**: vozes do TTS BigLinux (Piper, RHVoice, espeak-ng e
+  **Kokoro**) geradas uma única vez e tocadas pelo aplicativo **ou** pela fonte do OBS — nunca
+  pelos dois, e a leitura nunca se sobrepõe à resposta.
 - **Overlay para o OBS** num endereço local secreto: fundo transparente ou chroma key, balão de
   fala, controles de tamanho, posição, câmera, luz, qualidade e FPS, com prévia ao vivo dentro do
   aplicativo.
@@ -143,7 +174,7 @@ makepkg -si
 ```
 
 Depois abra **ChatToon** pelo menu (ou rode `chattoon`). Para conferir a versão:
-`chattoon --version` → `chattoon 2.0.0`. Para remover: `sudo pacman -R chattoon`.
+`chattoon --version` → `chattoon 2.1.0`. Para remover: `sudo pacman -R chattoon`.
 
 | Tipo | Pacotes |
 |---|---|
@@ -174,23 +205,29 @@ GTX 1050 Ti. Detalhes de latência em [docs/04-ollama.md](docs/04-ollama.md).
 
 ### Voz (TTS BigLinux)
 
-Instale o `tts-biglinux`. O ChatToon importa o catálogo de vozes, a normalização de texto e o
-sintetizador nativo dele, então **toda voz que você instalou no TTS BigLinux aparece no
-ChatToon**. Cada personagem pode ter sua própria voz, velocidade e tom (página **Voz**, com
-botão de prévia). Detalhes em [docs/06-tts.md](docs/06-tts.md).
+Instale o `tts-biglinux` (e, para as vozes neurais, o `biglinux-kokoro-tts`). O ChatToon
+importa o catálogo de vozes, a normalização de texto, o sintetizador nativo e o construtor de
+comandos do Kokoro dele, então **toda voz que funciona no TTS BigLinux funciona no ChatToon**
+— incluindo as brasileiras `pf_dora`, `pm_alex` e `pm_santa`. Cada personagem pode ter sua
+própria voz, velocidade e tom (página **Voz**, com botão de prévia); a leitura das mensagens
+pode usar outra voz. Detalhes em [docs/06-tts.md](docs/06-tts.md).
 
 ## Como usar
 
-1. **Primeira execução**: o assistente verifica o Ollama e a voz e deixa você escolher o
-   personagem.
-2. **Experimente** no modo **Demonstração**: digite no Painel como se fosse alguém do chat.
-3. Página **Chat do YouTube**: cole o link da live e escolha como as mensagens são selecionadas.
-4. Página **Contexto da live**: canal, assunto, convidados, temas proibidos e chamadas
+1. **Primeira execução**: o assistente verifica o Ollama e a voz e deixa você escolher um
+   dos seis personagens.
+2. Página **Personagens**: veja cada um de perto, teste expressões, gestos e voz na prévia ao
+   vivo (é exatamente o que o OBS mostra) e ajuste as **animações em repouso**.
+3. Página **Voz**: escolha a voz de cada personagem (Piper, RHVoice, espeak-ng ou Kokoro) e, em
+   **Leitura das mensagens**, se ele lê só o nome, nome + mensagem ou responde direto.
+4. **Experimente** no modo **Demonstração**: digite no Painel como se fosse alguém do chat.
+5. Página **Chat do YouTube**: cole o link da live e escolha como as mensagens são selecionadas.
+6. Página **Contexto da live**: canal, assunto, convidados, temas proibidos e chamadas
    para ação.
-5. Página **OBS Studio**: copie o endereço do overlay → no OBS, adicione uma fonte
+7. Página **OBS Studio**: copie o endereço do overlay → no OBS, adicione uma fonte
    **Navegador** com esse endereço, em 1920×1080. Se a voz deve sair pelo OBS, escolha
    *Dentro do OBS* na página Voz e ative *Control audio via OBS* nas propriedades da fonte no OBS.
-6. Mude para **Assistido** ou **Automático** e aperte **Iniciar** (`Ctrl+Espaço`).
+8. Mude para **Assistido** ou **Automático** e aperte **Iniciar** (`Ctrl+Espaço`).
 
 Atalhos: `Ctrl+Espaço` iniciar/pausar · `Ctrl+.` interromper · `Ctrl+M` silenciar ·
 `Ctrl+Shift+X` ou `Pause` parada de emergência · `Ctrl+1…9` páginas.
@@ -267,7 +304,10 @@ eventos por sinais Qt em fila, por isso **nunca trava** esperando a rede, o mode
 2. Normaliza o texto com o `process_text` do TTS BigLinux (emoji removido antes, URLs não são
    lidas).
 3. Gera **um WAV**: Piper e espeak-ng pelo módulo nativo `tts_engine`, RHVoice pelo
-   `RHVoice-test`; o texto sempre vai por *stdin*, nunca por um shell.
+   `RHVoice-test`, Kokoro pelo `koko text` montado pelo próprio TTS BigLinux (o modo `pipe`,
+   que toca o som sozinho, nunca é usado); tudo vira PCM 16 bits mono. Nenhum texto passa por
+   um shell, e interromper mata o processo do motor na hora.
+   Com Kokoro, a fala é gerada **frase por frase**: uma toca enquanto a próxima é gerada.
 4. Calcula o envelope de volume (RMS, 50 por segundo, normalizado no percentil 95) que move a
    boca do personagem.
 5. Toca **uma vez**: pelo `pw-play`/`paplay`/`aplay` no desktop **ou** dentro da fonte do OBS.
@@ -277,6 +317,13 @@ eventos por sinais Qt em fila, por isso **nunca trava** esperando a rede, o mode
 | Letícia (RHVoice) | 3,1 s | 0,49 s |
 | Faber (Piper, medium) | 1,9 s | 1,6 s a frio, 0,07 s aquecido |
 | espeak-ng pt-br | 2,4 s | 0,01 s |
+| Dora (Kokoro, pf_dora) | 2,95 s | 2,9 s |
+| Alex (Kokoro, pm_alex) | 8,95 s | 8,3 s |
+
+**Leitura antes da resposta**: quando uma mensagem é escolhida, o personagem presta atenção,
+lê "Fulano disse/perguntou: …" (o texto do espectador, só normalizado para a voz) e, enquanto
+lê, a IA já está gerando — e a voz já está preparando — a resposta. A ordem é garantida:
+leitura → pausa configurável → resposta, nunca as duas ao mesmo tempo.
 
 ### Segurança e privacidade
 
@@ -318,9 +365,18 @@ sudo pacman -S --needed python-pytest
 python -m pytest
 ```
 
-São mais de 100 casos de teste cobrindo motor, seleção de mensagens, configurações, Ollama, personalidade, TTS,
-overlay, chat do YouTube, tradução, interface e empacotamento (incluindo a checagem de que o
-`pkgver` do PKGBUILD é igual à versão do projeto).
+São mais de 160 casos de teste cobrindo motor, seleção de mensagens, configurações, Ollama, personalidade, TTS
+(incluindo o Kokoro com um `koko` simulado: modo sem reprodução, conversão do WAV, erros,
+cancelamento e *timeout*), leitura das mensagens (ordem, interrupção, pausa, filtros, modos
+Demonstração/Assistido/Automático), overlay, chat do YouTube, tradução, interface e
+empacotamento (incluindo a checagem de que o `pkgver` do PKGBUILD é igual à versão do projeto).
+
+Com Chrome ou Chromium instalado, `tests/test_overlay_render.py` abre o overlay de verdade num
+navegador sem janela e confere os seis personagens: carregamento, gestos, orçamento de
+desempenho, fundo transparente durante a animação, balão de leitura → resposta sem cobrir o
+rosto, memória de GPU estável nas trocas e boca parada quando não há áudio real.
+`python -m pytest --run-live` testa também Ollama e TTS BigLinux reais (vozes `pf_dora` e
+`pm_alex`, se instaladas).
 
 ## Solução de problemas
 
@@ -336,8 +392,11 @@ overlay, chat do YouTube, tradução, interface e empacotamento (incluindo a che
 
 ## Limitações conhecidas e próximos passos
 
-- A fala começa depois que a resposta inteira é gerada (ainda sem *streaming* por frase).
-- Vozes Kokoro aparecem no TTS BigLinux mas ainda não são sintetizadas pelo ChatToon.
+- A fala começa depois que a resposta inteira é gerada pela IA (as vozes Kokoro já falam frase
+  por frase, mas o texto ainda não vem em *streaming* do Ollama).
+- O Kokoro gera o áudio mais ou menos no tempo em que ele dura; em computadores modestos,
+  prefira Piper para respostas longas.
+- Comemorações de novos inscritos/membros dependem de eventos que o chat público não informa.
 - A fonte do OBS é adicionada à mão (com passo a passo no aplicativo); sem obs-websocket ainda.
 - A boca acompanha o volume, não os fonemas.
 - Conectores para Twitch e Rumble ainda não existem — a interface de conector já está pronta
@@ -350,10 +409,14 @@ Lista completa em [docs/11-release.md](docs/11-release.md).
 [Auditoria](docs/01-audit.md) · [Arquitetura](docs/02-architecture.md) · [UI/UX](docs/03-ui-ux.md) ·
 [Ollama](docs/04-ollama.md) · [YouTube](docs/05-youtube.md) · [TTS](docs/06-tts.md) ·
 [Avatares](docs/07-avatars.md) · [OBS](docs/08-obs.md) · [Segurança](docs/09-security.md) ·
-[Testes](docs/10-testing.md) · [Lançamento](docs/11-release.md)
+[Testes](docs/10-testing.md) · [Lançamento](docs/11-release.md) ·
+[Personagens, Kokoro e leitura (2.1)](docs/12-character-tts-upgrade.md)
 
 ## Histórico de versões
 
+- **2.1.0** — leitura do nome e da mensagem antes da resposta, vozes Kokoro, Tux de cartola,
+  Gata, Coruja e Cachorro, motor de animações em repouso com estados e gestos, nova página de
+  personagens com prévia interativa e troca de personagem sem travar.
 - **2.0.0** — o aplicativo ChatToon: interface desktop PySide6/QML, três personagens 3D,
   IA local (Ollama), voz do TTS BigLinux, overlay seguro para o OBS, tradução pt-BR e pacote
   para Arch/BigLinux.

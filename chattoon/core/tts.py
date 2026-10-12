@@ -2,10 +2,11 @@
 
 ChatToon does not ship its own speech engine. It imports TTS BigLinux's modules from
 the installed package to reuse its voice catalog (RHVoice, espeak-ng, Piper, Kokoro),
-its text normalisation (abbreviations, numbers, URLs, Markdown) and its native
-``tts_engine`` synthesizer. The only difference from the TTS BigLinux app is the last
-step: instead of piping audio straight to ``aplay``, ChatToon renders a WAV file so it
-can compute a mouth-movement envelope and play the audio exactly once, in one place.
+its text normalisation (abbreviations, numbers, URLs, Markdown), its native
+``tts_engine`` synthesizer and its Kokoro command builder. The only difference from the
+TTS BigLinux app is the last step: instead of piping audio straight to ``aplay``,
+ChatToon renders a WAV file so it can compute a mouth-movement envelope and play the
+audio exactly once, in one place.
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ import math
 import os
 import re
 import shutil
+import signal
+import struct
 import subprocess
 import sys
 import tempfile
@@ -32,10 +35,27 @@ TTS_BIGLINUX_DIR = Path(os.environ.get("CHATTOON_TTS_BIGLINUX_DIR", "/usr/share/
 TTS_ENGINE_DIR = Path(os.environ.get("CHATTOON_TTS_ENGINE_DIR", "/usr/lib/tts-biglinux"))
 TTS_BIGLINUX_SETTINGS = Path.home() / ".config" / "biglinux-tts" / "settings.json"
 ENVELOPE_FPS = 50  # mouth openness samples per second
+# koko renders roughly as fast as the audio plays on a desktop CPU (~0.05 s per character)
+KOKORO_TIMEOUT_BASE = 25.0
+KOKORO_TIMEOUT_PER_CHAR = 0.15
 
 
 class TTSError(Exception):
-    pass
+    """A synthesis problem. ``code`` lets the interface show a translated message."""
+
+    def __init__(self, message: str, code: str = "", detail: str = ""):
+        super().__init__(message)
+        self.code = code
+        self.detail = detail
+
+
+class TTSCancelled(TTSError):
+    def __init__(self) -> None:
+        super().__init__("Speech synthesis was cancelled", "cancelled")
+
+
+# Engines without real pitch control (the slider would do nothing).
+_NO_PITCH = frozenset({"kokoro"})
 
 
 @dataclass(frozen=True)
@@ -51,6 +71,14 @@ class Voice:
     def label(self) -> str:
         engine = {"rhvoice": "RHVoice", "espeak-ng": "espeak-ng", "piper": "Piper", "kokoro": "Kokoro"}
         return f"{self.name} · {engine.get(self.backend, self.backend)}"
+
+    @property
+    def pitch_supported(self) -> bool:
+        return self.backend not in _NO_PITCH
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "name": self.name, "language": self.language, "backend": self.backend,
+                "gender": self.gender, "quality": self.quality, "pitch": self.pitch_supported}
 
 
 @dataclass
@@ -73,6 +101,11 @@ class BigLinuxTTS:
         self._lock = threading.Lock()  # the native engine is not re-entrant
         self._voices: list[Voice] | None = None
         self._modules = None
+        self._kokoro = None
+        self._proc: subprocess.Popen | None = None  # engine process running right now
+        self._proc_lock = threading.Lock()
+        self._epoch = 0  # cancel() bumps it: every synthesis requested before is dropped
+        self._job_epoch = 0  # epoch of the synthesis holding self._lock
         self.error = ""
 
     # -- integration ------------------------------------------------------
@@ -98,6 +131,18 @@ class BigLinuxTTS:
             tts_engine = None
         self._modules = (voice_manager, tts_service, process_text, tts_engine)
         return self._modules
+
+    def _kokoro_service(self):
+        """TTS BigLinux's Kokoro helpers (model, voices.bin, koko command line)."""
+        if self._kokoro is None:
+            self._load()
+            try:
+                from services import kokoro_voice_service  # type: ignore[import-not-found]
+            except Exception as e:  # noqa: BLE001 - older TTS BigLinux without Kokoro support
+                raise TTSError(f"This TTS BigLinux version has no Kokoro support: {e}", "kokoro-missing",
+                               str(e)) from e
+            self._kokoro = kokoro_voice_service
+        return self._kokoro
 
     @property
     def available(self) -> bool:
@@ -155,7 +200,10 @@ class BigLinuxTTS:
         return " ".join((processed or "").split())
 
     def prewarm(self, voice: Voice) -> None:
-        """Load a Piper model ahead of time (first synthesis drops from ~1.6 s to ~0.1 s)."""
+        """Load a Piper model ahead of time (first synthesis drops from ~1.6 s to ~0.1 s).
+
+        Kokoro runs one ``koko`` process per text: a tiny render pulls its 90 MB model into
+        the page cache, so the first viewer does not also pay for the disk read."""
         engine = self._load()[3]
         if voice.backend == "piper" and engine is not None and hasattr(engine, "load_piper"):
             model = voice.id.removeprefix("piper:")
@@ -163,6 +211,24 @@ class BigLinuxTTS:
                 model += ".onnx"
             with self._lock:
                 engine.load_piper(model)
+        elif voice.backend == "kokoro":
+            path = self.workdir / "prewarm.wav"
+            with self._lock:
+                self._job_epoch = self._epoch
+                try:
+                    self._kokoro_render(".", voice, 0, path)
+                except TTSError:
+                    pass  # reported for real on the first reply
+                finally:
+                    path.unlink(missing_ok=True)
+
+    def cancel(self) -> None:
+        """Stop the synthesis in progress (thread-safe). The waiting call raises TTSCancelled."""
+        with self._proc_lock:
+            self._epoch += 1
+            proc = self._proc
+        if proc is not None:
+            _kill(proc)
 
     def synthesize(self, text: str, voice: Voice, rate: int = 0, pitch: int = 0, volume: int = 85,
                    utterance_id: str = "") -> Utterance:
@@ -174,18 +240,36 @@ class BigLinuxTTS:
         uid = utterance_id or f"u{int(time.time() * 1000)}"
         path = self.workdir / f"{uid}.wav"
         started = time.monotonic()
+        epoch = self._epoch
         with self._lock:
-            if voice.backend == "piper":
-                self._piper(svc, engine, spoken, voice, rate, pitch, volume, path)
-            elif voice.backend == "espeak-ng":
-                self._espeak(svc, engine, spoken, voice, rate, pitch, volume, path)
-            elif voice.backend == "rhvoice":
-                self._rhvoice(spoken, voice, rate, pitch, volume, path)
-            else:
-                raise TTSError(f"Voice engine '{voice.backend}' is not supported by ChatToon yet")
-        if not path.exists() or path.stat().st_size < 100:
-            raise TTSError("The voice engine produced no audio")
+            self._job_epoch = epoch
+            try:
+                if self._is_cancelled():
+                    raise TTSCancelled()
+                if voice.backend == "piper":
+                    self._piper(svc, engine, spoken, voice, rate, pitch, volume, path)
+                elif voice.backend == "espeak-ng":
+                    self._espeak(svc, engine, spoken, voice, rate, pitch, volume, path)
+                elif voice.backend == "rhvoice":
+                    self._rhvoice(spoken, voice, rate, pitch, volume, path)
+                elif voice.backend == "kokoro":
+                    self._kokoro_synth(spoken, voice, rate, volume, path)
+                else:
+                    raise TTSError(f"Voice engine '{voice.backend}' is not supported by ChatToon yet",
+                                   "unsupported", voice.backend)
+                if self._is_cancelled():
+                    raise TTSCancelled()
+                if not path.exists() or path.stat().st_size < 100:
+                    raise TTSError("The voice engine produced no audio", "no-audio")
+                # Every engine ends as 16-bit PCM: one format for the envelope, pw-play and OBS.
+                to_pcm16(path)
+            except BaseException:
+                path.unlink(missing_ok=True)
+                raise
         duration, envelope = analyse_wav(path)
+        if duration <= 0.05:
+            path.unlink(missing_ok=True)
+            raise TTSError("The voice engine produced no audio", "no-audio")
         return Utterance(uid, text, path, duration, envelope, time.monotonic() - started)
 
     @staticmethod
@@ -231,23 +315,247 @@ class BigLinuxTTS:
                    "-t", str(max(20, min(200, 100 + pitch))), "-v", str(max(0, min(100, volume))),
                    "-o", str(path)], text)
 
-    @staticmethod
-    def _run(cmd: list[str], text: str) -> None:
+    # -- Kokoro (package biglinux-kokoro-tts, ``koko`` binary) -------------
+    #
+    # ``koko pipe`` (what the TTS BigLinux app uses) plays every sentence itself while
+    # it writes the WAV, so ChatToon would be heard twice. ``koko text`` only renders
+    # the file. The command line comes from TTS BigLinux (build_koko_command), so the
+    # model, voices.bin, language and speed are exactly what the TTS BigLinux app uses.
+
+    def _kokoro_synth(self, text, voice, rate, volume, path) -> None:
+        if volume <= 0:
+            raise TTSError("The voice volume is zero", "no-audio")
+        raw = path.with_suffix(".koko.wav")
+        try:
+            self._kokoro_render(text, voice, rate, raw)
+            to_pcm16(raw, path, gain=_volume_gain(volume))
+        finally:
+            raw.unlink(missing_ok=True)
+
+    def _kokoro_render(self, text: str, voice: Voice, rate: int, output: Path) -> None:
+        kvs = self._kokoro_service()
+        problem = kvs.koko_problem(voice.id)  # binary, model, voices.bin, this voice
+        if problem:
+            raise TTSError(problem, "kokoro-unavailable", problem)
+        # koko cuts sentences at every punctuation sign and fails on punctuation-only
+        # pieces ("Sério?!"); prepare_koko_text fixes that and splits long sentences.
+        prepared = " ".join(kvs.prepare_koko_text(text).split("\n"))
+        if not any(c.isalnum() for c in prepared):
+            raise TTSError("Nothing to say after text cleanup", "no-audio")
+        cmd = kvs.build_koko_command(voice.id, speed=kvs.kokoro_speed(rate), text=prepared, output=str(output))
+        if "pipe" in cmd or "text" not in cmd:  # never a mode that plays audio by itself
+            raise TTSError("This TTS BigLinux version cannot render Kokoro to a file", "kokoro-failed",
+                           "koko text")
+        timeout = min(300.0, KOKORO_TIMEOUT_BASE + len(prepared) * KOKORO_TIMEOUT_PER_CHAR)
+        try:
+            code, err = self._exec(cmd, None, timeout, cwd=kvs.koko_workdir())
+        except subprocess.TimeoutExpired as e:
+            raise TTSError("Kokoro took too long to speak this text", "kokoro-timeout") from e
+        if code != 0:
+            detail = _engine_error(err) or f"exit code {code}"
+            raise TTSError(f"Kokoro failed: {detail}", "kokoro-failed", detail)
+        if not output.exists() or output.stat().st_size < 100:
+            raise TTSError("The voice engine produced no audio", "no-audio")
+
+    # -- processes ----------------------------------------------------------
+
+    def _run(self, cmd: list[str], text: str, timeout: float = 120) -> None:
         if not shutil.which(cmd[0]) and not os.path.isfile(cmd[0]):
-            raise TTSError(f"{cmd[0]} is not installed")
+            raise TTSError(f"{cmd[0]} is not installed", "missing", cmd[0])
         # Text goes through stdin, never through a shell or the command line.
-        result = subprocess.run(cmd, input=text.encode("utf-8"), capture_output=True, timeout=120)
-        if result.returncode != 0:
-            raise TTSError(result.stderr.decode("utf-8", "replace").strip()[-300:] or f"{cmd[0]} failed")
+        try:
+            code, err = self._exec(cmd, text.encode("utf-8"), timeout)
+        except subprocess.TimeoutExpired as e:
+            raise TTSError(f"{cmd[0]} took too long", "timeout", cmd[0]) from e
+        if code != 0:
+            raise TTSError(_engine_error(err) or f"{cmd[0]} failed", "failed", cmd[0])
+
+    def _exec(self, cmd: list[str], stdin: bytes | None, timeout: float, cwd: str | None = None) -> tuple[int, bytes]:
+        """Run an engine (argv list, no shell) that cancel() can kill. Returns (code, stderr)."""
+        with self._proc_lock:
+            if self._is_cancelled():
+                raise TTSCancelled()
+            # Own process group: a cancel/timeout also takes down helpers the engine started.
+            try:
+                proc = subprocess.Popen(cmd, stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
+                                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, cwd=cwd,
+                                        start_new_session=True)
+            except OSError as e:
+                raise TTSError(f"Could not start {os.path.basename(cmd[0])}: {e.strerror or e}", "failed",
+                               os.path.basename(cmd[0])) from e
+            self._proc = proc
+        try:
+            _, err = proc.communicate(stdin, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            _kill(proc)
+            raise
+        except BaseException:
+            _kill(proc)
+            raise
+        finally:
+            with self._proc_lock:
+                self._proc = None
+        if self._is_cancelled():
+            raise TTSCancelled()
+        return proc.returncode, err or b""
+
+    def _is_cancelled(self) -> bool:
+        return self._job_epoch != self._epoch
 
     def cleanup(self, keep: int = 20) -> None:
         """Delete old WAV files, keeping the newest ``keep``."""
-        files = sorted(self.workdir.glob("*.wav"), key=lambda p: p.stat().st_mtime, reverse=True)
-        for old in files[keep:]:
+        files = []
+        for f in self.workdir.glob("*.wav"):
+            try:
+                files.append((f.stat().st_mtime, f))
+            except OSError:
+                pass  # removed meanwhile
+        for _, old in sorted(files, reverse=True)[keep:]:
             old.unlink(missing_ok=True)
 
     def shutdown(self) -> None:
+        self.cancel()
         shutil.rmtree(self.workdir, ignore_errors=True)
+
+
+# koko writes progress and the text being read to stderr; only real errors are reported.
+_ENGINE_NOISE = ("WARNING", "TOKENIZE", "shape_style", "phonemes", "PHONEMIZE", "CALLING PHONEMIZE",
+                 "Processing", "Audio saved", "Time taken", "Words per second", "Detected language",
+                 "Language detection", "Using ", "MANUAL LANGUAGE", "Manual language", "voice styles")
+
+
+def _engine_error(stderr: bytes) -> str:
+    lines = [ln.strip() for ln in stderr.decode("utf-8", "replace").splitlines()]
+    useful = [ln for ln in lines if ln and not ln.startswith(_ENGINE_NOISE)]
+    return " ".join(useful[-3:])[-300:]
+
+
+def _kill(proc: subprocess.Popen) -> None:
+    """Terminate an engine and its process group, and reap it (no zombies)."""
+    if proc.poll() is not None:
+        return
+    for sig, wait in ((signal.SIGTERM, 1.0), (signal.SIGKILL, 2.0)):
+        try:
+            os.killpg(proc.pid, sig)
+        except (ProcessLookupError, PermissionError, OSError):
+            try:
+                proc.send_signal(sig)
+            except OSError:
+                pass
+        try:
+            proc.wait(wait)
+            return
+        except subprocess.TimeoutExpired:
+            continue
+
+
+def _volume_gain(volume: int) -> float:
+    """Same scale as TTS BigLinux (50 = unchanged, 100 = twice as loud, 0 = mute)."""
+    if volume <= 0:
+        return 0.0
+    return max(0.2, min(2.0, volume / 50.0))
+
+
+# -- WAV normalisation ---------------------------------------------------------
+
+_PCM, _FLOAT, _EXTENSIBLE = 1, 3, 0xFFFE
+
+
+def _read_wav(path: Path) -> tuple[int, int, int, int, bytes]:
+    """(format, channels, rate, bits, sample bytes) of a RIFF WAV, tolerating the
+    streaming headers engines write (data size 0 or 0xFFFFFFFF) and truncated files."""
+    data = path.read_bytes()
+    if len(data) < 12 or data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+        raise TTSError("The voice engine produced an invalid audio file", "invalid-wav")
+    pos, fmt, samples = 12, None, None
+    while pos + 8 <= len(data):
+        cid, size = data[pos:pos + 4], struct.unpack("<I", data[pos + 4:pos + 8])[0]
+        body = pos + 8
+        if cid == b"fmt " and size >= 16:
+            tag, channels, rate, _, _, bits = struct.unpack("<HHIIHH", data[body:body + 16])
+            if tag == _EXTENSIBLE and size >= 40:
+                tag = struct.unpack("<H", data[body + 24:body + 26])[0]  # sub-format GUID
+            fmt = (tag, channels, rate, bits)
+        elif cid == b"data":
+            end = len(data) if size in (0, 0xFFFFFFFF) or body + size > len(data) else body + size
+            samples = data[body:end]
+            break
+        pos = body + size + (size & 1)
+    if fmt is None or samples is None or fmt[1] < 1 or fmt[2] < 1000:
+        raise TTSError("The voice engine produced an invalid audio file", "invalid-wav")
+    return (*fmt, samples)
+
+
+def to_pcm16(src: Path, dst: Path | None = None, gain: float = 1.0) -> Path:
+    """Rewrite ``src`` as mono 16-bit PCM (in place, or to ``dst``), applying ``gain``.
+
+    Kokoro writes stereo 32-bit float (WAVE_FORMAT_EXTENSIBLE), which Python's ``wave``
+    module, the lip-sync analysis and some players cannot read. The gain is limited so
+    the loudest sample never clips."""
+    dst = dst or src
+    tag, channels, rate, bits, raw = _read_wav(src)
+    if tag == _PCM and bits == 16 and channels == 1 and gain == 1.0:
+        if dst != src:
+            shutil.copyfile(src, dst)
+        return dst
+    width = bits // 8
+    usable = len(raw) - len(raw) % (width * channels)
+    raw = raw[:usable]
+    if tag == _FLOAT and bits == 32:
+        values = array.array("f", raw)
+        scale = 1.0
+    elif tag == _FLOAT and bits == 64:
+        values = array.array("d", raw)
+        scale = 1.0
+    elif tag == _PCM and bits == 16:
+        values = array.array("h", raw)
+        scale = 1 / 32768
+    elif tag == _PCM and bits == 32:
+        values = array.array("i", raw)
+        scale = 1 / 2147483648
+    elif tag == _PCM and bits == 8:
+        values = array.array("f", (b - 128 for b in raw))
+        scale = 1 / 128
+    elif tag == _PCM and bits == 24:
+        values = array.array("i", (int.from_bytes(raw[i:i + 3], "little", signed=True)
+                                   for i in range(0, len(raw), 3)))
+        scale = 1 / 8388608
+    else:
+        raise TTSError("The voice engine produced an unsupported audio format", "invalid-wav", f"{tag}/{bits}")
+    if sys.byteorder == "big" and values.typecode in "hifd":
+        values.byteswap()
+    if not values:
+        raise TTSError("The voice engine produced no audio", "no-audio")
+    try:
+        import numpy as np  # fast path; numpy comes with TTS BigLinux's Kokoro tools
+    except ImportError:
+        np = None
+    if np is not None:
+        a = np.frombuffer(values, dtype=np.dtype(values.typecode)).astype(np.float32) * scale
+        mono = a.reshape(-1, channels).mean(axis=1) if channels > 1 else a
+        mono = np.nan_to_num(mono)
+        peak = float(np.abs(mono).max()) if mono.size else 0.0
+        g = min(gain, 0.98 / peak) if peak > 0 else gain
+        pcm = (np.clip(mono * g, -1.0, 1.0) * 32767).astype("<i2").tobytes()
+    else:
+        mono = [sum(values[i:i + channels]) * scale / channels for i in range(0, len(values), channels)] \
+            if channels > 1 else [v * scale for v in values]
+        mono = [0.0 if v != v else v for v in mono]  # NaN
+        peak = max((abs(v) for v in mono), default=0.0)
+        g = min(gain, 0.98 / peak) if peak > 0 else gain
+        out = array.array("h", (int(max(-1.0, min(1.0, v * g)) * 32767) for v in mono))
+        if sys.byteorder == "big":
+            out.byteswap()
+        pcm = out.tobytes()
+    tmp = dst.with_suffix(".part")
+    with wave.open(str(tmp), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(pcm)
+    os.chmod(tmp, 0o600)
+    tmp.replace(dst)
+    return dst
 
 
 def analyse_wav(path: Path, fps: int = ENVELOPE_FPS) -> tuple[float, list[float]]:

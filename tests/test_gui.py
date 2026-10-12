@@ -99,8 +99,11 @@ def test_demo_flow_through_backend(backend):
     assert pump(3, lambda: backend.runtimeState["state"] == "running")
     backend.submitMessage("oi minhoca", "Ana")
     assert pump(8, lambda: len(backend.history) == 1)
-    assert backend.history[0]["reply"] == "Resposta para oi minhoca!"
-    assert backend.stats["spoken"] == 1 and len(backend.engine.player.played) == 1
+    assert backend.history[0]["reply"] == "Resposta para oi minhoca!" and backend.history[0]["read"]
+    # new installations read "name + message" first: two utterances, one after the other
+    assert backend.engine.tts.texts == ["Ana disse: oi minhoca.", "Resposta para oi minhoca!"]
+    assert backend.stats["spoken"] == 1 and backend.stats["read"] == 1
+    assert len(backend.engine.player.played) == 2 and backend.engine.player.max_active == 1
     backend.emergencyStop()
     assert pump(3, lambda: backend.runtimeState["state"] == "emergency")
 
@@ -236,3 +239,103 @@ def test_shutdown_right_after_start_is_clean(qapp, tmp_path, capfd):
     import gc
     gc.collect()
     assert "Task was destroyed but it is pending" not in capfd.readouterr().err
+
+
+def test_six_characters_with_gestures_and_species(backend):
+    chars = backend.characters
+    assert [c["id"] for c in chars] == ["worm", "alien", "tux", "cat", "owl", "dog"]
+    for c in chars:
+        assert c["species"] and c["tagline"] and c["gestures"], c["id"]
+        assert all(g["label"] and g["id"].isalpha() for g in c["gestures"])
+    tux = next(c for c in chars if c["id"] == "tux")
+    assert "tipHat" in [g["id"] for g in tux["gestures"]]
+    thumbs = QML / "assets" / "characters"
+    assert all((thumbs / f"{c['id']}.png").exists() for c in chars)
+
+
+def test_animation_and_reading_settings_persist_and_reach_the_overlay(backend):
+    backend.setConfig("animation.intensity", "lively")
+    backend.setConfig("animation.reduce_motion", True)
+    backend.setConfig("reading.mode", "name")
+    backend.setConfig("reading.pause", 1.2)
+    saved = Settings.load()
+    assert (saved.animation.intensity, saved.animation.reduce_motion) == ("lively", True)
+    assert (saved.reading.mode, saved.reading.pause) == ("name", 1.2)
+    assert pump(2, lambda: backend.engine.server._snapshot.get("config", {}).get("reduceMotion") is True)
+    cfg = backend.engine.server._snapshot["config"]
+    assert cfg["intensity"] == "lively" and cfg["idle"] is True
+    assert backend.readingSample() == "Pergunta de Maria."
+    backend.setConfig("reading.mode", "name_message")
+    assert backend.readingSample().startswith("Maria perguntou: ")
+    backend.setConfig("reading.mode", "off")
+    assert backend.readingSample() == ""
+
+
+def test_engine_errors_are_shown_in_the_interface_language(backend):
+    backend.engine.bus.emit("error", {"source": "tts", "message": "Kokoro took too long", "code": "kokoro-timeout"})
+    backend.engine.bus.emit("error", {"source": "tts", "message": "x", "code": "kokoro-unavailable",
+                                      "detail": "Voice not installed"})
+    backend.engine.bus.emit("error", {"source": "chat", "message": "Something else"})
+    assert pump(2, lambda: len(backend.toasts) >= 3)
+    texts = [m for m, _ in backend.toasts[-3:]]
+    assert texts[0].startswith("Kokoro took too long to speak this text")
+    assert texts[1] == "Kokoro: Voice not installed" and texts[2] == "Something else"
+
+
+def test_gesture_slot_broadcasts_only_safe_names(backend):
+    sent = []
+    original = backend.engine.server.broadcast
+
+    async def spy(event, keep=False):
+        sent.append(event)
+        await original(event, keep)
+
+    backend.engine.server.broadcast = spy
+    backend.gesture("tipHat")
+    backend.gesture("<script>")
+    assert pump(2, lambda: any(e.get("type") == "gesture" for e in sent))
+    pump(0.3)
+    assert [e["name"] for e in sent if e.get("type") == "gesture"] == ["tipHat"]
+
+
+def test_character_cards_select_on_click_but_not_from_the_expand_button(backend):
+    from PySide6.QtCore import QPointF, Qt
+    from PySide6.QtTest import QTest
+
+    from chattoon.gui.app import create_engine
+
+    warnings = []
+    engine = create_engine(backend, warnings)
+    window = engine.rootObjects()[0]
+    window.setProperty("currentPage", 1)
+    pump(0.5)
+
+    def find(item, name):
+        if item.objectName() == name:
+            return item
+        for child in item.childItems():
+            found = find(child, name)
+            if found is not None:
+                return found
+        return None
+
+    def click(name):
+        click_in(window.contentItem(), name)  # Loader/Repeater items live in the visual tree
+
+    def click_in(root, name):
+        item = find(root, name)
+        assert item is not None, name
+        pos = item.mapToScene(QPointF(item.width() / 2, item.height() / 2)).toPoint()
+        QTest.mouseClick(window, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, pos)
+        pump(0.4)
+
+    assert backend.config["character"] == "worm"
+    click("expand-owl")
+    assert backend.config["character"] == "worm"  # expanding only opens the enlarged view
+    assert find(window.contentItem(), "zoom-close") is not None  # the enlarged view is open
+    click("zoom-close")
+    click("card-owl")
+    assert backend.config["character"] == "owl"
+    window.close()
+    del engine
+    assert warnings == []

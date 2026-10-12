@@ -12,7 +12,7 @@ from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 
 from ..core.brain import apply_preset
-from ..core.characters import CHARACTERS, get_character
+from ..core.characters import CHARACTERS, GESTURES, get_character
 from ..core.config import Settings, profiles_dir
 from ..core.engine import ChatToonEngine
 from ..core.events import EventBus
@@ -23,7 +23,7 @@ from ..core.youtube_chat import extract_video_id
 log = logging.getLogger(__name__)
 
 # settings that require the engine to rebuild its selector/overlay state
-_ENGINE_SECTIONS = {"chat", "overlay", "ai", "mode", "character"}
+_ENGINE_SECTIONS = {"chat", "overlay", "ai", "mode", "character", "animation", "reading"}
 
 
 class Backend(QObject):
@@ -111,10 +111,11 @@ class Backend(QObject):
             self._history = ([data] + self._history)[:300]
             self.historyChanged.emit()
         elif kind == "error":
-            self._state["lastError"] = data.get("message", "")
+            message = self._error_text(data)
+            self._state["lastError"] = message
             self._state["lastErrorSource"] = data.get("source", "")
             self.runtimeChanged.emit()
-            self.toast.emit(data.get("message", ""), "error")
+            self.toast.emit(message, "error")
         elif kind == "pull":
             self._pull = data
             self.pullChanged.emit()
@@ -144,11 +145,59 @@ class Backend(QObject):
     messages = Property("QVariantList", lambda self: self._messages, notify=messagesChanged)
     pull = Property("QVariantMap", lambda self: self._pull, notify=pullChanged)
 
+    def _error_text(self, data: dict) -> str:
+        """Engine errors carry a code: show them in the interface language."""
+        code, detail, message = data.get("code", ""), data.get("detail", ""), data.get("message", "")
+        known = {
+            "no-model": self.tr("Choose an Ollama model first."),
+            "kokoro-unavailable": self.tr("Kokoro: %1"),
+            "kokoro-missing": self.tr("This TTS BigLinux version cannot use Kokoro voices. Update the tts-biglinux package."),
+            "kokoro-timeout": self.tr("Kokoro took too long to speak this text. Try a shorter reply or another voice."),
+            "kokoro-failed": self.tr("Kokoro could not speak this text: %1"),
+            "no-audio": self.tr("The voice engine produced no audio."),
+            "invalid-wav": self.tr("The voice engine produced an invalid audio file."),
+            "unsupported": self.tr("The voice engine %1 is not supported."),
+            "missing": self.tr("%1 is not installed."),
+            "timeout": self.tr("%1 took too long to answer."),
+            "failed": self.tr("The voice engine %1 failed."),
+        }
+        text = known.get(code)
+        return text.replace("%1", detail or message) if text else message
+
     def _characters(self) -> list[dict]:
         lang = self.settings.ai.reply_language
+        info = {
+            "worm": (self.tr("Cartoon earthworm"), self.tr("Ironic, funny and a bit of a provocateur.")),
+            "alien": (self.tr("Alien explorer"), self.tr("Curious, tech-savvy and unpredictable.")),
+            "tux": (self.tr("Penguin in a top hat"), self.tr("Geeky, elegant and a free software champion.")),
+            "cat": (self.tr("Orange cat"), self.tr("Sarcastic, clever and independent.")),
+            "owl": (self.tr("Purple owl"), self.tr("Wise, observant and good-humoured.")),
+            "dog": (self.tr("Beagle puppy"), self.tr("Cheerful, playful and full of energy.")),
+        }
         return [{"id": c.id, "name": c.name, "color": c.color, "preset": c.personality.preset,
+                 "species": info.get(c.id, ("", ""))[0], "tagline": info.get(c.id, ("", ""))[1],
                  "persona": c.text(c.persona, lang), "example": c.text(c.examples, lang)[0][1],
-                 "exampleIn": c.text(c.examples, lang)[0][0]} for c in CHARACTERS.values()]
+                 "exampleIn": c.text(c.examples, lang)[0][0],
+                 "gestures": [{"id": g, "label": self._gesture_label(g)} for g in GESTURES.get(c.id, ())]}
+                for c in CHARACTERS.values()]
+
+    def _gesture_label(self, gesture: str) -> str:
+        labels = {
+            "lookAround": self.tr("Look around"), "stretch": self.tr("Stretch"), "wiggle": self.tr("Wiggle"),
+            "peek": self.tr("Hide in the dirt"), "headBob": self.tr("Head bob"), "dig": self.tr("Dig"),
+            "scan": self.tr("Scan"), "beep": self.tr("Beep"), "wave": self.tr("Wave"), "orbit": self.tr("Spin in the air"),
+            "probe": self.tr("Investigate"), "tipHat": self.tr("Tip the hat"), "adjustHat": self.tr("Adjust the hat"),
+            "flap": self.tr("Flap"), "waddle": self.tr("Waddle"), "bow": self.tr("Bow"), "bellyPat": self.tr("Belly pat"),
+            "tailWag": self.tr("Wag the tail"), "earTwitch": self.tr("Twitch an ear"), "slowBlink": self.tr("Slow blink"),
+            "headTilt": self.tr("Tilt the head"), "curiousLook": self.tr("Curious look"), "silentMeow": self.tr("Silent meow"),
+            "pawRaise": self.tr("Raise a paw"), "faceWash": self.tr("Wash the face"), "headTurn": self.tr("Turn the head"),
+            "wingOpen": self.tr("Open the wings"), "wingFlap": self.tr("Flap the wings"), "sway": self.tr("Sway"),
+            "ruffle": self.tr("Ruffle the feathers"), "hoot": self.tr("Hoot"), "surprisePuff": self.tr("Startle"),
+            "techExcited": self.tr("Tech excitement"), "earFlop": self.tr("Flop the ears"), "pant": self.tr("Pant"),
+            "tongueOut": self.tr("Tongue out"), "hop": self.tr("Hop"), "joy": self.tr("Joy"),
+            "curiousSniff": self.tr("Sniff around"),
+        }
+        return labels.get(gesture, gesture)
 
     characters = Property("QVariantList", _characters, constant=True)
     recommendedModels = Property("QVariantList", lambda self: list(RECOMMENDED_MODELS), constant=True)
@@ -262,9 +311,11 @@ class Backend(QObject):
             self.runtime.loop.call_soon_threadsafe(self.engine.submit, text, author.strip() or self.tr("You"))
 
     @Slot(str)
-    def testReply(self, text: str) -> None:  # noqa: N802
+    @Slot(str, str)
+    def testReply(self, text: str, author: str = "") -> None:  # noqa: N802
+        """Simulate a viewer message (read aloud + AI reply), whatever the mode."""
         if text.strip():
-            self.runtime.submit(self.engine.test_reply(text))
+            self.runtime.submit(self.engine.test_reply(text, author.strip() or self.tr("Viewer")))
 
     @Slot(str, str)
     def say(self, text: str, emotion: str) -> None:
@@ -278,6 +329,27 @@ class Backend(QObject):
     @Slot(str)
     def react(self, emotion: str) -> None:
         self.runtime.submit(self.engine.react(emotion))
+
+    @Slot(str)
+    def gesture(self, name: str) -> None:
+        self.runtime.submit(self.engine.gesture(name))
+
+    @Slot()
+    def previewReading(self) -> None:  # noqa: N802
+        self.runtime.submit(self.engine.preview_reading())
+
+    @Slot(result=str)
+    def readingSample(self) -> str:  # noqa: N802
+        """What the current reading settings would say for a sample message."""
+        return self.engine.reading_sample()
+
+    @Slot(str, result=str)
+    def voiceFor(self, character_id: str) -> str:  # noqa: N802
+        """Name of the voice a character speaks with ("" while TTS BigLinux is unavailable)."""
+        if not self._services.get("tts", {}).get("ok"):
+            return ""
+        voice = self.engine.voice_for(get_character(character_id))
+        return voice.label if voice else ""
 
     @Slot(str)
     def approve(self, item_id: str) -> None:

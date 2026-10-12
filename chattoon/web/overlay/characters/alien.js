@@ -1,16 +1,6 @@
 // E.T.: big-headed, levitating alien with spring antennae and a glowing hover ring.
 import * as THREE from "../../vendor/three/three.module.js";
-import { Brow, Character, Eye, Mouth, damp, skin } from "../rig.js";
-
-class Spring {
-  constructor(stiffness = 60, damping = 7) { this.x = 0; this.v = 0; this.k = stiffness; this.d = damping; }
-  step(target, dt) {
-    const a = (target - this.x) * this.k - this.v * this.d;
-    this.v += a * dt;
-    this.x += this.v * dt;
-    return this.x;
-  }
-}
+import { Brow, Character, Eye, Mouth, Spring, damp, skin, wrapAngle } from "../rig.js";
 
 export class Alien extends Character {
   constructor(options) {
@@ -109,6 +99,24 @@ export class Alien extends Character {
     beam.position.y = 0.45;
     this.root.add(beam);
     this.beam = beam;
+
+    this.bubbleAnchor = new THREE.Object3D();
+    this.bubbleAnchor.position.set(0, 0.95, 0); // above the antennae
+    head.add(this.bubbleAnchor);
+    this.extent = { width: 1.4, height: 2.75 };
+    this.director.register({
+      scan: { duration: 3.2, weight: 1, cooldown: 14 },
+      beep: { duration: 1.4, weight: 1.1, cooldown: 9, states: ["idle", "speaking"] },
+      wave: { duration: 2.2, weight: 0.8, cooldown: 22 },
+      orbit: { duration: 3.0, weight: 0.5, cooldown: 30, big: true },
+      probe: { duration: 2.2, weight: 0.8, cooldown: 16 },
+      point: { duration: 1.5, weight: 1.4, cooldown: 4, states: ["speaking"] },
+    });
+  }
+
+  hear(text) {
+    if (Character.mentionsTech(text)) this.director.play("beep");
+    else this.director.play("probe");
   }
 
   setupFace(head, color) {
@@ -132,27 +140,42 @@ export class Alien extends Character {
   }
 
   animate(dt, t, state) {
-    const c = this.cur;
+    const c = this.cur, d = this.director, a = d.amp;
     const act = this.actionCurve();
+    const g = d.curve();
     const talking = c.speak;
+    const still = d.state === "emergency";
     // levitation (the root rises; the overlay shrinks the contact shadow accordingly)
-    let lift = Math.sin(t * 1.6) * 0.06;
-    if (act.name === "surprised" || act.name === "celebrate") lift += 0.35 * act.s;
+    let lift = Math.sin(t * 1.6) * 0.06 * (still ? 0.3 : 1) + d.breath * 0.01 - d.w.paused * 0.05;
+    if (act.name === "surprised" || act.name === "celebrate") lift += (act.gentle ? 0.12 : 0.35) * act.s;
+    if (g.name === "orbit") lift += 0.12 * g.s;
     this.root.position.y = damp(this.root.position.y, lift, 10, dt);
-    this.float.rotation.y = act.name === "celebrate" ? act.p * Math.PI * 2 : damp(this.float.rotation.y, Math.sin(t * 0.5) * 0.12, 4, dt);
-    this.float.rotation.z = damp(this.float.rotation.z, act.name === "laugh" ? Math.sin(t * 30) * 0.05 * act.s : Math.sin(t * 0.8) * 0.03, 12, dt);
-    this.head.rotation.z = damp(this.head.rotation.z, c.tilt * 1.1, 8, dt);
-    this.head.rotation.x = damp(this.head.rotation.x, -talking * 0.1 + (state.phase === "thinking" ? -0.15 : 0), 10, dt);
-    this.head.scale.setScalar(1 + (act.name === "surprised" ? 0.06 * act.s : 0));
+    const spin = (act.name === "celebrate" && !act.gentle ? act.p * Math.PI * 2 : 0) + (g.name === "orbit" ? g.p * Math.PI * 2 : 0);
+    this.float.rotation.y = spin || damp(wrapAngle(this.float.rotation.y), Math.sin(t * 0.5) * 0.12 * a + d.head.x * 0.2, 4, dt);
+    this.float.rotation.z = damp(this.float.rotation.z, act.name === "laugh" ? Math.sin(t * 30) * 0.05 * act.s
+      : Math.sin(t * 0.8) * 0.03 * a + d.lean.x * 0.04, 12, dt);
+    this.float.rotation.x = damp(this.float.rotation.x, d.lean.z * 0.05 + d.w.listening * 0.06 + (g.name === "probe" ? 0.12 * g.s : 0), 6, dt);
+    let yaw = d.head.x * 0.5, roll = c.tilt * 1.1;
+    if (g.name === "scan") yaw += Math.sin(g.p * Math.PI * 2) * 0.6 * g.s;
+    if (g.name === "curious" || g.name === "probe") roll += 0.18 * g.s;
+    this.head.rotation.y = damp(this.head.rotation.y, yaw, 6, dt);
+    this.head.rotation.z = damp(this.head.rotation.z, roll, 8, dt);
+    this.head.rotation.x = damp(this.head.rotation.x, -talking * 0.1 - d.head.y * 0.3 - d.beat * 0.07
+      + (state.phase === "thinking" ? -0.15 : 0), 10, dt);
+    this.head.scale.setScalar(1 + (act.name === "surprised" ? 0.06 * act.s : 0) + d.breath * 0.005);
 
     // arms: gestures while talking, up when celebrating, hand to chin when thinking
     this.arms.forEach((arm, i) => {
       const side = i === 0 ? -1 : 1;
-      let z = side * (0.18 + talking * 0.25 * (0.5 + 0.5 * Math.sin(t * 5 + i * 2)));
-      let x = Math.sin(t * 1.3 + i) * 0.05;
-      if (act.name === "celebrate" || act.name === "surprised") z = side * (0.18 + 2.4 * act.s);
-      if (state.phase === "thinking" && i === 1) { z = -0.9; x = -1.2; }
-      if (act.name === "annoyed") { z = side * -0.5; x = -0.6; }
+      let z = side * (0.18 + talking * 0.25 * (0.5 + 0.5 * Math.sin(t * 5 + i * 2)) + d.beat * 0.2);
+      let x = Math.sin(t * 1.3 + i) * 0.05 * a;
+      if (!still) {
+        if (g.name === "wave" && i === 1) { z = 2.6 + Math.sin(t * 10) * 0.35 * g.s; z = side * (0.18 + (z - 0.18) * g.s); }
+        if (g.name === "point" && i === 1) { z = side * (0.18 + 1.1 * g.s); x = -0.9 * g.s; }
+        if (act.name === "celebrate" || act.name === "surprised") z = side * (0.18 + 2.4 * act.s);
+        if (state.phase === "thinking" && i === 1) { z = -0.9; x = -1.2; }
+        if (act.name === "annoyed") { z = side * -0.5; x = -0.6; }
+      }
       arm.rotation.z = damp(arm.rotation.z, z, 9, dt);
       arm.rotation.x = damp(arm.rotation.x, x, 9, dt);
     });
@@ -162,17 +185,19 @@ export class Alien extends Character {
     const vx = (this.tmp.x - this.prevHead.x) / Math.max(dt, 1e-3);
     const vy = (this.tmp.y - this.prevHead.y) / Math.max(dt, 1e-3);
     this.prevHead.copy(this.tmp);
-    for (const a of this.antennae) {
-      const droop = (state.phase === "thinking" || this.emotion === "confused") && a.side < 0 ? 0.5 : 0;
-      a.pivot.rotation.z = a.sz.step(-vx * 0.15 + droop + Math.sin(t * 2 + a.side) * 0.05, dt);
-      a.pivot.rotation.x = a.sx.step(vy * 0.12 + (act.name === "surprised" ? -0.4 * act.s : 0), dt);
+    for (const ant of this.antennae) {
+      const droop = (state.phase === "thinking" || this.emotion === "confused") && ant.side < 0 ? 0.5 : 0;
+      const wiggle = g.name === "beep" ? Math.sin(t * 24 + ant.side) * 0.25 * g.s : 0;
+      ant.pivot.rotation.z = ant.sz.step(-vx * 0.15 + droop + Math.sin(t * 2 + ant.side) * 0.05 + wiggle, dt);
+      ant.pivot.rotation.x = ant.sx.step(vy * 0.12 + (act.name === "surprised" ? -0.4 * act.s : 0) - d.w.listening * 0.2, dt);
     }
-    // glow follows the voice
-    const pulse = 1.2 + talking * 2.5 + Math.sin(t * 3) * 0.2;
+    // glow follows the voice (and beeps)
+    const beep = g.name === "beep" ? Math.abs(Math.sin(g.p * Math.PI * 6)) * 2 * g.s : 0;
+    const pulse = 1.2 + talking * 2.5 + Math.sin(t * 3) * 0.2 + beep + (g.name === "scan" ? g.s : 0);
     for (const m of this.tipMats) m.emissiveIntensity = pulse;
-    this.emblemMat.emissiveIntensity = 1 + talking * 1.5;
+    this.emblemMat.emissiveIntensity = 1 + talking * 1.5 + beep * 0.5;
     this.ring.scale.setScalar(1 + Math.sin(t * 3) * 0.04 + (act.name ? 0.15 * act.s : 0));
     this.ringMat.opacity = 0.55 + 0.3 * Math.sin(t * 3);
-    this.beam.material.opacity = 0.08 + talking * 0.1;
+    this.beam.material.opacity = 0.08 + talking * 0.1 + (g.name === "scan" ? 0.08 * g.s : 0);
   }
 }

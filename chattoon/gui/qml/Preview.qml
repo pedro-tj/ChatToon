@@ -13,6 +13,9 @@ Rectangle {
     color: Theme.dark ? "#141120" : "#e7e3f3"
     clip: true
 
+    // Run code in the preview page (the standalone demo page exposes window.chattoonDemo).
+    function run(js) { if (loader.item) loader.item.runJavaScript(js) }
+
     Loader {
         id: loader
         anchors.fill: parent

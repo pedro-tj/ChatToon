@@ -1,6 +1,6 @@
 // Minhoca: a skinned, segmented earthworm popping out of a dirt mound.
 import * as THREE from "../../vendor/three/three.module.js";
-import { Brow, Character, Eye, Mouth, damp, skin } from "../rig.js";
+import { Brow, Character, Eye, Mouth, damp, skin, smooth, wrapAngle } from "../rig.js";
 
 const BONES = 7;
 const HEIGHT = 1.55;
@@ -99,6 +99,24 @@ export class Worm extends Character {
     this.root.add(dirt);
     this.dirt = dirt;
     this.root.position.y = 0;
+
+    this.bubbleAnchor = new THREE.Object3D();
+    this.bubbleAnchor.position.set(0, 0.62, 0);
+    head.add(this.bubbleAnchor);
+    this.extent = { width: 1.7, height: 2.45 };
+    this.director.register({
+      stretch: { duration: 2.6, weight: 0.8, cooldown: 20 },
+      wiggle: { duration: 2.0, weight: 1.1, cooldown: 10, states: ["idle", "speaking"] },
+      peek: { duration: 3.0, weight: 0.5, cooldown: 35, big: true },
+      headBob: { duration: 1.6, weight: 1, cooldown: 9 },
+      dig: { duration: 2.2, weight: 0.5, cooldown: 28 },
+      sassy: { duration: 1.4, weight: 1.4, cooldown: 4, states: ["speaking"] },
+    });
+  }
+
+  hear(text) {
+    if (/\b(sono|dormir|cansad|pregui|sleep|tired)/i.test(text || "")) this.director.play("stretch");
+    else if (Character.mentionsTech(text)) this.director.play("headBob");
   }
 
   setupFace(head, color) {
@@ -127,29 +145,46 @@ export class Worm extends Character {
   }
 
   animate(dt, t, state) {
-    const c = this.cur;
+    const c = this.cur, d = this.director, a = d.amp;
     const act = this.actionCurve();
-    const energy = state.phase === "speaking" ? 1 : 0.55;
-    // S-shaped sway travelling up the body
+    const g = d.curve();
+    const still = d.state === "emergency";
+    const energy = (state.phase === "speaking" ? 1 : 0.55) * (still ? 0.15 : 1) * (0.6 + 0.4 * a);
+    // S-shaped sway travelling up the body; the whole worm leans with the posture shift
     for (let i = 1; i <= BONES; i++) {
       const k = i / BONES;
       const wave = Math.sin(t * 1.6 - i * 0.55) * 0.06 * energy;
       const curl = 0.11 * Math.sin(i * 0.95 + 0.6);  // resting S-curve: worms are never straight
-      let z = curl + wave + c.tilt * 0.06 * k;
-      let x = 0.035 + Math.sin(t * 1.1 - i * 0.4) * 0.03 + c.speak * 0.035 * Math.sin(t * 7 + i);
+      let z = curl + wave + c.tilt * 0.06 * k + d.lean.x * 0.03 * a - d.head.x * 0.05 * k;
+      let x = 0.035 + Math.sin(t * 1.1 - i * 0.4) * 0.03 * energy + c.speak * 0.035 * Math.sin(t * 7 + i)
+        + d.lean.z * 0.03 + d.w.listening * 0.05 * k - d.beat * 0.04 * k;
+      if (g.name === "wiggle") z += Math.sin(t * 9 - i * 0.9) * 0.09 * g.s;
+      if (g.name === "stretch") x -= 0.05 * g.s;
+      if (g.name === "sassy") z += Math.sin(g.p * Math.PI * 2) * 0.07 * g.s * k;
       if (act.name === "laugh") z += Math.sin(t * 34 + i) * 0.06 * act.s;
       if (act.name === "annoyed") x -= 0.09 * act.s;
       if (act.name === "confused") z += 0.06 * act.s * Math.sin(act.p * Math.PI * 2);
+      if (state.phase === "thinking") z += 0.05 * k * d.w.thinking;
       this.bones[i].rotation.z = damp(this.bones[i].rotation.z, z, 10, dt);
       this.bones[i].rotation.x = damp(this.bones[i].rotation.x, x, 10, dt);
     }
-    // breathing + stretch on surprise/celebration
-    const stretch = 1 + Math.sin(t * 2.2) * 0.012 + c.speak * 0.03
-      + (act.name === "surprised" ? 0.18 * act.s : 0) + (act.name === "celebrate" ? 0.12 * act.s : 0);
+    // breathing + stretch on surprise/celebration; peek = dive into the dirt and pop out
+    let stretch = 1 + d.breath * 0.012 * a + c.speak * 0.03 - d.w.paused * 0.04
+      + (act.name === "surprised" ? 0.18 * act.s : 0) + (act.name === "celebrate" ? 0.12 * act.s : 0)
+      + (g.name === "stretch" ? 0.16 * g.s : 0);
+    if (g.name === "peek") stretch -= 0.55 * smooth(0.1, 0.35, g.p) * (1 - smooth(0.6, 0.9, g.p));
+    if (g.name === "dig") stretch -= 0.12 * Math.abs(Math.sin(g.p * Math.PI * 3)) * g.s;
     this.bones[0].scale.y = damp(this.bones[0].scale.y, stretch, 12, dt);
-    this.bones[0].rotation.y = act.name === "celebrate" ? act.p * Math.PI * 2 : damp(this.bones[0].rotation.y, 0, 6, dt);
-    this.head.rotation.z = damp(this.head.rotation.z, c.tilt + Math.sin(t * 0.9) * 0.04, 8, dt);
-    this.head.rotation.x = damp(this.head.rotation.x, -c.speak * 0.12 + (state.phase === "thinking" ? -0.12 : 0), 10, dt);
-    this.dirt.scale.y = 1 + (act.name === "celebrate" ? 0.08 * act.s : 0);
+    this.head.scale.y = 1 / this.bones[0].scale.y; // the body stretches/retracts, the head keeps its shape
+    const spin = act.name === "celebrate" && !act.gentle ? act.p * Math.PI * 2 : 0;
+    this.bones[0].rotation.y = spin || damp(wrapAngle(this.bones[0].rotation.y), d.head.x * 0.25, 4, dt);
+    let roll = c.tilt + Math.sin(t * 0.9) * 0.04 * a + d.head.x * -0.1;
+    if (g.name === "headBob") roll += Math.sin(g.p * Math.PI * 4) * 0.12 * g.s;
+    if (g.name === "curious" || d.w.listening > 0.4) roll += 0.15 * Math.max(g.name === "curious" ? g.s : 0, d.w.listening);
+    this.head.rotation.z = damp(this.head.rotation.z, roll, 8, dt);
+    this.head.rotation.y = damp(this.head.rotation.y, d.head.x * 0.4, 6, dt);
+    this.head.rotation.x = damp(this.head.rotation.x, -c.speak * 0.12 - d.head.y * 0.25 - d.beat * 0.06
+      + (state.phase === "thinking" ? -0.12 : 0), 10, dt);
+    this.dirt.scale.y = 1 + (act.name === "celebrate" ? 0.08 * act.s : 0) + (g.name === "dig" ? 0.06 * g.s : 0);
   }
 }

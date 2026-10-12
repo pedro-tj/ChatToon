@@ -130,12 +130,264 @@
   <context>
     <name>Backend</name>
     <message>
+      <source>Choose an Ollama model first.</source>
+      <translation>Escolha um modelo do Ollama primeiro.</translation>
+    </message>
+    <message>
+      <source>Kokoro: %1</source>
+      <translation>Kokoro: %1</translation>
+    </message>
+    <message>
+      <source>This TTS BigLinux version cannot use Kokoro voices. Update the tts-biglinux package.</source>
+      <translation>Esta versão do TTS BigLinux não consegue usar vozes Kokoro. Atualize o pacote tts-biglinux.</translation>
+    </message>
+    <message>
+      <source>Kokoro took too long to speak this text. Try a shorter reply or another voice.</source>
+      <translation>O Kokoro demorou demais para falar este texto. Tente uma resposta mais curta ou outra voz.</translation>
+    </message>
+    <message>
+      <source>Kokoro could not speak this text: %1</source>
+      <translation>O Kokoro não conseguiu falar este texto: %1</translation>
+    </message>
+    <message>
+      <source>The voice engine produced no audio.</source>
+      <translation>O mecanismo de voz não gerou áudio.</translation>
+    </message>
+    <message>
+      <source>The voice engine produced an invalid audio file.</source>
+      <translation>O mecanismo de voz gerou um arquivo de áudio inválido.</translation>
+    </message>
+    <message>
+      <source>The voice engine %1 is not supported.</source>
+      <translation>O mecanismo de voz %1 não é suportado.</translation>
+    </message>
+    <message>
+      <source>%1 is not installed.</source>
+      <translation>%1 não está instalado.</translation>
+    </message>
+    <message>
+      <source>%1 took too long to answer.</source>
+      <translation>%1 demorou demais para responder.</translation>
+    </message>
+    <message>
+      <source>The voice engine %1 failed.</source>
+      <translation>O mecanismo de voz %1 falhou.</translation>
+    </message>
+    <message>
+      <source>Ironic, funny and a bit of a provocateur.</source>
+      <translation>Irônica, engraçada e provocadora.</translation>
+    </message>
+    <message>
+      <source>Curious, tech-savvy and unpredictable.</source>
+      <translation>Curioso, tecnológico e imprevisível.</translation>
+    </message>
+    <message>
+      <source>Penguin in a top hat</source>
+      <translation>Pinguim de cartola</translation>
+    </message>
+    <message>
+      <source>Geeky, elegant and a free software champion.</source>
+      <translation>Geek, elegante e defensor do software livre.</translation>
+    </message>
+    <message>
+      <source>Sarcastic, clever and independent.</source>
+      <translation>Sarcástica, inteligente e independente.</translation>
+    </message>
+    <message>
+      <source>Wise, observant and good-humoured.</source>
+      <translation>Sábia, observadora e bem-humorada.</translation>
+    </message>
+    <message>
+      <source>Cartoon earthworm</source>
+      <translation>Minhoca cartunesca</translation>
+    </message>
+    <message>
+      <source>Alien explorer</source>
+      <translation>Explorador alienígena</translation>
+    </message>
+    <message>
+      <source>Orange cat</source>
+      <translation>Gatinha laranja</translation>
+    </message>
+    <message>
+      <source>Purple owl</source>
+      <translation>Coruja roxa</translation>
+    </message>
+    <message>
+      <source>Cheerful, playful and full of energy.</source>
+      <translation>Alegre, brincalhão e entusiasmado.</translation>
+    </message>
+    <message>
+      <source>Beagle puppy</source>
+      <translation>Filhote beagle</translation>
+    </message>
+    <message>
+      <source>Look around</source>
+      <translation>Olhar ao redor</translation>
+    </message>
+    <message>
+      <source>Stretch</source>
+      <translation>Espreguiçar</translation>
+    </message>
+    <message>
+      <source>Wiggle</source>
+      <translation>Rebolar</translation>
+    </message>
+    <message>
+      <source>Hide in the dirt</source>
+      <translation>Se esconder na terra</translation>
+    </message>
+    <message>
+      <source>Head bob</source>
+      <translation>Balançar a cabeça</translation>
+    </message>
+    <message>
+      <source>Dig</source>
+      <translation>Cavar</translation>
+    </message>
+    <message>
+      <source>Scan</source>
+      <translation>Escanear</translation>
+    </message>
+    <message>
+      <source>Beep</source>
+      <translation>Bipar</translation>
+    </message>
+    <message>
+      <source>Wave</source>
+      <translation>Acenar</translation>
+    </message>
+    <message>
+      <source>Spin in the air</source>
+      <translation>Girar no ar</translation>
+    </message>
+    <message>
+      <source>Investigate</source>
+      <translation>Investigar</translation>
+    </message>
+    <message>
+      <source>Tip the hat</source>
+      <translation>Tirar a cartola</translation>
+    </message>
+    <message>
+      <source>Adjust the hat</source>
+      <translation>Ajeitar a cartola</translation>
+    </message>
+    <message>
+      <source>Flap</source>
+      <translation>Bater as nadadeiras</translation>
+    </message>
+    <message>
+      <source>Waddle</source>
+      <translation>Gingar no lugar</translation>
+    </message>
+    <message>
+      <source>Bow</source>
+      <translation>Saudação</translation>
+    </message>
+    <message>
+      <source>Belly pat</source>
+      <translation>Tapinha na barriga</translation>
+    </message>
+    <message>
+      <source>Wag the tail</source>
+      <translation>Abanar a cauda</translation>
+    </message>
+    <message>
+      <source>Twitch an ear</source>
+      <translation>Mexer a orelha</translation>
+    </message>
+    <message>
+      <source>Slow blink</source>
+      <translation>Piscar lentamente</translation>
+    </message>
+    <message>
+      <source>Tilt the head</source>
+      <translation>Inclinar a cabeça</translation>
+    </message>
+    <message>
+      <source>Curious look</source>
+      <translation>Olhar curioso</translation>
+    </message>
+    <message>
+      <source>Silent meow</source>
+      <translation>Miado silencioso</translation>
+    </message>
+    <message>
+      <source>Raise a paw</source>
+      <translation>Levantar a patinha</translation>
+    </message>
+    <message>
+      <source>Wash the face</source>
+      <translation>Lavar o rosto</translation>
+    </message>
+    <message>
+      <source>Turn the head</source>
+      <translation>Girar a cabeça</translation>
+    </message>
+    <message>
+      <source>Open the wings</source>
+      <translation>Abrir as asas</translation>
+    </message>
+    <message>
+      <source>Flap the wings</source>
+      <translation>Bater as asas</translation>
+    </message>
+    <message>
+      <source>Sway</source>
+      <translation>Balançar</translation>
+    </message>
+    <message>
+      <source>Ruffle the feathers</source>
+      <translation>Ajeitar as penas</translation>
+    </message>
+    <message>
+      <source>Hoot</source>
+      <translation>Piar</translation>
+    </message>
+    <message>
+      <source>Startle</source>
+      <translation>Susto</translation>
+    </message>
+    <message>
+      <source>Tech excitement</source>
+      <translation>Empolgação tech</translation>
+    </message>
+    <message>
+      <source>Flop the ears</source>
+      <translation>Balançar as orelhas</translation>
+    </message>
+    <message>
+      <source>Pant</source>
+      <translation>Ofegar</translation>
+    </message>
+    <message>
+      <source>Tongue out</source>
+      <translation>Mostrar a língua</translation>
+    </message>
+    <message>
+      <source>Hop</source>
+      <translation>Saltitar</translation>
+    </message>
+    <message>
+      <source>Joy</source>
+      <translation>Alegria</translation>
+    </message>
+    <message>
+      <source>Sniff around</source>
+      <translation>Farejar</translation>
+    </message>
+    <message>
       <source>This is not a YouTube video or live link.</source>
       <translation>Isto não é um link de vídeo ou live do YouTube.</translation>
     </message>
     <message>
       <source>You</source>
       <translation>Você</translation>
+    </message>
+    <message>
+      <source>Viewer</source>
+      <translation>Espectador</translation>
     </message>
     <message>
       <source>Hi! This is how I sound. Ready for the live stream?</source>
@@ -173,10 +425,6 @@
       <translation>Personagens</translation>
     </message>
     <message>
-      <source>Pick who joins your stream. Each one has its own look, voice and sense of humour.</source>
-      <translation>Escolha quem participa da sua live. Cada um tem visual, voz e humor próprios.</translation>
-    </message>
-    <message>
       <source>On air</source>
       <translation>No ar</translation>
     </message>
@@ -187,6 +435,158 @@
     <message>
       <source>Use %1</source>
       <translation>Usar %1</translation>
+    </message>
+    <message>
+      <source>Happy</source>
+      <translation>Feliz</translation>
+    </message>
+    <message>
+      <source>Laugh</source>
+      <translation>Rir</translation>
+    </message>
+    <message>
+      <source>Surprise</source>
+      <translation>Surpresa</translation>
+    </message>
+    <message>
+      <source>Confused</source>
+      <translation>Confuso</translation>
+    </message>
+    <message>
+      <source>Annoyed</source>
+      <translation>Irritado</translation>
+    </message>
+    <message>
+      <source>Celebrate</source>
+      <translation>Comemorar</translation>
+    </message>
+    <message>
+      <source>Pick who joins your stream. Each one has its own look, voice, gestures and sense of humour.</source>
+      <translation>Escolha quem participa da sua live. Cada um tem seu visual, voz, gestos e senso de humor.</translation>
+    </message>
+    <message>
+      <source>See %1 up close</source>
+      <translation>Ver %1 de perto</translation>
+    </message>
+    <message>
+      <source>Live preview — exactly what OBS shows</source>
+      <translation>Prévia ao vivo — exatamente o que o OBS mostra</translation>
+    </message>
+    <message>
+      <source>Try %1</source>
+      <translation>Testar %1</translation>
+    </message>
+    <message>
+      <source>Everything here plays on the live overlay, with the real voice and lip sync.</source>
+      <translation>Tudo aqui aparece no overlay ao vivo, com a voz de verdade e sincronia labial.</translation>
+    </message>
+    <message>
+      <source>Expressions</source>
+      <translation>Expressões</translation>
+    </message>
+    <message>
+      <source>Gestures</source>
+      <translation>Gestos</translation>
+    </message>
+    <message>
+      <source>No voice available</source>
+      <translation>Nenhuma voz disponível</translation>
+    </message>
+    <message>
+      <source>Test voice</source>
+      <translation>Testar voz</translation>
+    </message>
+    <message>
+      <source>Simulate a viewer message</source>
+      <translation>Simular uma mensagem de espectador</translation>
+    </message>
+    <message>
+      <source>Viewer</source>
+      <translation>Espectador</translation>
+    </message>
+    <message>
+      <source>Name</source>
+      <translation>Nome</translation>
+    </message>
+    <message>
+      <source>Good evening! Which Linux distro do you recommend?</source>
+      <translation>Boa noite! Qual distribuição Linux vocês recomendam?</translation>
+    </message>
+    <message>
+      <source>Reads the message (if enabled) and answers it with the AI</source>
+      <translation>Lê a mensagem (se ativado) e responde com a IA</translation>
+    </message>
+    <message>
+      <source>Send</source>
+      <translation>Enviar</translation>
+    </message>
+    <message>
+      <source>Simulate a reply</source>
+      <translation>Simular uma resposta</translation>
+    </message>
+    <message>
+      <source>Make it say exactly this…</source>
+      <translation>Fazer falar exatamente isto…</translation>
+    </message>
+    <message>
+      <source>Say</source>
+      <translation>Falar</translation>
+    </message>
+    <message>
+      <source>Tune the personality</source>
+      <translation>Ajustar a personalidade</translation>
+    </message>
+    <message>
+      <source>Idle animations</source>
+      <translation>Animações em repouso</translation>
+    </message>
+    <message>
+      <source>While nobody is talking, the character breathes, looks around and makes small gestures. Applies to all characters.</source>
+      <translation>Enquanto ninguém fala, o personagem respira, olha ao redor e faz pequenos gestos. Vale para todos os personagens.</translation>
+    </message>
+    <message>
+      <source>Move while idle</source>
+      <translation>Movimentar em repouso</translation>
+    </message>
+    <message>
+      <source>When off, only breathing and blinking remain.</source>
+      <translation>Desligado, ficam só a respiração e as piscadas.</translation>
+    </message>
+    <message>
+      <source>Intensity</source>
+      <translation>Intensidade</translation>
+    </message>
+    <message>
+      <source>Subtle</source>
+      <translation>Suave</translation>
+    </message>
+    <message>
+      <source>Normal</source>
+      <translation>Normal</translation>
+    </message>
+    <message>
+      <source>Lively</source>
+      <translation>Animada</translation>
+    </message>
+    <message>
+      <source>Gesture frequency</source>
+      <translation>Frequência dos gestos</translation>
+    </message>
+    <message>
+      <source>Low</source>
+      <translation>Baixa</translation>
+    </message>
+    <message>
+      <source>High</source>
+      <translation>Alta</translation>
+    </message>
+    <message>
+      <source>Reduce motion</source>
+      <translation>Reduzir movimento</translation>
+    </message>
+    <message>
+      <source>No jumps or spins, softer and slower movement. For viewers sensitive to motion.</source>
+      <translation>Sem pulos nem giros, com movimentos mais suaves e lentos. Para quem é sensível a movimento.</translation>
     </message>
     <message>
       <source>Look and catchphrases</source>
@@ -201,6 +601,10 @@
       <translation>Cor principal</translation>
     </message>
     <message>
+      <source>For Tux it colours the band of the top hat.</source>
+      <translation>No Tux, colore a faixa da cartola.</translation>
+    </message>
+    <message>
       <source>Default colour</source>
       <translation>Cor padrão</translation>
     </message>
@@ -211,6 +615,22 @@
     <message>
       <source>E.g.: Minhocou!</source>
       <translation>Ex.: Minhocou!</translation>
+    </message>
+    <message>
+      <source>Animation demo · simulated lip sync</source>
+      <translation>Demonstração de animação · fala simulada</translation>
+    </message>
+    <message>
+      <source>Close</source>
+      <translation>Fechar</translation>
+    </message>
+    <message>
+      <source>Talk</source>
+      <translation>Falar</translation>
+    </message>
+    <message>
+      <source>Hi! This is how I move when I talk.</source>
+      <translation>Oi! É assim que eu me mexo quando falo.</translation>
     </message>
   </context>
   <context>
@@ -324,6 +744,26 @@
       <translation>Super Chats furam a fila</translation>
     </message>
     <message>
+      <source>Read the viewer's name and message before replying</source>
+      <translation>Ler o nome e a mensagem do espectador antes de responder</translation>
+    </message>
+    <message>
+      <source>Off — the avatar answers directly.</source>
+      <translation>Desativado — o avatar responde direto.</translation>
+    </message>
+    <message>
+      <source>On — reads who wrote, then answers.</source>
+      <translation>Ativado — lê quem escreveu e depois responde.</translation>
+    </message>
+    <message>
+      <source>On — reads who wrote and the message, then answers.</source>
+      <translation>Ativado — lê quem escreveu e a mensagem, depois responde.</translation>
+    </message>
+    <message>
+      <source>Configure</source>
+      <translation>Configurar</translation>
+    </message>
+    <message>
       <source>Blocked words (comma separated) — messages containing them are ignored</source>
       <translation>Palavras bloqueadas (separadas por vírgula) — mensagens com elas são ignoradas</translation>
     </message>
@@ -379,8 +819,16 @@
       <translation>Modo demonstração (sem YouTube)</translation>
     </message>
     <message>
-      <source>Listening</source>
-      <translation>Ouvindo</translation>
+      <source>Waiting for messages</source>
+      <translation>Aguardando mensagens</translation>
+    </message>
+    <message>
+      <source>Paying attention</source>
+      <translation>Prestando atenção</translation>
+    </message>
+    <message>
+      <source>Reading the message</source>
+      <translation>Lendo a mensagem</translation>
     </message>
     <message>
       <source>Thinking…</source>
@@ -584,6 +1032,10 @@
     <message>
       <source>Clear the queue</source>
       <translation>Limpar a fila</translation>
+    </message>
+    <message>
+      <source>Reads first: %1</source>
+      <translation>Lê antes: %1</translation>
     </message>
     <message>
       <source>Discard</source>
@@ -1370,12 +1822,16 @@
       <translation>Automática (a que mais combina com o personagem)</translation>
     </message>
     <message>
+      <source>Same voice as the character</source>
+      <translation>A mesma voz do personagem</translation>
+    </message>
+    <message>
       <source>Voice</source>
       <translation>Voz</translation>
     </message>
     <message>
-      <source>Speech comes from TTS BigLinux (RHVoice, Piper, espeak-ng). Each character can have its own voice.</source>
-      <translation>A fala vem do TTS BigLinux (RHVoice, Piper, espeak-ng). Cada personagem pode ter a sua voz.</translation>
+      <source>Speech comes from TTS BigLinux (RHVoice, Piper, espeak-ng and Kokoro). Each character can have its own voice.</source>
+      <translation>A fala vem do TTS BigLinux (RHVoice, Piper, espeak-ng e Kokoro). Cada personagem pode ter a sua voz.</translation>
     </message>
     <message>
       <source>Check again</source>
@@ -1405,6 +1861,18 @@
       <translation>Desligado, as respostas aparecem só no balão.</translation>
     </message>
     <message>
+      <source>Engines:</source>
+      <translation>Mecanismos:</translation>
+    </message>
+    <message>
+      <source>Ready</source>
+      <translation>Pronto</translation>
+    </message>
+    <message>
+      <source>Not installed or without voices</source>
+      <translation>Não instalado ou sem vozes</translation>
+    </message>
+    <message>
       <source>Install it with:  sudo pacman -S tts-biglinux</source>
       <translation>Instale com:  sudo pacman -S tts-biglinux</translation>
     </message>
@@ -1417,6 +1885,10 @@
       <translation>Ouvir</translation>
     </message>
     <message>
+      <source>Kokoro voices are neural and very natural, but take about as long to create as they last. ChatToon prepares the reply while the viewer's message is being read.</source>
+      <translation>As vozes Kokoro são neurais e muito naturais, mas levam quase o mesmo tempo para serem geradas que para serem ouvidas. O ChatToon prepara a resposta enquanto lê a mensagem do espectador.</translation>
+    </message>
+    <message>
       <source>Speed</source>
       <translation>Velocidade</translation>
     </message>
@@ -1425,8 +1897,60 @@
       <translation>Tom</translation>
     </message>
     <message>
-      <source>Supported by RHVoice and espeak-ng.</source>
-      <translation>Funciona com RHVoice e espeak-ng.</translation>
+      <source>Supported by RHVoice and espeak-ng (Piper changes the expressiveness).</source>
+      <translation>Funciona no RHVoice e no espeak-ng (no Piper altera a expressividade).</translation>
+    </message>
+    <message>
+      <source>This voice has no pitch control.</source>
+      <translation>Esta voz não tem controle de tom.</translation>
+    </message>
+    <message>
+      <source>Message reading</source>
+      <translation>Leitura das mensagens</translation>
+    </message>
+    <message>
+      <source>Before replying, the character can read who wrote and what they wrote — exactly as written, never changed by the AI.</source>
+      <translation>Antes de responder, o personagem pode ler quem escreveu e o que escreveu — exatamente como foi escrito, sem a IA alterar nada.</translation>
+    </message>
+    <message>
+      <source>Read before replying</source>
+      <translation>Ler antes de responder</translation>
+    </message>
+    <message>
+      <source>Off</source>
+      <translation>Desativado</translation>
+    </message>
+    <message>
+      <source>Name</source>
+      <translation>Nome</translation>
+    </message>
+    <message>
+      <source>Name + message</source>
+      <translation>Nome + mensagem</translation>
+    </message>
+    <message>
+      <source>Read at most</source>
+      <translation>Ler no máximo</translation>
+    </message>
+    <message>
+      <source>Longer messages are cut at a word boundary — never summarised or rewritten.</source>
+      <translation>Mensagens maiores são cortadas no fim de uma palavra — nunca resumidas nem reescritas.</translation>
+    </message>
+    <message>
+      <source> chars</source>
+      <translation> caracteres</translation>
+    </message>
+    <message>
+      <source>Pause before the reply</source>
+      <translation>Pausa antes da resposta</translation>
+    </message>
+    <message>
+      <source>Reading voice</source>
+      <translation>Voz da leitura</translation>
+    </message>
+    <message>
+      <source>Links and emoji are skipped and odd user names are made pronounceable. Messages blocked by your filters are never read, and off-limits topics are read as the name only.</source>
+      <translation>Links e emojis são ignorados e nomes de usuário estranhos ficam pronunciáveis. Mensagens bloqueadas pelos seus filtros nunca são lidas, e assuntos proibidos são lidos só com o nome.</translation>
     </message>
     <message>
       <source>Audio output</source>

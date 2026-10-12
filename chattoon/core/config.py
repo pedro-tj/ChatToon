@@ -97,6 +97,26 @@ class VoiceSettings:
 
 
 @dataclass
+class ReadingSettings:
+    """Read the viewer's name (and message) aloud before the reply."""
+
+    mode: str = "name_message"  # off | name | name_message
+    max_chars: int = 180  # longer messages are cut at a word boundary (never rewritten)
+    pause: float = 0.5  # seconds of silence between the reading and the reply
+    voice_id: str = ""  # "" = the character's own voice
+
+
+@dataclass
+class AnimationSettings:
+    """Idle life of the avatar while nobody is talking to it."""
+
+    idle: bool = True
+    intensity: str = "normal"  # subtle | normal | lively
+    frequency: str = "normal"  # low | normal | high
+    reduce_motion: bool = False  # no jumps, spins or fast gestures
+
+
+@dataclass
 class ChatSettings:
     url: str = ""
     selection: str = "smart"  # all | smart | mentions | questions | moderators | members | random | manual
@@ -136,7 +156,7 @@ class OverlaySettings:
 
 @dataclass
 class Settings:
-    character: str = "worm"  # worm | alien | tux
+    character: str = "worm"  # worm | alien | tux | cat | owl | dog
     mode: str = "demo"  # demo | assisted | auto
     ui_language: str = "system"  # system | en | pt_BR
     theme: str = "system"  # system | dark | light
@@ -145,6 +165,8 @@ class Settings:
     voice: VoiceSettings = field(default_factory=VoiceSettings)
     chat: ChatSettings = field(default_factory=ChatSettings)
     overlay: OverlaySettings = field(default_factory=OverlaySettings)
+    reading: ReadingSettings = field(default_factory=ReadingSettings)
+    animation: AnimationSettings = field(default_factory=AnimationSettings)
     context: ChannelContext = field(default_factory=ChannelContext)
     characters: dict[str, CharacterSettings] = field(default_factory=dict)
 
@@ -154,7 +176,7 @@ class Settings:
         cid = character_id or self.character
         if cid not in self.characters:
             base = CHARACTERS.get(cid)
-            self.characters[cid] = base.default_settings() if base else CharacterSettings()
+            self.characters[cid] = base.default_settings(self.ai.reply_language) if base else CharacterSettings()
         return self.characters[cid]
 
     # -- persistence -----------------------------------------------------
@@ -170,7 +192,12 @@ class Settings:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return cls()
-        return from_dict(cls, data)
+        settings = from_dict(cls, data)
+        if isinstance(data, dict) and "reading" not in data:
+            # Saved before message reading existed: keep answering directly, as the
+            # streamer is used to. New installations read "name + message" by default.
+            settings.reading.mode = "off"
+        return settings
 
     def save(self, path: Path | None = None) -> None:
         path = path or self.file()
