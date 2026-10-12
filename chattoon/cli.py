@@ -16,7 +16,10 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("-v", "--verbose", action="store_true", help="debug logging")
     sub = p.add_subparsers(dest="command")
     sub.add_parser("gui", help="open the desktop app (default)")
-    sub.add_parser("doctor", help="check Ollama, TTS BigLinux and audio")
+    sub.add_parser("doctor", help="check Ollama, TTS BigLinux, audio and streaming platforms")
+    extras = sub.add_parser("extras", help="optional components (installed in a private folder)")
+    extras.add_argument("action", choices=["install", "status"])
+    extras.add_argument("name", choices=["tiktok"])
     say = sub.add_parser("ask", help="ask the current character something (prints, does not speak)")
     say.add_argument("text")
     say.add_argument("--character", choices=["worm", "alien", "tux", "cat", "owl", "dog"])
@@ -51,7 +54,29 @@ async def _doctor() -> int:
         print(f"✘ TTS BigLinux: {t.get('error')}")
     print("✔ audio player found" if report["player"] else "✘ no audio player (install pipewire or alsa-utils)")
     engine.tts.shutdown()
+    _doctor_streams(settings)
     return 0 if ok and report["player"] else 1
+
+
+def _doctor_streams(settings) -> None:
+    """Configured platforms, keyring and optional components (never prints secrets)."""
+    import importlib.util
+
+    from .core import extras
+    from .core.credentials import open_store
+    from .core.streams import PLATFORMS
+
+    store = open_store()
+    print("✔ logins in the system keyring" if store.encrypted else "· no keyring found: logins kept in a private file")
+    extras.activate()
+    has_tiktok = importlib.util.find_spec("TikTokLive") is not None
+    print("✔ TikTokLive installed" if has_tiktok else "· TikTok support not installed (chattoon extras install tiktok)")
+    sources = settings.stream_sources()
+    if not sources:
+        print("· no streaming platform configured")
+    for s in sources:
+        info = PLATFORMS[s.platform]
+        print(f"  {'✔' if s.enabled else '·'} {info['label']} ({info['support']}): {s.label or s.target}")
 
 
 async def _ask(text: str, character: str | None) -> int:
@@ -88,10 +113,24 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING,
                         format="%(levelname)s %(name)s: %(message)s")
+    from .core.credentials import install_log_redaction
+
+    install_log_redaction()  # tokens never reach a log line, even with --verbose
     if args.command == "doctor":
         return asyncio.run(_doctor())
     if args.command == "ask":
         return asyncio.run(_ask(args.text, args.character))
+    if args.command == "extras":
+        import importlib.util
+
+        from .core import extras
+
+        if args.action == "install":
+            print("Installing into", extras.venv_dir(), "(nothing outside this folder changes)")
+            return extras.install(args.name)
+        installed = extras.activate() and importlib.util.find_spec("TikTokLive") is not None
+        print("installed" if installed else "not installed")
+        return 0 if installed else 1
     from .gui.app import run
 
     return run(sys.argv[:1])

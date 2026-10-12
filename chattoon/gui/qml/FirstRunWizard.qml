@@ -49,7 +49,7 @@ Popup {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                     color: Theme.textMuted; font.pixelSize: 14; lineHeight: 1.3
-                    text: qsTr("A 3D character that reads your YouTube chat, answers with its own sense of humour and talks with a real voice — all running on your computer. Let's check a couple of things and you are ready in a minute.")
+                    text: qsTr("A 3D character that reads your live chat — YouTube, Twitch, Kick, TikTok and more at the same time — answers with its own sense of humour and talks with a real voice, all running on your computer. Let's check a couple of things and you are ready in a minute.")
                 }
             }
 
@@ -135,7 +135,7 @@ Popup {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                     color: Theme.textMuted; font.pixelSize: 14; lineHeight: 1.3
-                    text: qsTr("Try it now in Demo mode: type a message on the Dashboard as if you were a viewer. When you go live, paste the stream link on the YouTube chat page, add the overlay to OBS and switch to Assisted or Automatic.")
+                    text: qsTr("Try it now in Demo mode: type a message on the Dashboard as if you were a viewer. When you go live, add your platforms on the Streaming platforms page, add the overlay to OBS and switch to Assisted or Automatic.")
                 }
             }
         }

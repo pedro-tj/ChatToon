@@ -188,3 +188,29 @@ def test_mouth_moves_only_with_real_audio():
 
     silent, voiced = run_page(check)
     assert silent == 0 and voiced > 0.6
+
+
+def test_bubble_shows_the_platform_tag_safely():
+    async def check(page, url, _):
+        await page.open(f"{url}?demo=tux&capture=1", 1280, 720)
+        await page.eval("chattoonCapture.advance(0.3)")
+        await page.eval("chattoonCapture.speak({id: 'p1', kind: 'reading', author: 'Ana', text: 'Como instalo a NVIDIA?', "
+                        "duration: 1, envelope: [0.5], fps: 50, question: true, platform: 'twitch', "
+                        "platformLabel: 'Twitch', platformColor: '#9146ff'})")
+        await page.eval("chattoonCapture.advance(0.5)")
+        tagged = await page.eval("chattoonCapture.bubble()")
+        hostile = await page.eval("chattoonCapture.speak({id: 'p2', kind: 'reading', author: 'x', text: 'oi', duration: 1, "
+                                  "envelope: [0.5], fps: 50, platformLabel: '<img src=x onerror=alert(1)>', "
+                                  "platformColor: 'red;background:url(//evil)'}); chattoonCapture.advance(0.5); "
+                                  "[document.querySelector('#bubble .platform').innerHTML, "
+                                  "document.querySelector('#bubble .platform').style.getPropertyValue('--platform')]")
+        await page.eval("chattoonCapture.done(); chattoonCapture.speak({id: 'p3', kind: 'reply', author: 'Ana', "
+                        "text: 'Fácil!', duration: 1, envelope: [0.5], fps: 50, platformLabel: 'Twitch'}); chattoonCapture.advance(0.5)")
+        reply = await page.eval("chattoonCapture.bubble()")
+        return tagged, hostile, reply, page.errors
+
+    tagged, hostile, reply, errors = run_page(check)
+    assert errors == []
+    assert tagged["platform"] == "Twitch" and tagged["author"] == "Ana" and tagged["label"]  # "question"
+    assert "<img" not in hostile[0] and hostile[1] == "#5b5670"  # text only; odd colours fall back
+    assert reply["platform"] == ""  # only the viewer's message carries the tag

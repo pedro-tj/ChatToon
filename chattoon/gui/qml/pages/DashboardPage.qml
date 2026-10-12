@@ -14,10 +14,13 @@ Page {
     title: qsTr("Dashboard")
     subtitle: qsTr("Everything that matters during the live stream, in one place.")
 
+    readonly property var enabledSources: backend.sources.filter(s => s.enabled)
+    readonly property int connectedSources: enabledSources.filter(s => s.status.state === "connected").length
     function chatValue() {
-        const map = { connected: qsTr("Connected"), connecting: qsTr("Connecting…"), reconnecting: qsTr("Reconnecting…"),
-                      ended: qsTr("Chat ended"), error: qsTr("Unavailable"), stopped: qsTr("Not connected") }
-        return cfg.mode === "demo" ? qsTr("Demo mode (no YouTube)") : (map[rt.chat] || qsTr("Not connected"))
+        if (cfg.mode === "demo") return qsTr("Demo mode (no platform)")
+        if (enabledSources.length === 0) return qsTr("No platform added")
+        if (!win.running && !win.paused) return qsTr("%n platform(s) ready", "", enabledSources.length)
+        return qsTr("%1 of %2 connected").arg(connectedSources).arg(enabledSources.length)
     }
     function phaseLabel(p) {
         return { idle: qsTr("Waiting for messages"), listening: qsTr("Paying attention"), reading: qsTr("Reading the message"),
@@ -61,7 +64,7 @@ Page {
                 status: svc.ollama.ok === true ? (cfg.ai.model ? "ok" : "warn") : svc.ollama.ok === false ? "error" : "busy"
                 value: svc.ollama.ok === false ? qsTr("Not running") : cfg.ai.model || qsTr("Choose a model")
                 detail: svc.ollama.ok === false ? svc.ollama.error || "" : qsTr("Version %1").arg(svc.ollama.version || "?")
-                onClicked: win.currentPage = 3
+                onClicked: win.go("ai")
             }
             StatusCard {
                 iconName: "volume"
@@ -70,23 +73,26 @@ Page {
                 value: !cfg.voice.enabled ? qsTr("Muted") : svc.tts.ok === false ? qsTr("Unavailable")
                      : cfg.voice.audio_output === "overlay" ? qsTr("Plays in OBS") : qsTr("Plays on this computer")
                 detail: svc.tts.ok === false ? svc.tts.error || "" : ""
-                onClicked: win.currentPage = 5
+                onClicked: win.go("voice")
             }
             StatusCard {
                 iconName: "chat"
                 title: qsTr("Live chat")
-                status: cfg.mode === "demo" ? "ok" : rt.chat === "connected" ? "ok" : rt.chat === "error" ? "error"
-                      : (rt.chat === "connecting" || rt.chat === "reconnecting") ? "busy" : "idle"
+                status: cfg.mode === "demo" ? "ok" : page.enabledSources.length === 0 ? "warn"
+                      : win.attention > 0 ? "error"
+                      : page.connectedSources === page.enabledSources.length && page.connectedSources > 0 ? "ok"
+                      : (rt.chat === "connecting" || rt.chat === "reconnecting") ? "busy"
+                      : page.connectedSources > 0 ? "warn" : "idle"
                 value: page.chatValue()
-                detail: rt.chatDetail || ""
-                onClicked: win.currentPage = 4
+                detail: page.enabledSources.map(s => (win.platformInfo[s.platform] || {}).label + ": " + Status.label(s.status.state)).join("\n")
+                onClicked: win.go("platforms")
             }
             StatusCard {
                 iconName: "broadcast"
                 title: qsTr("OBS overlay")
                 status: rt.obs > 0 ? "ok" : "idle"
                 value: rt.obs > 0 ? qsTr("%n source(s) connected", "", rt.obs) : qsTr("Not added to OBS yet")
-                onClicked: win.currentPage = 7
+                onClicked: win.go("obs")
             }
             GridLayout {
                 Layout.fillWidth: true
@@ -115,11 +121,64 @@ Page {
         }
     }
 
+    // ------------------------------------------------------------------- multistream
+    Section {
+        visible: backend.sources.length > 0 && cfg.mode !== "demo"
+        title: qsTr("Platforms")
+        iconName: "layers"
+        description: qsTr("Messages per minute and replies on each platform.")
+        actions: AppButton { compact: true; variant: "ghost"; iconName: "chat"; text: qsTr("Open live chat"); onClicked: win.go("livechat") }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 10
+            Repeater {
+                model: backend.sources
+                Rectangle {
+                    id: tile
+                    required property var modelData
+                    width: 252
+                    height: 74
+                    radius: Theme.radiusSmall
+                    color: Theme.field
+                    border.width: 1
+                    border.color: Theme.tint(Status.tone(modelData.status.state), 0.4)
+                    opacity: modelData.enabled ? 1 : 0.5
+                    Accessible.role: Accessible.Button
+                    Accessible.name: (win.platformInfo[modelData.platform] || {}).label + " " + Status.label(modelData.status.state)
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: win.go("platforms") }
+                    ColumnLayout {
+                        anchors { fill: parent; margins: 10 }
+                        spacing: 6
+                        RowLayout {
+                            spacing: 8
+                            PlatformBadge { platform: tile.modelData.platform; size: 22 }
+                            Text {
+                                Layout.fillWidth: true
+                                textFormat: Text.PlainText
+                                text: tile.modelData.label || tile.modelData.status.channel || tile.modelData.target.replace(/^https?:\/\/(www\.)?/, "")
+                                color: Theme.text; font.pixelSize: 12; font.weight: Font.DemiBold; elide: Text.ElideRight
+                            }
+                        }
+                        RowLayout {
+                            spacing: 8
+                            StatePill { value: tile.modelData.status.state; implicitHeight: 20; Layout.maximumWidth: 150; clip: true }
+                            Item { Layout.fillWidth: true }
+                            Text { text: qsTr("%1/min").arg(tile.modelData.rate); color: Theme.textMuted; font.family: Theme.mono; font.pixelSize: 11 }
+                            Text { text: "✓ " + tile.modelData.answered; color: Theme.success; font.family: Theme.mono; font.pixelSize: 11
+                                   Accessible.name: qsTr("%1 answered").arg(tile.modelData.answered) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ------------------------------------------------------------------- controls
     Section {
         title: qsTr("Live controls")
         iconName: "zap"
-        description: qsTr("Demo works without YouTube. Assisted shows suggestions for you to approve. Automatic answers on its own.")
+        description: qsTr("Demo works without any platform. Assisted shows suggestions for you to approve. Automatic answers on its own.")
 
         RowLayout {
             Layout.fillWidth: true
@@ -221,7 +280,7 @@ Page {
                         id: sugCol
                         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
                         spacing: 4
-                        Text { Layout.fillWidth: true; text: modelData.author + ": " + modelData.message; color: Theme.textFaint; font.pixelSize: 11; elide: Text.ElideRight }
+                        Text { Layout.fillWidth: true; text: modelData.author + ": " + modelData.message; textFormat: Text.PlainText; color: Theme.textFaint; font.pixelSize: 11; elide: Text.ElideRight }
                         RowLayout {
                             Layout.fillWidth: true
                             visible: !!modelData.reading
@@ -229,7 +288,7 @@ Page {
                             Icon { name: "quote"; size: 12; color: Theme.textFaint }
                             Text { Layout.fillWidth: true; text: qsTr("Reads first: %1").arg(modelData.reading || ""); color: Theme.textFaint; font.pixelSize: 11; font.italic: true; elide: Text.ElideRight }
                         }
-                        Text { Layout.fillWidth: true; text: modelData.text; color: Theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
+                        Text { Layout.fillWidth: true; text: modelData.text; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
                         RowLayout {
                             Item { Layout.fillWidth: true }
                             AppButton { compact: true; variant: "ghost"; iconName: "x"; text: qsTr("Discard"); onClicked: backend.reject(modelData.id) }
@@ -244,6 +303,7 @@ Page {
                     required property var modelData
                     Layout.fillWidth: true
                     spacing: 8
+                    PlatformBadge { visible: !!win.platformInfo[modelData.platform]; platform: modelData.platform; size: 18 }
                     Chip { visible: modelData.superchat !== ""; text: modelData.superchat; tone: Theme.warning }
                     Chip { visible: modelData.moderator; text: qsTr("mod"); tone: Theme.accent }
                     Chip { visible: modelData.question; text: "?"; tone: Theme.accent2 }
@@ -282,9 +342,10 @@ Page {
                     Layout.fillWidth: true
                     visible: modelData.author !== ""
                     text: modelData.author + ": " + modelData.message
+                    textFormat: Text.PlainText
                     color: Theme.textFaint; font.pixelSize: 11; elide: Text.ElideRight
                 }
-                Text { Layout.fillWidth: true; text: modelData.reply; color: Theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
+                Text { Layout.fillWidth: true; text: modelData.reply; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
             }
         }
     }

@@ -67,6 +67,9 @@ def run(argv: list[str] | None = None) -> int:
     QApplication.setApplicationVersion(__version__)
     QApplication.setOrganizationName("chattoon")
     QApplication.setDesktopFileName("chattoon")
+    from ..core.credentials import install_log_redaction
+
+    install_log_redaction()
     app = QApplication(argv or sys.argv[:1])
     app.setWindowIcon(QIcon(str(APP_ICON)))
     backend = Backend()

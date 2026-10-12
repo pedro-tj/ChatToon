@@ -70,6 +70,11 @@ Page {
             LabeledSlider { label: qsTr("Lighting"); from: 0.3; to: 2; stepSize: 0.05; decimals: 2; value: o.light; onMoved: v => backend.setConfig("overlay.light", v) }
             SettingRow { label: qsTr("Speech bubble"); AppSwitch { checked: o.show_bubble; onToggled: backend.setConfig("overlay.show_bubble", checked) } }
             SettingRow { label: qsTr("Show the viewer's name"); AppSwitch { checked: o.show_author; onToggled: backend.setConfig("overlay.show_author", checked) } }
+            SettingRow {
+                label: qsTr("Show the platform of the message")
+                description: qsTr("A small “Twitch • Ana” tag on the viewer's message.")
+                AppSwitch { checked: o.show_platform; onToggled: backend.setConfig("overlay.show_platform", checked); Accessible.name: qsTr("Show the platform of the message") }
+            }
             SettingRow { label: qsTr("Soft shadow"); AppSwitch { checked: o.shadows; onToggled: backend.setConfig("overlay.shadows", checked) } }
             SettingRow {
                 label: qsTr("Background")

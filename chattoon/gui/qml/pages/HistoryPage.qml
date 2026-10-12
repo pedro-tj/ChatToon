@@ -50,8 +50,8 @@ Page {
                     Chip { visible: modelData.generation > 0; text: modelData.generation.toFixed(1) + " s"; iconName: "clock" }
                     Chip { visible: !modelData.voice; text: qsTr("no voice"); tone: Theme.warning }
                 }
-                Text { Layout.fillWidth: true; visible: modelData.author !== ""; text: modelData.author + ": " + modelData.message; color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.WordWrap }
-                Text { Layout.fillWidth: true; text: modelData.reply; color: Theme.text; font.pixelSize: 14; wrapMode: Text.WordWrap }
+                Text { Layout.fillWidth: true; visible: modelData.author !== ""; text: modelData.author + ": " + modelData.message; textFormat: Text.PlainText; color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.WordWrap }
+                Text { Layout.fillWidth: true; text: modelData.reply; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: 14; wrapMode: Text.WordWrap }
             }
         }
     }

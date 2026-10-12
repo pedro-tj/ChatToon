@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import types
 import typing
@@ -101,6 +102,8 @@ class ReadingSettings:
     """Read the viewer's name (and message) aloud before the reply."""
 
     mode: str = "name_message"  # off | name | name_message
+    # say where the message came from: never | multi (only while 2+ platforms are live) | always
+    platform: str = "multi"
     max_chars: int = 180  # longer messages are cut at a word boundary (never rewritten)
     pause: float = 0.5  # seconds of silence between the reading and the reply
     voice_id: str = ""  # "" = the character's own voice
@@ -118,8 +121,9 @@ class AnimationSettings:
 
 @dataclass
 class ChatSettings:
-    url: str = ""
-    selection: str = "smart"  # all | smart | mentions | questions | moderators | members | random | manual
+    url: str = ""  # YouTube URL of ChatToon 2.x; migrated to a stream source (kept for older versions)
+    # smart | balanced | weighted | all | mentions | questions | moderators | members | random | manual
+    selection: str = "smart"
     user_cooldown: int = 60  # seconds before answering the same person again
     max_queue: int = 40
     message_ttl: int = 120  # older messages are dropped
@@ -128,7 +132,53 @@ class ChatSettings:
     skip_backlog: bool = True  # ignore messages that existed before connecting
     ignore_commands: bool = True  # "!cmd" messages belong to other bots
     blocked_words: str = ""  # comma separated, messages containing them are dropped
-    superchat_priority: bool = True
+    superchat_priority: bool = True  # paid messages of any platform (Super Chat, Bits, gifts…) go first
+    fairness: bool = True  # share replies between platforms instead of answering only the busiest chat
+    include_events: bool = False  # gifts, follows and subscriptions without text may be answered too
+    priority_viewers: str = ""  # comma separated names ("ana" or "twitch:ana") answered first
+
+
+# option names that could carry credentials never enter settings files or profiles
+SECRET_KEY = re.compile(r"token|secret|password|passwd|cookie|session|api.?key|bearer|verifier|auth.?code", re.I)
+PLATFORMS = ("youtube", "twitch", "kick", "tiktok", "facebook", "instagram", "x")
+
+
+@dataclass
+class SourceConfig:
+    """One chat being read: a platform plus the channel, URL or live it points to."""
+
+    id: str = ""
+    platform: str = "youtube"
+    target: str = ""  # URL, channel name, @handle or id typed by the streamer
+    label: str = ""  # optional display name
+    enabled: bool = True
+    priority: int = 1  # 1..5: share of attention in the "weighted" selection mode
+    options: dict[str, str] = field(default_factory=dict)  # platform specific, never secrets
+
+    def __post_init__(self) -> None:
+        if self.platform not in PLATFORMS:
+            self.platform = "youtube"
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,40}", self.id or ""):
+            self.id = f"{self.platform}-{secrets.token_hex(3)}"
+        self.priority = min(5, max(1, int(self.priority)))
+        self.options = {str(k): str(v) for k, v in self.options.items() if not SECRET_KEY.search(str(k))}
+
+
+@dataclass
+class PlatformApps:
+    """Public ids of developer apps used for official logins. Secrets (client secrets,
+    tokens) live in the system keyring, never here."""
+
+    twitch_client_id: str = ""
+    kick_client_id: str = ""
+    kick_webhook_port: int = 8790  # local receiver for Kick webhooks (only when enabled)
+
+
+@dataclass
+class StreamSettings:
+    sources: list[SourceConfig] = field(default_factory=list)
+    apps: PlatformApps = field(default_factory=PlatformApps)
+    migrated: bool = False  # True once ChatToon 2.x's single YouTube URL became a source
 
 
 @dataclass
@@ -137,6 +187,7 @@ class OverlaySettings:
     token: str = ""
     show_bubble: bool = True
     show_author: bool = True
+    show_platform: bool = True  # small "Twitch • Ana" tag on the viewer's message
     scale: float = 1.0
     position_x: float = 0.0  # -1..1 (left..right)
     position_y: float = -0.15  # -1..1 (bottom..top)
@@ -164,6 +215,7 @@ class Settings:
     ai: AISettings = field(default_factory=AISettings)
     voice: VoiceSettings = field(default_factory=VoiceSettings)
     chat: ChatSettings = field(default_factory=ChatSettings)
+    streams: StreamSettings = field(default_factory=StreamSettings)
     overlay: OverlaySettings = field(default_factory=OverlaySettings)
     reading: ReadingSettings = field(default_factory=ReadingSettings)
     animation: AnimationSettings = field(default_factory=AnimationSettings)
@@ -178,6 +230,13 @@ class Settings:
             base = CHARACTERS.get(cid)
             self.characters[cid] = base.default_settings(self.ai.reply_language) if base else CharacterSettings()
         return self.characters[cid]
+
+    def stream_sources(self) -> list[SourceConfig]:
+        """Configured sources; ChatToon 2.x settings (one YouTube URL) still work unmigrated."""
+        if self.streams.sources or self.streams.migrated:
+            return self.streams.sources
+        url = self.chat.url.strip()
+        return [SourceConfig(id="youtube-main", platform="youtube", target=url)] if url else []
 
     # -- persistence -----------------------------------------------------
 
@@ -197,6 +256,10 @@ class Settings:
             # Saved before message reading existed: keep answering directly, as the
             # streamer is used to. New installations read "name + message" by default.
             settings.reading.mode = "off"
+        if isinstance(data, dict) and "streams" not in data:
+            # ChatToon 2.x read one YouTube chat: it becomes the first source, nothing to redo.
+            settings.streams.sources = settings.stream_sources()
+            settings.streams.migrated = True
         return settings
 
     def save(self, path: Path | None = None) -> None:
@@ -213,6 +276,8 @@ class Settings:
         data = asdict(self)
         data["overlay"].pop("token", None)  # the overlay token is a local secret
         data.pop("first_run_done", None)
+        for source in data["streams"]["sources"]:  # belt and braces: options never hold secrets
+            source["options"] = {k: v for k, v in source["options"].items() if not SECRET_KEY.search(k)}
         return {"chattoon_profile": 1, "settings": data}
 
     def import_profile(self, profile: dict) -> Settings:

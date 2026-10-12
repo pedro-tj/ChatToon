@@ -225,7 +225,7 @@ Page {
                 AppButton { id: sayBtn; compact: true; iconName: "volume"; text: qsTr("Say"); enabled: sayText.text !== ""
                             onClicked: { backend.say(sayText.text, "happy"); sayText.text = "" } }
             }
-            AppButton { compact: true; variant: "ghost"; iconName: "sparkles"; text: qsTr("Tune the personality"); onClicked: win.currentPage = 2 }
+            AppButton { compact: true; variant: "ghost"; iconName: "sparkles"; text: qsTr("Tune the personality"); onClicked: win.go("personality") }
         }
     }
 

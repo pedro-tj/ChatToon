@@ -20,7 +20,13 @@ body.preview.light { background: radial-gradient(120% 90% at 50% 15%, #ffffff 0%
   background: inherit; transform: translateX(-50%) rotate(45deg); border-radius: 0 0 8px 0;
 }
 #bubble .head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-#bubble .head:has(.author:empty):has(.label:empty) { display: none; }
+#bubble .head:has(.author:empty):has(.label:empty):has(.platform:empty) { display: none; }
+#bubble .platform {
+  display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.5em; font-weight: 800;
+  letter-spacing: 0.05em; text-transform: uppercase; color: #fff; background: var(--platform, #5b5670); white-space: nowrap;
+}
+#bubble .platform.light { color: #111; }
+#bubble .platform:empty { display: none; }
 #bubble .author {
   display: inline-block; padding: 2px 10px; border-radius: 999px;
   font-size: 0.55em; letter-spacing: 0.02em; font-weight: 700; color: #fff;

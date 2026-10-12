@@ -27,6 +27,7 @@ _ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 _UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
        "Chrome/140.0 Safari/537.36")
 BASE = "https://www.youtube.com"
+_PAID = {"liveChatPaidMessageRenderer": "superchat", "liveChatPaidStickerRenderer": "supersticker"}
 
 
 class ChatError(Exception):
@@ -111,6 +112,8 @@ def parse_actions(actions: list[dict]) -> list[ChatMessage]:
                 is_verified="VERIFIED" in icons,
                 is_member=member,
                 superchat=(r.get("purchaseAmountText") or {}).get("simpleText", ""),
+                event_type="paid" if kind in _PAID else "message",
+                paid_kind=_PAID.get(kind, ""),
             ))
     return [m for m in out if m.id]
 

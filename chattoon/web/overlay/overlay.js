@@ -22,6 +22,7 @@ const config = {
   fps: Number(params.get("fps") || 60), bubbleSeconds: 2.5, background: "transparent", zoom: Number(params.get("zoom") || 1),
   idle: params.get("idle") !== "0", intensity: params.get("intensity") || "normal",
   frequency: params.get("frequency") || "normal", reduceMotion: params.get("reduce") === "1", language: "pt-BR",
+  showPlatform: true,
 };
 // phase: what the avatar is doing (idle/listening/reading/thinking/speaking); app: running/paused/stopped/emergency
 const state = { phase: "idle", app: "stopped", speech: null, connected: false };
@@ -148,6 +149,7 @@ const bubble = document.getElementById("bubble");
 const bubbleText = bubble.querySelector(".text");
 const bubbleAuthor = bubble.querySelector(".author");
 const bubbleLabel = bubble.querySelector(".label");
+const bubblePlatform = bubble.querySelector(".platform");
 let bubbleHideAt = 0;
 let swapTimer = 0;
 const LABELS = {
@@ -157,12 +159,30 @@ const LABELS = {
 
 function labels() { return LABELS[(config.language || "pt").toLowerCase().startsWith("pt") ? "pt" : "en"]; }
 
+// Super Chats say so; Bits, Kicks and gifts show their own label ("100 bits", "Rosa ×5")
+function paidLabel(extra) {
+  const superchat = !extra.paidKind || extra.paidKind === "superchat" || extra.paidKind === "supersticker";
+  return superchat ? `${labels().superchat} ${extra.superchat}` : extra.superchat;
+}
+
+// "Twitch • Ana": where the message came from, in the platform's colour (text, never only colour)
+function fillPlatform(kind, extra) {
+  const show = kind === "reading" && config.showPlatform !== false && extra.platformLabel;
+  bubblePlatform.textContent = show ? String(extra.platformLabel).slice(0, 20) : "";
+  const color = /^#[0-9a-f]{6}$/i.test(extra.platformColor || "") ? extra.platformColor : "#5b5670";
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16) / 255);
+  bubblePlatform.style.setProperty("--platform", color);
+  bubblePlatform.classList.toggle("light", 0.299 * r + 0.587 * g + 0.114 * b > 0.6);
+  return !!show;
+}
+
 function fillBubble(text, author, kind, extra = {}) {
   bubble.classList.toggle("viewer", kind === "reading");
   bubble.classList.remove("waiting");
+  const tagged = fillPlatform(kind, extra);
   bubbleAuthor.textContent = (kind === "reading" || config.showAuthor) && author ? author : "";
   bubbleLabel.textContent = kind === "reading"
-    ? (extra.superchat ? `${labels().superchat} ${extra.superchat}` : extra.question ? labels().asked : labels().said) : "";
+    ? (extra.superchat ? paidLabel(extra) : extra.question ? labels().asked : tagged ? "" : labels().said) : "";
   bubbleText.textContent = "";
   const shown = document.createElement("span");
   const pending = document.createElement("span");
@@ -265,7 +285,9 @@ function startSpeech(msg) {
     // strong emotions get a short body reaction at the start of the line
     if (["laugh", "surprised", "celebrate"].includes(msg.emotion) && (msg.intensity ?? 0) >= 0.75) character?.react(msg.emotion);
   }
-  showBubble(msg.text || "", msg.author || "", kind, { reveal: msg.reveal, question: msg.question, superchat: msg.superchat });
+  showBubble(msg.text || "", msg.author || "", kind, { reveal: msg.reveal, question: msg.question, superchat: msg.superchat,
+                                                       paidKind: msg.paidKind, platformLabel: msg.platformLabel,
+                                                       platformColor: msg.platformColor });
   playAudio(msg, speech);
 }
 
@@ -475,7 +497,8 @@ if (capture) {
     config: (cfg) => applyConfig(cfg),
     bubble: () => (bubble.classList.contains("show")
       ? { ...bubble.getBoundingClientRect().toJSON(), viewer: bubble.classList.contains("viewer"),
-          waiting: bubble.classList.contains("waiting"), text: bubbleText.textContent, author: bubbleAuthor.textContent }
+          waiting: bubble.classList.contains("waiting"), text: bubbleText.textContent, author: bubbleAuthor.textContent,
+          platform: bubblePlatform.textContent, label: bubbleLabel.textContent }
       : null),
     headScreen: () => {
       const v = new THREE.Vector3();

@@ -21,6 +21,7 @@ Rectangle {
         Icon { name: root.iconName; visible: root.iconName !== ""; size: 12; color: root.tone; anchors.verticalCenter: parent.verticalCenter }
         Text {
             text: root.text
+            textFormat: Text.PlainText  // chips may show platform-supplied labels
             color: root.tone
             font.pixelSize: 11
             font.weight: Font.DemiBold
