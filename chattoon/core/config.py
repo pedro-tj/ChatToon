@@ -185,6 +185,9 @@ class StreamSettings:
 class OverlaySettings:
     port: int = 8765
     token: str = ""
+    # HTTPS address of a reverse proxy on this computer that forwards to the overlay
+    # (e.g. "https://example.org:8443"); "" keeps the overlay reachable only locally
+    public_address: str = ""
     show_bubble: bool = True
     show_author: bool = True
     show_platform: bool = True  # small "Twitch • Ana" tag on the viewer's message

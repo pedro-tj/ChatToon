@@ -1,10 +1,12 @@
 """Local web server for the OBS Browser Source overlay.
 
 Security model:
-* binds to 127.0.0.1 only; nothing is reachable from the network;
+* binds to 127.0.0.1 only; nothing is reachable from the network directly;
 * every URL carries a random token (``/o/<token>/``) so other local web pages cannot
   read the avatar's events or audio;
-* the Host header must be a loopback name (blocks DNS-rebinding attacks);
+* the Host header must be a loopback name (blocks DNS-rebinding attacks), or the one
+  public host the user configured for an HTTPS reverse proxy (Caddy, nginx…) running on
+  this computer — the proxy terminates TLS and forwards to 127.0.0.1;
 * the WebSocket is one-way: the overlay can only say "hello" (its role) and
   "ended" (audio finished). No settings or administrative actions exist here — the
   desktop app controls the engine in-process.
@@ -17,6 +19,7 @@ import json
 import logging
 import secrets
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from aiohttp import WSMsgType, web
 
@@ -26,9 +29,33 @@ WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 _LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
 
 
+def public_base(url: str) -> str:
+    """Normalise the public address typed by the user to ``https://host[:port]``.
+
+    Only HTTPS is accepted: the overlay carries the secret token and the viewer's audio.
+    A pasted overlay link keeps only its origin; credentials or another scheme yield ""."""
+    url = (url or "").strip().rstrip("/")
+    if not url:
+        return ""
+    if "://" not in url:
+        url = "https://" + url
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError:
+        return ""
+    host = (parts.hostname or "").lower()
+    if parts.scheme != "https" or not host or parts.username or parts.password:
+        return ""
+    if host in _LOOPBACK_HOSTS or host == "::1":
+        return ""
+    return f"https://{host}" + (f":{port}" if port and port != 443 else "")
+
+
 class OverlayServer:
-    def __init__(self, token: str, port: int = 8765, web_dir: Path = WEB_DIR):
+    def __init__(self, token: str, port: int = 8765, web_dir: Path = WEB_DIR, public_address: str = ""):
         self.token = token or secrets.token_urlsafe(12)
+        self.set_public_address(public_address)
         self.requested_port = port
         self.port = 0
         self.web_dir = web_dir
@@ -78,6 +105,16 @@ class OverlayServer:
     def url(self) -> str:
         return f"http://127.0.0.1:{self.port}/o/{self.token}/"
 
+    @property
+    def public_url(self) -> str:
+        """The overlay through the user's HTTPS reverse proxy, or "" when not configured."""
+        return f"{self._public_base}/o/{self.token}/" if self._public_base else ""
+
+    def set_public_address(self, url: str) -> None:
+        """Accept requests for this HTTPS address (e.g. ``https://example.org:8443``)."""
+        self._public_base = public_base(url)
+        self._public_host = urlsplit(self._public_base).hostname or ""
+
     def counts(self) -> dict[str, int]:
         out = {"obs": 0, "preview": 0}
         for role in self._clients.values():
@@ -90,7 +127,7 @@ class OverlayServer:
     async def _guard(self, request: web.Request, handler):
         host = request.host or ""
         host = host[: host.index("]") + 1] if host.startswith("[") and "]" in host else host.split(":")[0]
-        if host not in _LOOPBACK_HOSTS:
+        if host.lower() not in _LOOPBACK_HOSTS and not (self._public_host and host.lower() == self._public_host):
             return web.Response(status=403, text="forbidden")
         response = await handler(request)
         if isinstance(response, web.StreamResponse) and not isinstance(response, web.WebSocketResponse):
@@ -102,9 +139,12 @@ class OverlayServer:
     async def _index(self, request: web.Request) -> web.StreamResponse:
         html = (self.web_dir / "overlay" / "index.html").read_text(encoding="utf-8")
         resp = web.Response(text=html, content_type="text/html")
+        sockets = "ws://127.0.0.1:* ws://localhost:*"
+        if self._public_host and request.host.split(":")[0].lower() == self._public_host:
+            sockets += " " + self._public_base.replace("https://", "wss://", 1)  # served through the proxy
         resp.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-            "connect-src 'self' ws://127.0.0.1:* ws://localhost:*; media-src 'self'; img-src 'self' data:"
+            f"connect-src 'self' {sockets}; media-src 'self'; img-src 'self' data:"
         )
         return resp
 

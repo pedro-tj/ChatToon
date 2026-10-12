@@ -1,4 +1,4 @@
-# ChatToon 2.2.0
+# ChatToon 2.2.1
 
 **Um personagem 3D que participa da sua live — no YouTube, na Twitch, na Kick, no TikTok e em
 outras plataformas ao mesmo tempo:** ele lê os chats — inclusive em voz alta, dizendo quem
@@ -205,7 +205,7 @@ makepkg -si
 ```
 
 Depois abra **ChatToon** pelo menu (ou rode `chattoon`). Para conferir a versão:
-`chattoon --version` → `chattoon 2.2.0`. Para remover: `sudo pacman -R chattoon`.
+`chattoon --version` → `chattoon 2.2.1`. Para remover: `sudo pacman -R chattoon`.
 
 | Tipo | Pacotes |
 |---|---|
@@ -283,6 +283,7 @@ fontes da pesquisa em [docs/14-platform-api-research.md](docs/14-platform-api-re
 7. Página **OBS Studio**: copie o endereço do overlay → no OBS, adicione uma fonte
    **Navegador** com esse endereço, em 1920×1080. Se a voz deve sair pelo OBS, escolha
    *Dentro do OBS* na página Voz e ative *Control audio via OBS* nas propriedades da fonte no OBS.
+   O OBS está em outro computador? Veja [OBS em outro computador](docs/08-obs.md#obs-on-another-computer-https).
 8. Mude para **Assistido** ou **Automático** e aperte **Iniciar** (`Ctrl+Espaço`).
 
 Atalhos: `Ctrl+Espaço` iniciar/pausar · `Ctrl+.` interromper · `Ctrl+M` silenciar ·
@@ -395,7 +396,9 @@ leitura → pausa configurável → resposta, nunca as duas ao mesmo tempo.
 - **A saída da IA nunca é executada**: é só texto e uma emoção de uma lista fixa.
 - **Overlay protegido**: escuta só em `127.0.0.1`, exige um token secreto no endereço, recusa
   `Host` que não seja local (contra *DNS rebinding*), usa CSP `default-src 'self'` e ignora
-  qualquer comando vindo pelo WebSocket.
+  qualquer comando vindo pelo WebSocket. Para abrir de outro computador, um proxy reverso HTTPS
+  (Caddy, nginx…) na mesma máquina encaminha para `127.0.0.1`, e o domínio dele é o único
+  aceito além dos locais — só `https://`.
 - **Limites**: 300 caracteres por mensagem, quadros WebSocket de 4 KB, requisições de 64 KB e
   *timeouts* em tudo que é rede.
 - **Permissões mínimas**: roda como usuário comum, nunca pede root; configurações com permissão
@@ -466,6 +469,7 @@ rosto, memória de GPU estável nas trocas e boca parada quando não há áudio 
 | Voz "Indisponível" | `sudo pacman -S tts-biglinux` |
 | Chat "indisponível"/"desativado" | A live não está no ar, o chat está desligado ou é só para membros; a mensagem diz qual |
 | OBS não mostra nada | O aplicativo precisa estar aberto; confira o endereço; deixe *Shutdown source when not visible* desmarcado na fonte do OBS |
+| "forbidden" pelo domínio | Preencha *OBS Studio → Acesso de outro computador* com o endereço `https://` exato do proxy (domínio e porta) |
 | Voz duas vezes | Não acontece por projeto; se ouvir eco, o OBS está capturando o *Áudio do desktop* **e** a fonte |
 | Respostas lentas | Diminua a *Memória da conversa*, use um modelo menor, deixe só um modelo carregado |
 | Fonte em "Aguardando a live" | O canal não está ao vivo; o ChatToon conecta sozinho quando a live começar |
@@ -507,6 +511,9 @@ Lista completa em [docs/11-release.md](docs/11-release.md).
 
 ## Histórico de versões
 
+- **2.2.1** — overlay acessível de outro computador por um proxy reverso HTTPS (Caddy, nginx…):
+  novo campo *Acesso de outro computador* na página OBS Studio, com o link público pronto
+  para copiar; o ChatToon continua escutando só em `127.0.0.1`.
 - **2.2.0** — multistream: YouTube, Twitch, Kick, TikTok, Facebook, Instagram e X ao mesmo
   tempo, com várias fontes por plataforma, página Plataformas de streaming, Chat ao vivo
   unificado, fila justa entre plataformas, leitura com a plataforma de origem, etiqueta no balão
