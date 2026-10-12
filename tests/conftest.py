@@ -6,6 +6,7 @@ import wave
 import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+os.environ["CHATTOON_CREDENTIALS"] = "memory"  # tests never read or write the real keyring
 
 
 def pytest_addoption(parser):

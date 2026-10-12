@@ -11,6 +11,15 @@ ApplicationWindow {
     readonly property bool running: rt.state === "running"
     readonly property bool paused: rt.state === "paused"
     property alias currentPage: nav.currentIndex
+    // platform id -> { label, color, glyph, support, … } (PlatformBadge, pages)
+    readonly property var platformInfo: {
+        const map = {}
+        for (const p of backend.platforms) map[p.id] = p
+        return map
+    }
+    readonly property var pageIndex: ({ dashboard: 0, characters: 1, personality: 2, ai: 3, platforms: 4, livechat: 5,
+                                        voice: 6, context: 7, obs: 8, history: 9, settings: 10 })
+    function go(name) { nav.currentIndex = pageIndex[name] }
 
     width: 1360
     height: 880
@@ -34,6 +43,9 @@ ApplicationWindow {
     palette.placeholderText: Theme.textFaint
 
     Binding { target: Theme; property: "mode"; value: win.cfg.theme }
+
+    // sources that need the streamer (login, error) — shown as a badge on the menu
+    readonly property int attention: backend.sources.filter(s => s.enabled && ["auth_required", "error"].indexOf(s.status.state) >= 0).length
 
     function stateLabel(s) {
         return { running: qsTr("Live"), paused: qsTr("Paused"), stopped: qsTr("Stopped"), emergency: qsTr("Emergency stop") }[s] || s
@@ -100,7 +112,8 @@ ApplicationWindow {
                         { icon: "smile", label: qsTr("Characters") },
                         { icon: "sparkles", label: qsTr("Personality") },
                         { icon: "bot", label: qsTr("Artificial intelligence") },
-                        { icon: "chat", label: qsTr("YouTube chat") },
+                        { icon: "layers", label: qsTr("Streaming platforms") },
+                        { icon: "chat", label: qsTr("Live chat") },
                         { icon: "volume", label: qsTr("Voice") },
                         { icon: "book", label: qsTr("Stream context") },
                         { icon: "broadcast", label: qsTr("OBS Studio") },
@@ -114,7 +127,8 @@ ApplicationWindow {
                         text: modelData.label
                         iconName: modelData.icon
                         current: nav.currentIndex === index
-                        badge: index === 0 && (backend.queue.suggestions || []).length > 0 ? String(backend.queue.suggestions.length) : ""
+                        badge: index === 0 && (backend.queue.suggestions || []).length > 0 ? String(backend.queue.suggestions.length)
+                             : index === 4 && win.attention > 0 ? "!" : ""
                         onClicked: nav.currentIndex = index
                     }
                 }
@@ -182,10 +196,11 @@ ApplicationWindow {
             Loader { active: stack.currentIndex === 1; sourceComponent: CharactersPage {} }
             PersonalityPage {}
             AiPage {}
-            ChatPage {}
+            PlatformsPage {}
+            LiveChatPage {}
             VoicePage {}
             StreamPage {}
-            Loader { active: stack.currentIndex === 7; sourceComponent: ObsPage {} }
+            Loader { active: stack.currentIndex === 8; sourceComponent: ObsPage {} }
             HistoryPage {}
             SettingsPage {}
         }

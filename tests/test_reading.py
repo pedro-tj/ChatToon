@@ -259,7 +259,7 @@ def test_assisted_mode_reads_only_after_approval(tmp_path):
         FakeChat.instances[-1].on_message(ChatMessage("yt9", "Bia", "tux, qual distro?"))
         await wait_for(lambda: engine.suggestions)
         before = list(engine.tts.texts)
-        await engine.approve("yt9")
+        await engine.approve("youtube-main:yt9")  # ids are namespaced by source
         await engine.shutdown()
         return engine, before
 

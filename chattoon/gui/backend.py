@@ -2,28 +2,43 @@
 
 from __future__ import annotations
 
+import asyncio
+import importlib.util
 import json
 import logging
 import time
 from dataclasses import asdict
 from pathlib import Path
 
-from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
+import aiohttp
+from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 
+from ..core import extras
 from ..core.brain import apply_preset
 from ..core.characters import CHARACTERS, GESTURES, get_character
-from ..core.config import Settings, profiles_dir
+from ..core.config import PLATFORMS as PLATFORM_IDS
+from ..core.config import Settings, SourceConfig, profiles_dir
+from ..core.credentials import open_store
 from ..core.engine import ChatToonEngine
 from ..core.events import EventBus
 from ..core.ollama import RECOMMENDED_MODELS, OllamaClient
 from ..core.runtime import Runtime
+from ..core.streams import PLATFORMS
+from ..core.streams.base import ConnectorError
+from ..core.streams.twitch import TwitchAuth, client_id
+from ..core.streams.urls import UrlError, detect, source_key
 from ..core.youtube_chat import extract_video_id
+from .feed import ChatFeedFilter, ChatFeedModel, row_from_message
 
 log = logging.getLogger(__name__)
 
 # settings that require the engine to rebuild its selector/overlay state
-_ENGINE_SECTIONS = {"chat", "overlay", "ai", "mode", "character", "animation", "reading"}
+_ENGINE_SECTIONS = {"chat", "overlay", "ai", "mode", "character", "animation", "reading", "streams"}
+
+# secrets the interface may store: credential key -> allowed fields (nothing else is accepted)
+_SECRETS = {"kick/app": ("client_secret",), "meta/token": ("access_token",), "x/bearer": ("bearer_token",),
+            "tiktok/sign": ("api_key",)}
 
 
 class Backend(QObject):
@@ -35,6 +50,10 @@ class Backend(QObject):
     historyChanged = Signal()
     messagesChanged = Signal()
     pullChanged = Signal()
+    sourcesChanged = Signal()
+    accountsChanged = Signal()
+    loginChanged = Signal()
+    probeFinished = Signal(str, "QVariantMap")  # source id (or "draft"), result
     toast = Signal(str, str)  # message, kind (info | success | error)
     _event = Signal(str, "QVariant")  # engine thread -> GUI thread
 
@@ -54,12 +73,28 @@ class Backend(QObject):
         self._history: list[dict] = []
         self._messages: list[dict] = []
         self._pull = {"model": "", "status": "", "progress": -1.0}
+        self._sources: list[dict] = []
+        self._connected: list[str] = []
+        self._accounts: dict = {"store": "", "encrypted": False}
+        self._login: dict = {"platform": "", "state": "idle"}
+        self._login_future = None
+        self._feed = ChatFeedModel(self)
+        self._feed_filter = ChatFeedFilter(self._feed, self)
+        self._feed_pending: list[dict] = []
+        self._feed_timer = QTimer(self, singleShot=True, interval=80)  # batch bursts of messages
+        self._feed_timer.timeout.connect(self._flush_feed)
         self._event.connect(self._on_event)
         self.bus.subscribe(lambda kind, data: self._event.emit(kind, data))
         self.runtime.start()
         self._boot_future = self.runtime.submit(self._boot())
 
     async def _boot(self) -> None:
+        ctx = self.engine.streams.ctx
+        if ctx.credentials is None:
+            ctx.credentials = await asyncio.to_thread(open_store)  # D-Bus may block: never on the GUI thread
+        ctx.open_browser = lambda url: self.bus.emit("open_url", {"url": url})
+        self.engine.refresh_sources()
+        await self._refresh_accounts()
         try:
             await self.engine.startup()
         except OSError as e:
@@ -105,8 +140,29 @@ class Backend(QObject):
             self._queue = data
             self.queueChanged.emit()
         elif kind == "message":
-            self._messages = ([dict(data, receivedAt=time.time())] + self._messages)[:120]
-            self.messagesChanged.emit()
+            data = dict(data, receivedAt=time.time())
+            self._feed_pending.append(row_from_message(data))
+            self._messages = ([data] + self._messages)[:120]
+            if not self._feed_timer.isActive():
+                self._feed_timer.start()
+        elif kind == "message_state":
+            self._message_state(data)
+        elif kind == "sources":
+            self._sources = data.get("sources", [])
+            self._connected = data.get("connected", [])
+            self.sourcesChanged.emit()
+        elif kind == "accounts":
+            self._accounts = data
+            self.accountsChanged.emit()
+        elif kind == "login":
+            self._login = data
+            self.loginChanged.emit()
+            if data.get("state") == "done":
+                self.toast.emit(self.tr("Account connected: %1").replace("%1", data.get("login", "")), "success")
+            elif data.get("state") == "error":
+                self.toast.emit(self._login_error(data.get("code", ""), data.get("detail", "")), "error")
+        elif kind == "open_url":
+            QDesktopServices.openUrl(QUrl(data.get("url", "")))
         elif kind == "history":
             self._history = ([data] + self._history)[:300]
             self.historyChanged.emit()
@@ -119,6 +175,26 @@ class Backend(QObject):
         elif kind == "pull":
             self._pull = data
             self.pullChanged.emit()
+        elif kind == "probe":
+            self.probeFinished.emit(data.get("id", ""), data)
+        elif kind == "toast":
+            self.toast.emit(self.tr("Saved in the keyring"), "success")
+
+    def _flush_feed(self) -> None:
+        rows, self._feed_pending = self._feed_pending, []
+        self._feed.append(rows)
+        self.messagesChanged.emit()
+
+    def _message_state(self, data: dict) -> None:
+        uid, state = data.get("id", ""), data.get("state", "")
+        changes = {"status": state, "reason": data.get("reason", "")}
+        if data.get("reply"):
+            changes["reply"] = data["reply"]
+        for row in self._feed_pending:  # not shown yet: patch the pending row
+            if row["uid"] == uid:
+                row.update(changes)
+                return
+        self._feed.update(uid, **changes)
 
     def _autoselect(self) -> None:
         """Pick a sensible model the first time (never a model that is not installed)."""
@@ -144,6 +220,36 @@ class Backend(QObject):
     history = Property("QVariantList", lambda self: self._history, notify=historyChanged)
     messages = Property("QVariantList", lambda self: self._messages, notify=messagesChanged)
     pull = Property("QVariantMap", lambda self: self._pull, notify=pullChanged)
+    sources = Property("QVariantList", lambda self: self._sources, notify=sourcesChanged)
+    connectedPlatforms = Property("QVariantList", lambda self: self._connected, notify=sourcesChanged)  # noqa: N815
+    accounts = Property("QVariantMap", lambda self: self._accounts, notify=accountsChanged)
+    login = Property("QVariantMap", lambda self: self._login, notify=loginChanged)
+    feed = Property(QObject, lambda self: self._feed_filter, constant=True)
+    feedModel = Property(QObject, lambda self: self._feed, constant=True)  # noqa: N815
+
+    def _platforms(self) -> list[dict]:
+        notes = {
+            "youtube": self.tr("Public live chat, no login. Paste a live link or your @channel to follow every new live."),
+            "twitch": self.tr("Official EventSub with a Twitch login, or read-only guest mode without login."),
+            "kick": self.tr("Public chat socket used by kick.com (unofficial). Official webhooks need your own Kick app and a public HTTPS address."),
+            "tiktok": self.tr("Unofficial TikTokLive library; uses the Euler Stream signing service. Optional install."),
+            "facebook": self.tr("Facebook Pages only, with a token from your own Meta app. Personal profiles cannot be read."),
+            "instagram": self.tr("Professional accounts linked to a Facebook Page, with a token from your own Meta app."),
+            "x": self.tr("No API exists for live video or Spaces chat. Can read replies to a post with your own paid API key."),
+        }
+        accepts = {
+            "youtube": self.tr("youtube.com/live/…, youtu.be/… or @channel"),
+            "twitch": self.tr("twitch.tv/channel or just the channel name"),
+            "kick": self.tr("kick.com/channel or just the channel name"),
+            "tiktok": self.tr("tiktok.com/@user/live or @user"),
+            "facebook": self.tr("facebook.com/YourPage or the link of a live video"),
+            "instagram": self.tr("instagram.com/user or @user"),
+            "x": self.tr("Link of the post that announces the live"),
+        }
+        return [dict(info, id=pid, note=notes.get(pid, ""), accepts=accepts.get(pid, info["accepts"]))
+                for pid, info in PLATFORMS.items()]
+
+    platforms = Property("QVariantList", _platforms, constant=True)
 
     def _error_text(self, data: dict) -> str:
         """Engine errors carry a code: show them in the interface language."""
@@ -257,6 +363,224 @@ class Backend(QObject):
         self.settings.save()
         self.configChanged.emit()
         self.runtime.submit(self.engine.set_character(character_id))
+
+    # -- streaming sources ---------------------------------------------------
+
+    def _url_error(self, code: str) -> str:
+        return {
+            "empty": self.tr("Paste a link or type the channel."),
+            "unknown": self.tr("This link is not from a supported platform."),
+            "invalid": self.tr("This link or name is not valid for this platform."),
+            "short-link": self.tr("Short links cannot be checked. Open it in the browser and paste the full address."),
+            "ambiguous": self.tr("Choose the platform for this name."),
+            "unsupported": self.tr("X Spaces are audio rooms without a readable chat."),
+        }.get(code, self.tr("This link or name is not valid for this platform."))
+
+    @Slot(str, str, str, result="QVariantMap")
+    def detectSource(self, text: str, platform: str, editing: str = "") -> dict:  # noqa: N802
+        """Recognise a pasted link: platform, canonical target and duplicates."""
+        try:
+            found = detect(text, platform if platform in PLATFORM_IDS else "")
+        except UrlError as e:
+            return {"ok": False, "code": e.code, "error": self._url_error(e.code)}
+        duplicate = next((s for s in self.settings.stream_sources()
+                          if s.id != editing and source_key(s.platform, s.target) == found.key), None)
+        return {"ok": duplicate is None, "platform": found.platform, "target": found.target, "display": found.display,
+                "kind": found.kind, "code": "duplicate" if duplicate else "",
+                "error": self.tr("This chat is already in the list.") if duplicate else ""}
+
+    def _save_sources(self, sources: list[SourceConfig]) -> None:
+        self.settings.streams.sources = sources
+        self.settings.streams.migrated = True
+        self.settings.save()
+        self.configChanged.emit()
+        self.runtime.submit(self._apply())
+
+    @Slot(str, str, str, bool, "QVariantMap", result=str)
+    def addSource(self, platform: str, target: str, label: str, enabled: bool, options) -> str:  # noqa: N802
+        check = self.detectSource(target, platform, "")
+        if not check["ok"]:
+            self.toast.emit(check["error"], "error")
+            return ""
+        source = SourceConfig(platform=check["platform"], target=check["target"], label=label.strip()[:60],
+                              enabled=enabled, options={str(k): str(v) for k, v in dict(options or {}).items()})
+        self._save_sources([*self.settings.stream_sources(), source])
+        self.toast.emit(self.tr("%1 added").replace("%1", PLATFORMS[source.platform]["label"]), "success")
+        return source.id
+
+    @Slot(str, "QVariantMap", result=bool)
+    def updateSource(self, source_id: str, changes) -> bool:  # noqa: N802
+        sources = list(self.settings.stream_sources())
+        source = next((s for s in sources if s.id == source_id), None)
+        if source is None:
+            return False
+        changes = dict(changes or {})
+        if "target" in changes or "platform" in changes:
+            check = self.detectSource(str(changes.get("target", source.target)),
+                                      str(changes.get("platform", source.platform)), source_id)
+            if not check["ok"]:
+                self.toast.emit(check["error"], "error")
+                return False
+            source.platform, source.target = check["platform"], check["target"]
+        if "label" in changes:
+            source.label = str(changes["label"]).strip()[:60]
+        if "enabled" in changes:
+            source.enabled = bool(changes["enabled"])
+        if "priority" in changes:
+            source.priority = min(5, max(1, int(float(changes["priority"]))))
+        if "options" in changes:
+            source.options = SourceConfig(options={str(k): str(v) for k, v in dict(changes["options"]).items()}).options
+        self._save_sources(sources)
+        return True
+
+    @Slot(str)
+    def removeSource(self, source_id: str) -> None:  # noqa: N802
+        self._save_sources([s for s in self.settings.stream_sources() if s.id != source_id])
+
+    @Slot(str)
+    def connectSource(self, source_id: str) -> None:  # noqa: N802
+        self.runtime.loop.call_soon_threadsafe(self.engine.connect_source, source_id)
+
+    @Slot(str)
+    def disconnectSource(self, source_id: str) -> None:  # noqa: N802
+        self.runtime.loop.call_soon_threadsafe(self.engine.disconnect_source, source_id)
+
+    @Slot(str)
+    @Slot(str, str, str, "QVariantMap")
+    def testSource(self, source_id: str, platform: str = "", target: str = "", options=None) -> None:  # noqa: N802
+        """Check a saved source (by id) or the one being typed in the dialog (id "draft")."""
+        if source_id == "draft":
+            source = SourceConfig(id="draft", platform=platform, target=target,
+                                  options={str(k): str(v) for k, v in dict(options or {}).items()})
+        else:
+            source = next((s for s in self.settings.stream_sources() if s.id == source_id), None)
+            if source is None:
+                return
+
+        async def run() -> None:
+            result = await self.engine.probe_source(source)
+            self.bus.emit("probe", {"id": source_id, **result.to_dict()})
+
+        self.runtime.submit(run())
+
+    # -- accounts and secrets -------------------------------------------------
+
+    async def _refresh_accounts(self) -> None:
+        store = self.engine.streams.ctx.credentials
+
+        def read() -> dict:
+            twitch = store.get("twitch/account") if store else None
+            extras.activate()
+            return {
+                "store": getattr(store, "backend", ""), "encrypted": bool(getattr(store, "encrypted", False)),
+                "twitch": {"connected": bool(twitch), "login": (twitch or {}).get("login", ""),
+                           "clientId": bool(client_id(self.settings.streams.apps))},
+                "kick": {"secret": bool(store and store.has("kick/app"))},
+                "meta": {"token": bool(store and store.has("meta/token"))},
+                "x": {"token": bool(store and store.has("x/bearer"))},
+                "tiktok": {"installed": importlib.util.find_spec("TikTokLive") is not None,
+                           "key": bool(store and store.has("tiktok/sign")),
+                           "install": " && ".join(" ".join(c) for c in extras.install_commands("tiktok"))},
+            }
+
+        try:
+            self.bus.emit("accounts", await asyncio.to_thread(read))
+        except Exception as e:  # noqa: BLE001 - a locked keyring must not break the app
+            log.warning("cannot read the keyring: %s", type(e).__name__)
+
+    @Slot(str, str, str)
+    def setSecret(self, key: str, field: str, value: str) -> None:  # noqa: N802
+        """Store a pasted secret in the keyring (never in settings files)."""
+        if field not in _SECRETS.get(key, ()) or not value.strip():
+            return
+        store = self.engine.streams.ctx.credentials
+
+        async def run() -> None:
+            try:
+                await asyncio.to_thread(store.set, key, {field: value.strip()})
+                self.bus.emit("toast", {"message": "saved"})
+            except OSError as e:
+                self.bus.emit("error", {"source": "accounts", "message": str(e)})
+            await self._refresh_accounts()
+
+        self.runtime.submit(run())
+
+    @Slot(str)
+    def clearSecret(self, key: str) -> None:  # noqa: N802
+        if key not in _SECRETS:
+            return
+        store = self.engine.streams.ctx.credentials
+
+        async def run() -> None:
+            await asyncio.to_thread(store.delete, key)
+            await self._refresh_accounts()
+
+        self.runtime.submit(run())
+
+    def _login_error(self, code: str, detail: str) -> str:
+        return {
+            "no-client-id": self.tr("Set the Twitch Client ID first."),
+            "auth-denied": self.tr("The login was not approved."),
+            "auth-expired": self.tr("The login code expired. Try again."),
+        }.get(code, detail or self.tr("The login failed."))
+
+    @Slot()
+    def loginTwitch(self) -> None:  # noqa: N802
+        """Device Code login: show a code, open twitch.tv/activate, wait for approval."""
+        if self._login_future and not self._login_future.done():
+            return
+        auth = TwitchAuth(self.engine.streams.ctx.credentials, client_id(self.settings.streams.apps))
+
+        async def run() -> None:
+            try:
+                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as http:
+                    device = await auth.start(http)
+                    self.bus.emit("login", {"platform": "twitch", "state": "waiting", "code": device["user_code"],
+                                            "url": device["verification_uri"]})
+                    self.bus.emit("open_url", {"url": device["verification_uri"]})
+                    account = await auth.finish(http, device)
+                self.bus.emit("login", {"platform": "twitch", "state": "done", "login": account.get("login", "")})
+                await self._refresh_accounts()
+                self.engine.reconnect_platform("twitch")
+            except asyncio.CancelledError:
+                self.bus.emit("login", {"platform": "twitch", "state": "idle"})
+                raise
+            except ConnectorError as e:
+                self.bus.emit("login", {"platform": "twitch", "state": "error", "code": e.code, "detail": str(e)})
+            except (aiohttp.ClientError, OSError, asyncio.TimeoutError) as e:
+                self.bus.emit("login", {"platform": "twitch", "state": "error", "code": "network",
+                                        "detail": type(e).__name__})
+
+        self._login_future = self.runtime.submit(run())
+
+    @Slot()
+    def cancelLogin(self) -> None:  # noqa: N802
+        if self._login_future:
+            self._login_future.cancel()
+        self._login = {"platform": "", "state": "idle"}
+        self.loginChanged.emit()
+
+    @Slot()
+    def logoutTwitch(self) -> None:  # noqa: N802
+        auth = TwitchAuth(self.engine.streams.ctx.credentials, client_id(self.settings.streams.apps))
+
+        async def run() -> None:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as http:
+                await auth.revoke(http)
+            await self._refresh_accounts()
+            self.engine.reconnect_platform("twitch")
+
+        self.runtime.submit(run())
+
+    @Slot()
+    def refreshAccounts(self) -> None:  # noqa: N802
+        self.runtime.submit(self._refresh_accounts())
+
+    # -- feed ------------------------------------------------------------------
+
+    @Slot()
+    def clearFeed(self) -> None:  # noqa: N802
+        self._feed.clear()
 
     @Slot(str, result=str)
     def validateUrl(self, url: str) -> str:  # noqa: N802

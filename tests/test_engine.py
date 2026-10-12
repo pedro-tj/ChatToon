@@ -186,7 +186,7 @@ def test_assisted_mode_waits_for_approval(tmp_path):
         chat.on_message(ChatMessage("yt1", "Bia", "minhoca, cadê você?"))
         await wait_for(lambda: engine.suggestions)
         assert engine.player.played == []
-        await engine.approve("yt1")
+        await engine.approve("youtube-main:yt1")  # ids are namespaced by source
         await engine.shutdown()
         return engine
 

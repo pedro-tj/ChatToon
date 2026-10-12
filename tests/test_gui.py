@@ -129,7 +129,7 @@ def test_main_qml_loads_every_page_without_warnings(backend):
     warnings = []
     engine = create_engine(backend, warnings)
     window = engine.rootObjects()[0]
-    for page in range(10):
+    for page in range(11):
         window.setProperty("currentPage", page)
         pump(0.15)
     backend.setConfig("theme", "dark")

@@ -7,19 +7,22 @@ import logging
 import re
 import time
 import uuid
-from collections import deque
+from collections import OrderedDict, deque
 from dataclasses import dataclass, field
 
 from .brain import REPLY_SCHEMA, Brain, Reply
 from .characters import EMOTIONS, Character, get_character
-from .config import Settings
+from .config import Settings, SourceConfig
 from .events import EventBus
 from .messages import ChatMessage, MessageSelector, SelectorConfig, clean_text
 from .ollama import OllamaClient, OllamaError
 from .overlay_server import OverlayServer
 from .reading import Reading, build_reading
+from .streams import PLATFORMS, platform_label
+from .streams.base import ConnectorContext, ProbeResult
+from .streams.manager import MultiStreamManager
 from .tts import AudioPlayer, BigLinuxTTS, TTSCancelled, TTSError, Utterance, Voice
-from .youtube_chat import ChatError, ChatStatus, LiveChatClient
+from .youtube_chat import ChatStatus, LiveChatClient
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +82,8 @@ class ChatToonEngine:
         ollama: OllamaClient | None = None,
         chat_factory=LiveChatClient,
         server: OverlayServer | None = None,
+        connector_ctx: ConnectorContext | None = None,
+        connector_factories: dict | None = None,
     ):
         self.settings = settings
         self.bus = bus or EventBus()
@@ -96,8 +101,19 @@ class ChatToonEngine:
         self.state = "stopped"
         self.phase = "idle"
         self.chat_status = ChatStatus("stopped")
+        self._streams_emit: asyncio.TimerHandle | None = None
+        self._queue_emit: asyncio.TimerHandle | None = None
+        ctx = connector_ctx or ConnectorContext()
+        ctx.apps = settings.streams.apps
+        ctx.extra.setdefault("youtube_client", chat_factory)
+        self.streams = MultiStreamManager(self._on_chat_message, self._on_streams_change, ctx, connector_factories,
+                                          on_retract=self._on_retract)
+        self.streams.configure(settings.stream_sources())
+        self.selector.on_discard = self._on_discard
+        self.recent: OrderedDict[str, ChatMessage] = OrderedDict()  # uid -> message (manual picks from the feed)
+        self._active: ChatMessage | None = None  # message being read/answered right now
+        self._retracted: OrderedDict[str, None] = OrderedDict()  # deleted by moderators (never spoken)
         self._worker: asyncio.Task | None = None
-        self._chat_task: asyncio.Task | None = None
         self._current: asyncio.Task | None = None
         self._speech_lock = asyncio.Lock()
         self._last_speech_end = 0.0
@@ -119,11 +135,24 @@ class ChatToonEngine:
             blocked_words=tuple(w.strip() for w in c.blocked_words.split(",") if w.strip()),
             superchat_priority=c.superchat_priority,
             names=(self.character.name, *self.character.aliases),
+            weights={s.id: float(s.priority) for s in self.settings.stream_sources()},
+            fairness=c.fairness, include_events=c.include_events,
+            priority_authors=tuple(w.strip().casefold().lstrip("@") for w in c.priority_viewers.split(",")
+                                   if w.strip()),
         )
 
     def apply_settings(self) -> None:
         """Call after the settings object changed."""
         self.selector.config = self._selector_config()
+        self.streams.ctx.apps = self.settings.streams.apps
+        self.streams.ctx.skip_backlog = self.settings.chat.skip_backlog
+        removed = set(self.streams.sources) - {s.id for s in self.settings.stream_sources()}
+        for sid in removed:
+            for m in self.selector.pending():
+                if m.source_id == sid:
+                    self._message_state(m, "skipped")
+            self.selector.forget_source(sid)
+        self.streams.configure(self.settings.stream_sources())
         self.ollama.host = self.settings.ai.host.rstrip("/")
         self.ollama.timeout = self.settings.ai.timeout
         self._emit_overlay_config()
@@ -223,8 +252,8 @@ class ChatToonEngine:
     async def start(self) -> None:
         await self.startup()
         self.apply_settings()
-        if self.settings.mode != "demo" and not self.settings.chat.url.strip():
-            self._error("chat", "Paste the YouTube live URL before starting.")
+        if self.settings.mode != "demo" and not any(s.enabled for s in self.settings.stream_sources()):
+            self._error("chat", "Add a streaming platform (and enable it) before starting.", code="no-sources")
             return
         self._set_state("running")
         if self.settings.mode != "demo":
@@ -251,7 +280,9 @@ class ChatToonEngine:
         """Panic button: nothing more is read, generated or spoken until start()."""
         self._set_state("emergency")
         await self._stop_chat()
-        self.selector.clear()
+        self._drop_queue("skipped")
+        for reply in self.suggestions.values():
+            self._message_state(reply.message, "skipped")
         self.suggestions.clear()
         await self.interrupt()
         await self.server.broadcast({"type": "stop"})
@@ -272,54 +303,111 @@ class ChatToonEngine:
         self._set_phase("idle")
 
     def clear_queue(self) -> None:
-        self.selector.clear()
+        self._drop_queue("skipped")
         self._emit_queue()
 
-    # -- chat -------------------------------------------------------------
+    def _drop_queue(self, state: str) -> None:
+        for m in self.selector.pending():
+            self._message_state(m, state)
+        self.selector.clear()
+
+    # -- chat (every platform at once) ---------------------------------------
 
     def _start_chat(self) -> None:
-        if self._chat_task and not self._chat_task.done():
-            return
-        try:
-            client = self.chat_factory(self.settings.chat.url, self._on_chat_message, self._on_chat_status,
-                                       skip_backlog=self.settings.chat.skip_backlog)
-        except ValueError as e:
-            self._error("chat", str(e))
-            return
-        self._chat_task = asyncio.create_task(self._run_chat(client), name="chattoon-chat")
-
-    async def _run_chat(self, client) -> None:
-        try:
-            await client.run()
-        except ChatError:
-            pass  # status already reported
-        except asyncio.CancelledError:
-            raise
-        except Exception as e:  # noqa: BLE001
-            self._error("chat", str(e))
+        self.streams.ctx.skip_backlog = self.settings.chat.skip_backlog
+        self.streams.configure(self.settings.stream_sources())
+        if not self.streams.running:
+            self.streams.start()
 
     async def _stop_chat(self) -> None:
-        task, self._chat_task = self._chat_task, None
-        if task and not task.done():
-            task.cancel()
-            try:
-                await task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
-                pass
+        if self.streams.running:
+            await self.streams.stop()
 
-    def _on_chat_status(self, status: ChatStatus) -> None:
-        self.chat_status = status
-        if status.state == "reconnecting" and status.attempt:
-            self.stats.chat_failures += 1
-        self.bus.emit("chat_status", {"state": status.state, "detail": status.detail, "attempt": status.attempt})
+    def _on_streams_change(self) -> None:
+        """Statuses or counters changed: refresh the interface at most 4 times a second."""
+        state = self.streams.aggregate_state()
+        if state != self.chat_status.state:
+            if state == "reconnecting":
+                self.stats.chat_failures += 1
+            self.chat_status = ChatStatus(state)
+            self.bus.emit("chat_status", {"state": state, "detail": "", "attempt": 0})
+        self._later("_streams_emit", 0.25, self._emit_sources)
+
+    def _emit_sources(self) -> None:
+        self._streams_emit = None
+        counts = self.selector.counts()
+        for sid, stats in self.streams.stats.items():
+            stats.queued = counts.get(sid, 0)
+        self.bus.emit("sources", {"sources": self.streams.snapshot(),
+                                  "connected": sorted(self.streams.connected_platforms())})
+
+    def _later(self, attr: str, delay: float, callback) -> None:
+        """Coalesce bursts of updates into one (no-op when one is already scheduled)."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            callback()
+            return
+        if getattr(self, attr) is None:
+            setattr(self, attr, loop.call_later(delay, callback))
 
     def _on_chat_message(self, msg: ChatMessage) -> None:
         self.stats.received += 1
         reason = self.selector.offer(msg) if self.state in ("running", "paused") else "not running"
         if reason:
             self.stats.dropped += 1
+            stats = self.streams.stats.get(msg.source_id)
+            if stats:
+                stats.dropped += 1
+        self._remember_message(msg)
         self.bus.emit("message", dict(msg.to_dict(), dropped=reason))
         self._emit_queue()
+        self._on_streams_change()  # counters per platform (coalesced, 4 per second at most)
+
+    def _remember_message(self, msg: ChatMessage) -> None:
+        self.recent[msg.uid] = msg
+        while len(self.recent) > 600:
+            self.recent.popitem(last=False)
+
+    def _on_retract(self, source_id: str, message_id: str, author_id: str) -> None:
+        """Moderators removed a message (or a viewer's messages): it leaves the queue and the
+        suggestions, so the avatar never reads or answers it."""
+        def gone(m: ChatMessage | None) -> bool:
+            return bool(m) and m.source_id == source_id and (
+                (message_id and m.id == message_id) or (author_id and m.author_id == author_id))
+
+        for m in [m for m in self.selector.pending() if gone(m)]:
+            self.selector.remove(m.uid)
+            self._message_state(m, "deleted")
+        for key, reply in list(self.suggestions.items()):
+            if gone(reply.message):
+                del self.suggestions[key]
+                self._message_state(reply.message, "deleted")
+        for uid in [uid for uid, m in self.recent.items() if gone(m)]:
+            self._message_state(self.recent.pop(uid), "deleted")  # cannot be picked by hand any more
+            self._retracted[uid] = None
+        while len(self._retracted) > 2000:
+            self._retracted.popitem(last=False)
+        if gone(self._active):
+            self._retracted[self._active.uid] = None
+            self._message_state(self._active, "deleted")
+            asyncio.ensure_future(self.interrupt())  # it is being read or answered: stop now
+        self._emit_queue()
+
+    def _on_discard(self, msg: ChatMessage, reason: str) -> None:
+        self.stats.dropped += 1
+        stats = self.streams.stats.get(msg.source_id)
+        if stats:
+            stats.dropped += 1
+        self.bus.emit("message_state", {"id": msg.uid, "state": "dropped", "reason": reason})
+
+    def _failed(self, msg: ChatMessage) -> None:
+        if msg.uid not in self._retracted:  # a deleted message stays "deleted"
+            self._message_state(msg, "failed")
+
+    def _message_state(self, msg: ChatMessage | None, state: str, **extra) -> None:
+        if msg is not None:
+            self.bus.emit("message_state", {"id": msg.uid, "state": state, **extra})
 
     def submit(self, text: str, author: str = "You", platform: str = "demo") -> str:
         """Demo/manual message typed by the streamer."""
@@ -329,11 +417,42 @@ class ChatToonEngine:
         reason = self.selector.offer(msg)
         if reason:
             self.stats.dropped += 1
+        self._remember_message(msg)
         self.bus.emit("message", dict(msg.to_dict(), dropped=reason))
         self._emit_queue()
         return reason
 
+    # -- sources (live management) ------------------------------------------
+
+    def connect_source(self, source_id: str) -> None:
+        self.streams.connect(source_id)
+
+    def disconnect_source(self, source_id: str) -> None:
+        self.streams.disconnect(source_id)
+
+    def reconnect_platform(self, platform: str) -> None:
+        """A login changed: reconnect that platform's live sources with the new credentials."""
+        for sid, source in self.streams.sources.items():
+            if source.platform == platform and source.enabled and self.streams.running and sid not in self.streams.held:
+                self.streams.connect(sid)
+
+    def refresh_sources(self) -> None:
+        self._emit_sources()
+
+    async def probe_source(self, source: SourceConfig) -> ProbeResult:
+        return await self.streams.probe(source)
+
+    def active_platforms(self) -> set[str]:
+        """Platforms reading right now (or, before going live, the enabled ones)."""
+        if self.streams.running:
+            return self.streams.connected_platforms()
+        return {s.platform for s in self.settings.stream_sources() if s.enabled}
+
     def _emit_queue(self) -> None:
+        self._later("_queue_emit", 0.1, self._send_queue)
+
+    def _send_queue(self) -> None:
+        self._queue_emit = None
         self.bus.emit("queue", {
             "pending": [m.to_dict() for m in self.selector.pending()[:30]],
             "suggestions": [{"id": k, "text": r.text, "emotion": r.emotion,
@@ -348,8 +467,12 @@ class ChatToonEngine:
     # -- worker -----------------------------------------------------------
 
     async def _work(self) -> None:
+        refreshed = time.monotonic()
         while True:
             await asyncio.sleep(0.2)
+            if self.streams.running and time.monotonic() - refreshed > 5:
+                refreshed = time.monotonic()
+                self._on_streams_change()  # "messages per minute" decays when a chat goes quiet
             if self.state != "running" or self.phase != "idle" or self._current:
                 continue
             if time.monotonic() - self._last_speech_end < self.settings.chat.min_interval:
@@ -358,10 +481,14 @@ class ChatToonEngine:
             if msg is None:
                 continue
             self._emit_queue()
+            self._message_state(msg, "answering")
             self._current = asyncio.create_task(self._answer(msg))
             try:
-                await self._current
+                reply = await self._current
+                if reply is None:
+                    self._failed(msg)
             except asyncio.CancelledError:
+                self._failed(msg)
                 if asyncio.current_task().cancelling():  # the worker itself is being stopped
                     raise
             except Exception:  # noqa: BLE001
@@ -370,46 +497,72 @@ class ChatToonEngine:
                 self._current = None
 
     async def _answer(self, msg: ChatMessage, force_speak: bool = False) -> Reply | None:
-        if self.settings.mode == "assisted" and msg.platform == "youtube" and not force_speak:
+        self._active = msg
+        try:
+            return await self._answer_inner(msg, force_speak)
+        finally:
+            if self._active is msg:
+                self._active = None
+
+    async def _answer_inner(self, msg: ChatMessage, force_speak: bool) -> Reply | None:
+        if self.settings.mode == "assisted" and msg.platform not in ("demo", "manual") and not force_speak:
             # Nothing is read or spoken before the streamer approves the suggestion.
             reply = await self.generate(msg)
-            if reply is not None:
-                self.suggestions[msg.id] = reply
+            if reply is not None and msg.uid not in self._retracted:
+                self.suggestions[msg.uid] = reply
+                self._message_state(msg, "suggested", reply=reply.text)
                 self._emit_queue()
             return reply
         async with self._speech_lock:
             return await self._converse(msg)
 
-    async def deliver(self, reply: Reply) -> None:
+    async def deliver(self, reply: Reply) -> Reply | None:
         """Speak an approved reply, reading the viewer's message first when enabled."""
-        async with self._speech_lock:
-            await self._converse(reply.message, reply)
+        self._active = reply.message
+        try:
+            async with self._speech_lock:
+                return await self._converse(reply.message, reply)
+        finally:
+            self._active = None
 
     async def approve(self, item_id: str) -> None:
         """Assisted mode: speak a suggestion. Manual selection: answer a queued message."""
         reply = self.suggestions.pop(item_id, None)
         if reply:
+            if reply.message is not None and reply.message.uid in self._retracted:
+                self._emit_queue()
+                return
             self._emit_queue()
             await self._run_exclusive(self.deliver(reply))
             return
         msg = self.selector.take(item_id)
+        if msg is None and item_id in self.recent:
+            msg = self.recent[item_id]  # picked from the feed: answered even if it left the queue
+            self.selector.remove(item_id)
+            self.selector.mark_answered(msg)
         if msg:
+            if msg.uid in self._retracted:
+                return
             self._emit_queue()
-            await self._run_exclusive(self._answer(msg))
+            self._message_state(msg, "answering")
+            if await self._run_exclusive(self._answer(msg)) is None:
+                self._failed(msg)  # can be tried again from the feed
 
     def reject(self, item_id: str) -> None:
-        if self.suggestions.pop(item_id, None) is None:
+        reply = self.suggestions.pop(item_id, None)
+        if reply is None:
             self.selector.remove(item_id)
+        self._message_state(reply.message if reply else self.recent.get(item_id), "skipped")
         self._emit_queue()
 
-    async def _run_exclusive(self, coro) -> None:
+    async def _run_exclusive(self, coro):
         if self._current:
             await self.interrupt()
         self._current = asyncio.create_task(coro)
         try:
-            await self._current
+            return await self._current
         except asyncio.CancelledError:
-            pass
+            return None
         finally:
             self._current = None
 
@@ -475,8 +628,10 @@ class ChatToonEngine:
             self._set_phase("thinking", author=msg.author, message=msg.text)
         max_sentences, max_chars = self._reply_limits()
         system = self.brain.system_prompt(character, cs.personality, self.settings.context, ai.reply_language,
-                                          max_sentences, max_chars, catchphrases=cs.catchphrases)
-        messages = self.brain.messages(system, character, msg, ai.reply_language, ai.memory_size)
+                                          max_sentences, max_chars, catchphrases=cs.catchphrases,
+                                          platforms=self._stream_platforms())
+        messages = self.brain.messages(system, character, msg, ai.reply_language, ai.memory_size,
+                                       multistream=len(self._stream_platforms()) >= 2)
         started = time.monotonic()
         try:
             result = await self.ollama.chat(
@@ -499,11 +654,19 @@ class ChatToonEngine:
         reply.generation_seconds = time.monotonic() - started
         self.stats.generation.append(reply.generation_seconds)
         self.stats.answered += 1
+        stats = self.streams.stats.get(msg.source_id)
+        if stats:
+            stats.answered += 1
+            self._on_streams_change()
         self.brain.remember(msg, reply)
         self.bus.emit("reply", {"author": msg.author, "message": msg.text, "text": reply.text,
-                                "emotion": reply.emotion, "source": reply.source,
-                                "seconds": round(reply.generation_seconds, 2)})
+                                "emotion": reply.emotion, "source": reply.source, "id": msg.uid,
+                                "platform": msg.platform, "seconds": round(reply.generation_seconds, 2)})
         return reply
+
+    def _stream_platforms(self) -> list[str]:
+        """Labels of the platforms this live is on (stable while live: keeps Ollama's prompt cache)."""
+        return sorted({platform_label(s.platform) for s in self.settings.stream_sources() if s.enabled})
 
     def _reply_limits(self) -> tuple[int, int]:
         """Personality "length": short keeps the configured limits, medium allows ~60% more."""
@@ -522,7 +685,15 @@ class ChatToonEngine:
         mode = r.mode
         if self.brain.violates(msg.text, self.settings.context.forbidden_topics):
             mode = "name"  # the AI will steer away; the off-limits words are never read aloud
-        return build_reading(msg, mode, r.max_chars, self.settings.ai.reply_language)
+        return build_reading(msg, mode, r.max_chars, self.settings.ai.reply_language,
+                             announce_platform=self._announce_platform(msg))
+
+    def _announce_platform(self, msg: ChatMessage) -> bool:
+        if msg.platform not in PLATFORMS or self.settings.reading.platform == "never":
+            return False
+        if self.settings.reading.platform == "always":
+            return True
+        return len(self.active_platforms()) >= 2  # "multi": only when it tells viewers something
 
     async def speak(self, reply: Reply, voice_id: str = "") -> None:
         """Synthesize and play one reply. Holding the lock guarantees a single voice."""
@@ -639,7 +810,7 @@ class ChatToonEngine:
             "type": "speak", "kind": "reading", "id": uid, "text": reading.text, "author": reading.author,
             "emotion": "neutral", "intensity": 0.5, "fps": 50,
             "reveal": reading.mode == "name_message", "question": reading.question,
-            "superchat": reading.superchat,
+            "superchat": reading.superchat, "paidKind": msg.paid_kind, **self._platform_tag(msg),
         }
         self._set_phase("reading", author=reading.author, message=reading.text)
         try:
@@ -717,6 +888,7 @@ class ChatToonEngine:
         event = {
             "type": "speak", "kind": "reply", "id": uid, "text": reply.text, "emotion": reply.emotion,
             "intensity": reply.intensity, "author": reply.message.author if reply.message else "", "fps": 50,
+            **self._platform_tag(reply.message),
         }
         self._set_phase("speaking", text=reply.text, emotion=reply.emotion)
         started = time.monotonic()
@@ -730,17 +902,29 @@ class ChatToonEngine:
             await self.server.broadcast({"type": "done", "id": uid, "kind": "reply"})
             self._set_phase("idle")
             self.tts.cleanup()
+        msg = reply.message
         entry = {
-            "time": time.time(), "author": reply.message.author if reply.message else "",
-            "message": reply.message.text if reply.message else "", "reply": reply.text,
+            "time": time.time(), "author": msg.author if msg else "",
+            "message": msg.text if msg else "", "reply": reply.text,
             "emotion": reply.emotion, "source": reply.source, "voice": heard, "read": read,
             "generation": round(reply.generation_seconds, 2),
+            "platform": msg.platform if msg else "", "channel": msg.channel if msg else "",
+            "source_id": msg.source_id if msg else "", "id": msg.uid if msg else "",
         }
         self.history.append(entry)
         self.bus.emit("history", entry)
+        self._message_state(msg, "answered", reply=reply.text)
         self.bus.emit("stats", self.stats.to_dict())
 
     # -- overlay ----------------------------------------------------------
+
+    @staticmethod
+    def _platform_tag(msg: ChatMessage | None) -> dict:
+        """Where the message came from, for the bubble tag (no ids, no credentials)."""
+        info = PLATFORMS.get(msg.platform) if msg else None
+        if not info:
+            return {}
+        return {"platform": msg.platform, "platformLabel": info["label"], "platformColor": info["color"]}
 
     def _emit_overlay_config(self) -> None:
         o = self.settings.overlay
@@ -751,6 +935,7 @@ class ChatToonEngine:
             "scale": o.scale, "x": o.position_x, "y": o.position_y, "rotation": o.rotation,
             "zoom": o.camera_zoom, "light": o.light, "shadows": o.shadows, "quality": o.quality,
             "fps": o.fps, "bubbleSeconds": o.bubble_seconds, "background": o.background,
+            "showPlatform": o.show_platform,
             "idle": self.settings.animation.idle, "intensity": self.settings.animation.intensity,
             "frequency": self.settings.animation.frequency, "reduceMotion": self.settings.animation.reduce_motion,
             "language": self.settings.ai.reply_language,

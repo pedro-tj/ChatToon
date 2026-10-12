@@ -202,6 +202,70 @@
       <translation>Minhoca cartunesca</translation>
     </message>
     <message>
+      <source>Account connected: %1</source>
+      <translation>Conta conectada: %1</translation>
+    </message>
+    <message>
+      <source>Saved in the keyring</source>
+      <translation>Guardado no chaveiro do sistema</translation>
+    </message>
+    <message>
+      <source>Public live chat, no login. Paste a live link or your @channel to follow every new live.</source>
+      <translation>Chat público da live, sem login. Cole o link da live ou o seu @canal para acompanhar toda live nova.</translation>
+    </message>
+    <message>
+      <source>Official EventSub with a Twitch login, or read-only guest mode without login.</source>
+      <translation>EventSub oficial com login na Twitch, ou modo visitante só de leitura, sem login.</translation>
+    </message>
+    <message>
+      <source>Public chat socket used by kick.com (unofficial). Official webhooks need your own Kick app and a public HTTPS address.</source>
+      <translation>Conexão pública de chat usada pelo kick.com (não oficial). Os webhooks oficiais exigem seu próprio app da Kick e um endereço HTTPS público.</translation>
+    </message>
+    <message>
+      <source>Unofficial TikTokLive library; uses the Euler Stream signing service. Optional install.</source>
+      <translation>Biblioteca não oficial TikTokLive; usa o serviço de assinatura Euler Stream. Instalação opcional.</translation>
+    </message>
+    <message>
+      <source>Facebook Pages only, with a token from your own Meta app. Personal profiles cannot be read.</source>
+      <translation>Só Páginas do Facebook, com um token do seu próprio app da Meta. Perfis pessoais não podem ser lidos.</translation>
+    </message>
+    <message>
+      <source>Professional accounts linked to a Facebook Page, with a token from your own Meta app.</source>
+      <translation>Contas profissionais ligadas a uma Página do Facebook, com um token do seu próprio app da Meta.</translation>
+    </message>
+    <message>
+      <source>No API exists for live video or Spaces chat. Can read replies to a post with your own paid API key.</source>
+      <translation>Não existe API para o chat de vídeos ao vivo nem de Spaces. Dá para ler respostas a um post com sua própria chave paga da API.</translation>
+    </message>
+    <message>
+      <source>youtube.com/live/…, youtu.be/… or @channel</source>
+      <translation>youtube.com/live/…, youtu.be/… ou @canal</translation>
+    </message>
+    <message>
+      <source>twitch.tv/channel or just the channel name</source>
+      <translation>twitch.tv/canal ou só o nome do canal</translation>
+    </message>
+    <message>
+      <source>kick.com/channel or just the channel name</source>
+      <translation>kick.com/canal ou só o nome do canal</translation>
+    </message>
+    <message>
+      <source>tiktok.com/@user/live or @user</source>
+      <translation>tiktok.com/@usuario/live ou @usuario</translation>
+    </message>
+    <message>
+      <source>facebook.com/YourPage or the link of a live video</source>
+      <translation>facebook.com/SuaPagina ou o link de um vídeo ao vivo</translation>
+    </message>
+    <message>
+      <source>instagram.com/user or @user</source>
+      <translation>instagram.com/usuario ou @usuario</translation>
+    </message>
+    <message>
+      <source>Link of the post that announces the live</source>
+      <translation>Link do post que anuncia a live</translation>
+    </message>
+    <message>
       <source>Alien explorer</source>
       <translation>Explorador alienígena</translation>
     </message>
@@ -376,6 +440,54 @@
     <message>
       <source>Sniff around</source>
       <translation>Farejar</translation>
+    </message>
+    <message>
+      <source>Paste a link or type the channel.</source>
+      <translation>Cole um link ou digite o canal.</translation>
+    </message>
+    <message>
+      <source>This link is not from a supported platform.</source>
+      <translation>Este link não é de uma plataforma suportada.</translation>
+    </message>
+    <message>
+      <source>This link or name is not valid for this platform.</source>
+      <translation>Este link ou nome não é válido para esta plataforma.</translation>
+    </message>
+    <message>
+      <source>Short links cannot be checked. Open it in the browser and paste the full address.</source>
+      <translation>Links encurtados não podem ser verificados. Abra no navegador e cole o endereço completo.</translation>
+    </message>
+    <message>
+      <source>Choose the platform for this name.</source>
+      <translation>Escolha a plataforma deste nome.</translation>
+    </message>
+    <message>
+      <source>X Spaces are audio rooms without a readable chat.</source>
+      <translation>Os Spaces do X são salas de áudio sem chat legível.</translation>
+    </message>
+    <message>
+      <source>This chat is already in the list.</source>
+      <translation>Este chat já está na lista.</translation>
+    </message>
+    <message>
+      <source>%1 added</source>
+      <translation>%1 adicionado</translation>
+    </message>
+    <message>
+      <source>Set the Twitch Client ID first.</source>
+      <translation>Informe primeiro o Client ID da Twitch.</translation>
+    </message>
+    <message>
+      <source>The login was not approved.</source>
+      <translation>O login não foi aprovado.</translation>
+    </message>
+    <message>
+      <source>The login code expired. Try again.</source>
+      <translation>O código de login expirou. Tente de novo.</translation>
+    </message>
+    <message>
+      <source>The login failed.</source>
+      <translation>O login falhou.</translation>
     </message>
     <message>
       <source>This is not a YouTube video or live link.</source>
@@ -634,153 +746,6 @@
     </message>
   </context>
   <context>
-    <name>ChatPage</name>
-    <message>
-      <source>YouTube chat</source>
-      <translation>Chat do YouTube</translation>
-    </message>
-    <message>
-      <source>Paste the link of your live stream. ChatToon reads the chat like the pop-out window does — no login needed.</source>
-      <translation>Cole o link da sua live. O ChatToon lê o chat como a janela pop-out do YouTube — sem precisar de login.</translation>
-    </message>
-    <message>
-      <source>Live stream</source>
-      <translation>Transmissão</translation>
-    </message>
-    <message>
-      <source>Live stream URL</source>
-      <translation>Link da transmissão</translation>
-    </message>
-    <message>
-      <source>Open in the browser</source>
-      <translation>Abrir no navegador</translation>
-    </message>
-    <message>
-      <source>Accepted: watch?v=…, /live/…, youtu.be/…, live_chat?v=… and the pop-out chat link.</source>
-      <translation>Aceita: watch?v=…, /live/…, youtu.be/…, live_chat?v=… e o link do chat em janela.</translation>
-    </message>
-    <message>
-      <source>Connected to the chat</source>
-      <translation>Conectado ao chat</translation>
-    </message>
-    <message>
-      <source>Chat unavailable</source>
-      <translation>Chat indisponível</translation>
-    </message>
-    <message>
-      <source>Reconnecting…</source>
-      <translation>Reconectando…</translation>
-    </message>
-    <message>
-      <source>The live chat ended</source>
-      <translation>O chat da live terminou</translation>
-    </message>
-    <message>
-      <source>Connects when you press Start in Assisted or Automatic mode</source>
-      <translation>Conecta quando você aperta Iniciar no modo Assistido ou Automático</translation>
-    </message>
-    <message>
-      <source>Which messages to answer</source>
-      <translation>Quais mensagens responder</translation>
-    </message>
-    <message>
-      <source>Busy chats send more than any avatar can answer. Choose how ChatToon picks.</source>
-      <translation>Chats movimentados mandam mais do que qualquer avatar consegue responder. Escolha como o ChatToon decide.</translation>
-    </message>
-    <message>
-      <source>Smart — mentions, questions and paid messages first</source>
-      <translation>Inteligente — menções, perguntas e mensagens pagas primeiro</translation>
-    </message>
-    <message>
-      <source>All — in arrival order, within the limits</source>
-      <translation>Todas — por ordem de chegada, dentro dos limites</translation>
-    </message>
-    <message>
-      <source>Mentions — only when the avatar is called</source>
-      <translation>Menções — só quando chamarem o avatar</translation>
-    </message>
-    <message>
-      <source>Questions first</source>
-      <translation>Perguntas primeiro</translation>
-    </message>
-    <message>
-      <source>Moderators first</source>
-      <translation>Moderadores primeiro</translation>
-    </message>
-    <message>
-      <source>Members first</source>
-      <translation>Membros primeiro</translation>
-    </message>
-    <message>
-      <source>Random</source>
-      <translation>Aleatório</translation>
-    </message>
-    <message>
-      <source>Manual — you choose each message</source>
-      <translation>Manual — você escolhe cada mensagem</translation>
-    </message>
-    <message>
-      <source>Wait before answering the same person again</source>
-      <translation>Esperar antes de responder a mesma pessoa de novo</translation>
-    </message>
-    <message>
-      <source>Ignore messages older than</source>
-      <translation>Ignorar mensagens mais antigas que</translation>
-    </message>
-    <message>
-      <source>Queue size</source>
-      <translation>Tamanho da fila</translation>
-    </message>
-    <message>
-      <source>Skip messages sent before connecting</source>
-      <translation>Pular mensagens enviadas antes de conectar</translation>
-    </message>
-    <message>
-      <source>Ignore bot commands (messages starting with !)</source>
-      <translation>Ignorar comandos de bots (mensagens começando com !)</translation>
-    </message>
-    <message>
-      <source>Super Chats jump the queue</source>
-      <translation>Super Chats furam a fila</translation>
-    </message>
-    <message>
-      <source>Read the viewer's name and message before replying</source>
-      <translation>Ler o nome e a mensagem do espectador antes de responder</translation>
-    </message>
-    <message>
-      <source>Off — the avatar answers directly.</source>
-      <translation>Desativado — o avatar responde direto.</translation>
-    </message>
-    <message>
-      <source>On — reads who wrote, then answers.</source>
-      <translation>Ativado — lê quem escreveu e depois responde.</translation>
-    </message>
-    <message>
-      <source>On — reads who wrote and the message, then answers.</source>
-      <translation>Ativado — lê quem escreveu e a mensagem, depois responde.</translation>
-    </message>
-    <message>
-      <source>Configure</source>
-      <translation>Configurar</translation>
-    </message>
-    <message>
-      <source>Blocked words (comma separated) — messages containing them are ignored</source>
-      <translation>Palavras bloqueadas (separadas por vírgula) — mensagens com elas são ignoradas</translation>
-    </message>
-    <message>
-      <source>Incoming messages</source>
-      <translation>Mensagens recebidas</translation>
-    </message>
-    <message>
-      <source>The latest messages and why some were skipped.</source>
-      <translation>As últimas mensagens e por que algumas foram puladas.</translation>
-    </message>
-    <message>
-      <source>Nothing yet.</source>
-      <translation>Nada ainda.</translation>
-    </message>
-  </context>
-  <context>
     <name>DashboardPage</name>
     <message>
       <source>Dashboard</source>
@@ -791,32 +756,8 @@
       <translation>Tudo o que importa durante a live, em um só lugar.</translation>
     </message>
     <message>
-      <source>Connected</source>
-      <translation>Conectado</translation>
-    </message>
-    <message>
-      <source>Connecting…</source>
-      <translation>Conectando…</translation>
-    </message>
-    <message>
-      <source>Reconnecting…</source>
-      <translation>Reconectando…</translation>
-    </message>
-    <message>
-      <source>Chat ended</source>
-      <translation>Chat encerrado</translation>
-    </message>
-    <message>
       <source>Unavailable</source>
       <translation>Indisponível</translation>
-    </message>
-    <message>
-      <source>Not connected</source>
-      <translation>Desconectado</translation>
-    </message>
-    <message>
-      <source>Demo mode (no YouTube)</source>
-      <translation>Modo demonstração (sem YouTube)</translation>
     </message>
     <message>
       <source>Waiting for messages</source>
@@ -906,8 +847,47 @@
       <translation>Controles ao vivo</translation>
     </message>
     <message>
-      <source>Demo works without YouTube. Assisted shows suggestions for you to approve. Automatic answers on its own.</source>
-      <translation>Demonstração funciona sem YouTube. Assistido mostra sugestões para você aprovar. Automático responde sozinho.</translation>
+      <source>Demo mode (no platform)</source>
+      <translation>Modo demonstração (sem plataforma)</translation>
+    </message>
+    <message>
+      <source>No platform added</source>
+      <translation>Nenhuma plataforma adicionada</translation>
+    </message>
+    <message numerus="yes">
+      <source>%n platform(s) ready</source>
+      <translation>
+        <numerusform>%n plataforma pronta</numerusform>
+        <numerusform>%n plataformas prontas</numerusform>
+      </translation>
+    </message>
+    <message>
+      <source>%1 of %2 connected</source>
+      <translation>%1 de %2 conectadas</translation>
+    </message>
+    <message>
+      <source>Platforms</source>
+      <translation>Plataformas</translation>
+    </message>
+    <message>
+      <source>Messages per minute and replies on each platform.</source>
+      <translation>Mensagens por minuto e respostas em cada plataforma.</translation>
+    </message>
+    <message>
+      <source>Open live chat</source>
+      <translation>Abrir o chat ao vivo</translation>
+    </message>
+    <message>
+      <source>%1/min</source>
+      <translation>%1/min</translation>
+    </message>
+    <message>
+      <source>%1 answered</source>
+      <translation>%1 respondidas</translation>
+    </message>
+    <message>
+      <source>Demo works without any platform. Assisted shows suggestions for you to approve. Automatic answers on its own.</source>
+      <translation>A demonstração funciona sem nenhuma plataforma. O Assistido mostra sugestões para você aprovar. O Automático responde sozinho.</translation>
     </message>
     <message>
       <source>Demo</source>
@@ -1081,8 +1061,8 @@
       <translation>Boas-vindas ao ChatToon</translation>
     </message>
     <message>
-      <source>A 3D character that reads your YouTube chat, answers with its own sense of humour and talks with a real voice — all running on your computer. Let's check a couple of things and you are ready in a minute.</source>
-      <translation>Um personagem 3D que lê o chat do YouTube, responde com humor próprio e fala com voz de verdade — tudo rodando no seu computador. Vamos conferir algumas coisas e em um minuto está pronto.</translation>
+      <source>A 3D character that reads your live chat — YouTube, Twitch, Kick, TikTok and more at the same time — answers with its own sense of humour and talks with a real voice, all running on your computer. Let's check a couple of things and you are ready in a minute.</source>
+      <translation>Um personagem 3D que lê o chat da sua live — YouTube, Twitch, Kick, TikTok e outras ao mesmo tempo —, responde com humor próprio e fala com voz de verdade, tudo rodando no seu computador. Vamos conferir algumas coisas e em um minuto está pronto.</translation>
     </message>
     <message>
       <source>Checking your computer</source>
@@ -1140,8 +1120,8 @@
       <translation>Tudo pronto!</translation>
     </message>
     <message>
-      <source>Try it now in Demo mode: type a message on the Dashboard as if you were a viewer. When you go live, paste the stream link on the YouTube chat page, add the overlay to OBS and switch to Assisted or Automatic.</source>
-      <translation>Experimente agora no modo Demonstração: escreva uma mensagem no Painel como se fosse um espectador. Quando for ao ar, cole o link da live na página do chat do YouTube, adicione o overlay ao OBS e mude para Assistido ou Automático.</translation>
+      <source>Try it now in Demo mode: type a message on the Dashboard as if you were a viewer. When you go live, add your platforms on the Streaming platforms page, add the overlay to OBS and switch to Assisted or Automatic.</source>
+      <translation>Experimente agora no modo Demonstração: digite uma mensagem no Painel como se fosse um espectador. Na hora da live, adicione suas plataformas na página Plataformas de streaming, coloque o overlay no OBS e mude para Assistido ou Automático.</translation>
     </message>
     <message>
       <source>Back</source>
@@ -1200,6 +1180,189 @@
     </message>
   </context>
   <context>
+    <name>LiveChatPage</name>
+    <message>
+      <source>In the queue</source>
+      <translation>Na fila</translation>
+    </message>
+    <message>
+      <source>Answering now</source>
+      <translation>Respondendo agora</translation>
+    </message>
+    <message>
+      <source>Suggestion ready</source>
+      <translation>Sugestão pronta</translation>
+    </message>
+    <message>
+      <source>Answered</source>
+      <translation>Respondida</translation>
+    </message>
+    <message>
+      <source>Skipped</source>
+      <translation>Pulada</translation>
+    </message>
+    <message>
+      <source>Not answered</source>
+      <translation>Não respondida</translation>
+    </message>
+    <message>
+      <source>Not queued</source>
+      <translation>Fora da fila</translation>
+    </message>
+    <message>
+      <source>Removed by a moderator</source>
+      <translation>Removida por um moderador</translation>
+    </message>
+    <message>
+      <source>no words</source>
+      <translation>sem palavras</translation>
+    </message>
+    <message>
+      <source>bot command</source>
+      <translation>comando de bot</translation>
+    </message>
+    <message>
+      <source>blocked word</source>
+      <translation>palavra bloqueada</translation>
+    </message>
+    <message>
+      <source>duplicate</source>
+      <translation>duplicada</translation>
+    </message>
+    <message>
+      <source>repeated</source>
+      <translation>repetida</translation>
+    </message>
+    <message>
+      <source>no mention</source>
+      <translation>sem menção</translation>
+    </message>
+    <message>
+      <source>queue full</source>
+      <translation>fila cheia</translation>
+    </message>
+    <message>
+      <source>too old</source>
+      <translation>antiga demais</translation>
+    </message>
+    <message>
+      <source>not live</source>
+      <translation>fora do ar</translation>
+    </message>
+    <message>
+      <source>event</source>
+      <translation>evento</translation>
+    </message>
+    <message>
+      <source>Live chat</source>
+      <translation>Chat ao vivo</translation>
+    </message>
+    <message>
+      <source>LIVE</source>
+      <translation>AO VIVO</translation>
+    </message>
+    <message>
+      <source>Every platform in one place. Answer a message now or skip it — the avatar still speaks one at a time.</source>
+      <translation>Todas as plataformas num só lugar. Responda uma mensagem agora ou pule — o avatar continua falando uma de cada vez.</translation>
+    </message>
+    <message>
+      <source>Following</source>
+      <translation>Acompanhando</translation>
+    </message>
+    <message>
+      <source>Follow new messages</source>
+      <translation>Acompanhar novas mensagens</translation>
+    </message>
+    <message>
+      <source>Clear the list (the queue is kept)</source>
+      <translation>Limpar a lista (a fila é mantida)</translation>
+    </message>
+    <message>
+      <source>Clear the list</source>
+      <translation>Limpar a lista</translation>
+    </message>
+    <message>
+      <source>Search name or message…</source>
+      <translation>Buscar nome ou mensagem…</translation>
+    </message>
+    <message>
+      <source>Search the chat</source>
+      <translation>Buscar no chat</translation>
+    </message>
+    <message>
+      <source>All</source>
+      <translation>Todas</translation>
+    </message>
+    <message>
+      <source>Hide skipped</source>
+      <translation>Ocultar puladas</translation>
+    </message>
+    <message>
+      <source>Messages from every platform</source>
+      <translation>Mensagens de todas as plataformas</translation>
+    </message>
+    <message>
+      <source>host</source>
+      <translation>dono</translation>
+    </message>
+    <message>
+      <source>mod</source>
+      <translation>mod</translation>
+    </message>
+    <message>
+      <source>member</source>
+      <translation>membro</translation>
+    </message>
+    <message>
+      <source>Answer now</source>
+      <translation>Responder agora</translation>
+    </message>
+    <message>
+      <source>Skip</source>
+      <translation>Pular</translation>
+    </message>
+    <message>
+      <source>Nothing matches the filter</source>
+      <translation>Nada corresponde ao filtro</translation>
+    </message>
+    <message>
+      <source>No messages yet</source>
+      <translation>Nenhuma mensagem ainda</translation>
+    </message>
+    <message>
+      <source>Add your streaming platforms, then press Start in Assisted or Automatic mode.</source>
+      <translation>Adicione suas plataformas de streaming e aperte Iniciar no modo Assistido ou Automático.</translation>
+    </message>
+    <message>
+      <source>Messages from every connected platform will appear here.</source>
+      <translation>As mensagens de todas as plataformas conectadas aparecem aqui.</translation>
+    </message>
+    <message>
+      <source>Press Start to connect your platforms.</source>
+      <translation>Aperte Iniciar para conectar suas plataformas.</translation>
+    </message>
+    <message>
+      <source>Add platform</source>
+      <translation>Adicionar plataforma</translation>
+    </message>
+    <message>
+      <source>Received</source>
+      <translation>Recebidas</translation>
+    </message>
+    <message>
+      <source>Replies</source>
+      <translation>Respostas</translation>
+    </message>
+    <message>
+      <source>Platforms connected</source>
+      <translation>Plataformas conectadas</translation>
+    </message>
+    <message>
+      <source>Manual mode: only the messages you pick are answered.</source>
+      <translation>Modo manual: só as mensagens que você escolher são respondidas.</translation>
+    </message>
+  </context>
+  <context>
     <name>Main</name>
     <message>
       <source>Live</source>
@@ -1238,8 +1401,12 @@
       <translation>Inteligência artificial</translation>
     </message>
     <message>
-      <source>YouTube chat</source>
-      <translation>Chat do YouTube</translation>
+      <source>Streaming platforms</source>
+      <translation>Plataformas de streaming</translation>
+    </message>
+    <message>
+      <source>Live chat</source>
+      <translation>Chat ao vivo</translation>
     </message>
     <message>
       <source>Voice</source>
@@ -1386,6 +1553,14 @@
     <message>
       <source>Show the viewer's name</source>
       <translation>Mostrar o nome de quem escreveu</translation>
+    </message>
+    <message>
+      <source>Show the platform of the message</source>
+      <translation>Mostrar a plataforma da mensagem</translation>
+    </message>
+    <message>
+      <source>A small “Twitch • Ana” tag on the viewer's message.</source>
+      <translation>Uma pequena etiqueta “Twitch • Ana” na mensagem do espectador.</translation>
     </message>
     <message>
       <source>Soft shadow</source>
@@ -1552,6 +1727,433 @@
     </message>
   </context>
   <context>
+    <name>PlatformsPage</name>
+    <message>
+      <source>Streaming platforms</source>
+      <translation>Plataformas de streaming</translation>
+    </message>
+    <message>
+      <source>Read the chat of every platform you stream to — at the same time, with one avatar.</source>
+      <translation>Leia o chat de todas as plataformas em que você transmite — ao mesmo tempo, com um só avatar.</translation>
+    </message>
+    <message>
+      <source>Add platform</source>
+      <translation>Adicionar plataforma</translation>
+    </message>
+    <message>
+      <source>Your sources</source>
+      <translation>Suas fontes</translation>
+    </message>
+    <message>
+      <source>Demo mode does not read any chat. Switch to Assisted or Automatic on the Dashboard to go live.</source>
+      <translation>O modo Demonstração não lê nenhum chat. Mude para Assistido ou Automático no Painel para entrar ao vivo.</translation>
+    </message>
+    <message>
+      <source>%1 of %2 connected. Changes apply right away — no restart needed.</source>
+      <translation>%1 de %2 conectadas. As mudanças valem na hora — sem reiniciar.</translation>
+    </message>
+    <message>
+      <source>They connect together when you press Start.</source>
+      <translation>Elas conectam juntas quando você aperta Iniciar.</translation>
+    </message>
+    <message>
+      <source>No platform yet</source>
+      <translation>Nenhuma plataforma ainda</translation>
+    </message>
+    <message>
+      <source>Add YouTube, Twitch, Kick, TikTok and more. The avatar answers all of them, one at a time.</source>
+      <translation>Adicione YouTube, Twitch, Kick, TikTok e outras. O avatar responde todas, uma de cada vez.</translation>
+    </message>
+    <message>
+      <source>messages</source>
+      <translation>mensagens</translation>
+    </message>
+    <message>
+      <source>per min</source>
+      <translation>por min</translation>
+    </message>
+    <message>
+      <source>answered</source>
+      <translation>respondidas</translation>
+    </message>
+    <message>
+      <source>Read this chat</source>
+      <translation>Ler este chat</translation>
+    </message>
+    <message>
+      <source>Enabled</source>
+      <translation>Ativada</translation>
+    </message>
+    <message>
+      <source>Disabled</source>
+      <translation>Desativada</translation>
+    </message>
+    <message>
+      <source>Next try in %1 s.</source>
+      <translation>Nova tentativa em %1 s.</translation>
+    </message>
+    <message>
+      <source>Share of attention</source>
+      <translation>Fatia da atenção</translation>
+    </message>
+    <message>
+      <source>Connect</source>
+      <translation>Conectar</translation>
+    </message>
+    <message>
+      <source>Reconnect</source>
+      <translation>Reconectar</translation>
+    </message>
+    <message>
+      <source>Disconnect</source>
+      <translation>Desconectar</translation>
+    </message>
+    <message>
+      <source>Testing…</source>
+      <translation>Testando…</translation>
+    </message>
+    <message>
+      <source>Test</source>
+      <translation>Testar</translation>
+    </message>
+    <message>
+      <source>Check the link without reading the chat</source>
+      <translation>Verifica o link sem ler o chat</translation>
+    </message>
+    <message>
+      <source>Edit</source>
+      <translation>Editar</translation>
+    </message>
+    <message>
+      <source>Click again to remove</source>
+      <translation>Clique de novo para remover</translation>
+    </message>
+    <message>
+      <source>Remove</source>
+      <translation>Remover</translation>
+    </message>
+    <message>
+      <source>Remove?</source>
+      <translation>Remover?</translation>
+    </message>
+    <message>
+      <source>Attention between platforms</source>
+      <translation>Atenção entre as plataformas</translation>
+    </message>
+    <message>
+      <source>Busy chats send more than any avatar can answer. Choose how ChatToon picks — and how it shares replies between platforms.</source>
+      <translation>Chats movimentados mandam mais do que qualquer avatar consegue responder. Escolha como o ChatToon decide — e como divide as respostas entre as plataformas.</translation>
+    </message>
+    <message>
+      <source>Smart — questions, mentions and paid messages first, fair to every platform</source>
+      <translation>Inteligente — perguntas, menções e mensagens pagas primeiro, justo com todas as plataformas</translation>
+    </message>
+    <message>
+      <source>Balanced — each platform gets its turn</source>
+      <translation>Equilibrado — cada plataforma tem a sua vez</translation>
+    </message>
+    <message>
+      <source>Custom priority — you set each platform's share</source>
+      <translation>Prioridade personalizada — você define a fatia de cada plataforma</translation>
+    </message>
+    <message>
+      <source>Arrival order — oldest first, within the limits</source>
+      <translation>Ordem de chegada — mais antigas primeiro, dentro dos limites</translation>
+    </message>
+    <message>
+      <source>Mentions — only when the avatar is called</source>
+      <translation>Menções — só quando chamarem o avatar</translation>
+    </message>
+    <message>
+      <source>Questions first</source>
+      <translation>Perguntas primeiro</translation>
+    </message>
+    <message>
+      <source>Moderators first</source>
+      <translation>Moderadores primeiro</translation>
+    </message>
+    <message>
+      <source>Members and subscribers first</source>
+      <translation>Membros e inscritos primeiro</translation>
+    </message>
+    <message>
+      <source>Random</source>
+      <translation>Aleatório</translation>
+    </message>
+    <message>
+      <source>Manual — you choose each message in Live chat</source>
+      <translation>Manual — você escolhe cada mensagem no Chat ao vivo</translation>
+    </message>
+    <message>
+      <source>Selection mode</source>
+      <translation>Modo de seleção</translation>
+    </message>
+    <message>
+      <source>Share replies between platforms</source>
+      <translation>Dividir as respostas entre as plataformas</translation>
+    </message>
+    <message>
+      <source>A platform that got fewer of the latest replies gains priority, so the busiest chat never takes them all.</source>
+      <translation>A plataforma que recebeu menos das últimas respostas ganha prioridade, para o chat mais movimentado nunca levar todas.</translation>
+    </message>
+    <message>
+      <source>Paid messages jump the queue</source>
+      <translation>Mensagens pagas furam a fila</translation>
+    </message>
+    <message>
+      <source>Super Chats, Bits, Kicks and gifts. They are never compared by value: each platform pays differently.</source>
+      <translation>Super Chats, Bits, Kicks e presentes. Nunca são comparados por valor: cada plataforma paga de um jeito.</translation>
+    </message>
+    <message>
+      <source>Also thank gifts, follows and new subscribers</source>
+      <translation>Agradecer também presentes, novos seguidores e inscritos</translation>
+    </message>
+    <message>
+      <source>Events without text. Off by default: on busy lives they arrive in floods.</source>
+      <translation>Eventos sem texto. Desligado por padrão: em lives movimentadas eles chegam aos montes.</translation>
+    </message>
+    <message>
+      <source>Wait before answering the same person again</source>
+      <translation>Esperar antes de responder a mesma pessoa de novo</translation>
+    </message>
+    <message>
+      <source>Per platform: “ana” on Twitch and “ana” on YouTube are different people.</source>
+      <translation>Por plataforma: “ana” na Twitch e “ana” no YouTube são pessoas diferentes.</translation>
+    </message>
+    <message>
+      <source>Ignore messages older than</source>
+      <translation>Ignorar mensagens mais antigas que</translation>
+    </message>
+    <message>
+      <source>The topic moves on: old questions are dropped instead of answered late.</source>
+      <translation>O assunto muda: perguntas antigas são descartadas em vez de respondidas atrasadas.</translation>
+    </message>
+    <message>
+      <source>Queue size</source>
+      <translation>Tamanho da fila</translation>
+    </message>
+    <message>
+      <source>When full, the busiest platform loses its weakest message first.</source>
+      <translation>Quando enche, a plataforma mais movimentada perde primeiro a sua mensagem mais fraca.</translation>
+    </message>
+    <message>
+      <source>Skip messages sent before connecting</source>
+      <translation>Pular mensagens enviadas antes de conectar</translation>
+    </message>
+    <message>
+      <source>Ignore bot commands (messages starting with !)</source>
+      <translation>Ignorar comandos de bots (mensagens começando com !)</translation>
+    </message>
+    <message>
+      <source>Read the viewer's name and message before replying</source>
+      <translation>Ler o nome e a mensagem do espectador antes de responder</translation>
+    </message>
+    <message>
+      <source>Off — the avatar answers directly.</source>
+      <translation>Desativado — o avatar responde direto.</translation>
+    </message>
+    <message>
+      <source>On — reads who wrote, then answers.</source>
+      <translation>Ativado — lê quem escreveu e depois responde.</translation>
+    </message>
+    <message>
+      <source>On — reads who wrote and the message, then answers.</source>
+      <translation>Ativado — lê quem escreveu e a mensagem, depois responde.</translation>
+    </message>
+    <message>
+      <source>Configure</source>
+      <translation>Configurar</translation>
+    </message>
+    <message>
+      <source>Favourite viewers — answered first (comma separated; “twitch:ana” for one platform only)</source>
+      <translation>Espectadores favoritos — respondidos primeiro (separados por vírgula; “twitch:ana” para uma plataforma só)</translation>
+    </message>
+    <message>
+      <source>Favourite viewers</source>
+      <translation>Espectadores favoritos</translation>
+    </message>
+    <message>
+      <source>Blocked words (comma separated) — messages containing them are ignored</source>
+      <translation>Palavras bloqueadas (separadas por vírgula) — mensagens com elas são ignoradas</translation>
+    </message>
+    <message>
+      <source>Blocked words</source>
+      <translation>Palavras bloqueadas</translation>
+    </message>
+    <message>
+      <source>Accounts</source>
+      <translation>Contas</translation>
+    </message>
+    <message>
+      <source>Only where a platform requires it. ChatToon never asks for passwords; logins stay on this computer and are never exported in profiles.</source>
+      <translation>Só quando a plataforma exige. O ChatToon nunca pede senhas; os logins ficam neste computador e nunca vão nos perfis exportados.</translation>
+    </message>
+    <message>
+      <source>Stored in your system keyring (KWallet, GNOME Keyring or compatible).</source>
+      <translation>Guardados no chaveiro do sistema (KWallet, Chaveiro do GNOME ou compatível).</translation>
+    </message>
+    <message>
+      <source>No system keyring found: logins are kept in a private file only your user can read. Enable KWallet or GNOME Keyring for encrypted storage.</source>
+      <translation>Nenhum chaveiro do sistema encontrado: os logins ficam num arquivo privado que só o seu usuário lê. Ative o KWallet ou o Chaveiro do GNOME para guardar com criptografia.</translation>
+    </message>
+    <message>
+      <source>Checking the keyring…</source>
+      <translation>Verificando o chaveiro…</translation>
+    </message>
+    <message>
+      <source>Connected as %1</source>
+      <translation>Conectada como %1</translation>
+    </message>
+    <message>
+      <source>Not connected — guest mode is used</source>
+      <translation>Não conectada — usa o modo visitante</translation>
+    </message>
+    <message>
+      <source>Client ID of your Twitch app (public, not a secret)</source>
+      <translation>Client ID do seu app da Twitch (público, não é segredo)</translation>
+    </message>
+    <message>
+      <source>Twitch Client ID</source>
+      <translation>Client ID da Twitch</translation>
+    </message>
+    <message>
+      <source>Connect account</source>
+      <translation>Conectar conta</translation>
+    </message>
+    <message>
+      <source>Approve ChatToon on Twitch. If the page asks for a code, type:</source>
+      <translation>Aprove o ChatToon na Twitch. Se a página pedir um código, digite:</translation>
+    </message>
+    <message>
+      <source>Copy</source>
+      <translation>Copiar</translation>
+    </message>
+    <message>
+      <source>Open twitch.tv/activate</source>
+      <translation>Abrir twitch.tv/activate</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>Cancelar</translation>
+    </message>
+    <message>
+      <source>Create a free app at dev.twitch.tv/console with Client Type “Public” (any OAuth redirect, e.g. http://localhost). Only the “read chat” permission is requested; the token is validated every hour and renewed automatically.</source>
+      <translation>Crie um app gratuito em dev.twitch.tv/console com Client Type “Public” (qualquer redirecionamento OAuth, ex.: http://localhost). Só a permissão de “ler o chat” é pedida; o token é validado a cada hora e renovado sozinho.</translation>
+    </message>
+    <message>
+      <source>Official webhooks ready</source>
+      <translation>Webhooks oficiais prontos</translation>
+    </message>
+    <message>
+      <source>Not needed for the public chat</source>
+      <translation>Não precisa para o chat público</translation>
+    </message>
+    <message>
+      <source>Client ID of your Kick app</source>
+      <translation>Client ID do seu app da Kick</translation>
+    </message>
+    <message>
+      <source>Kick Client ID</source>
+      <translation>Client ID da Kick</translation>
+    </message>
+    <message>
+      <source>Client secret</source>
+      <translation>Client secret</translation>
+    </message>
+    <message>
+      <source>Local webhook port</source>
+      <translation>Porta local do webhook</translation>
+    </message>
+    <message>
+      <source>ChatToon listens on 127.0.0.1 only. Forward your public HTTPS address (set as Webhook URL in the Kick app) to http://127.0.0.1:%1/kick/webhook — ChatToon never opens ports to the internet.</source>
+      <translation>O ChatToon escuta só em 127.0.0.1. Encaminhe o seu endereço HTTPS público (o Webhook URL do app da Kick) para http://127.0.0.1:%1/kick/webhook — o ChatToon nunca abre portas para a internet.</translation>
+    </message>
+    <message>
+      <source>TikTokLive installed</source>
+      <translation>TikTokLive instalada</translation>
+    </message>
+    <message>
+      <source>Optional component not installed</source>
+      <translation>Componente opcional não instalado</translation>
+    </message>
+    <message>
+      <source>Install it in a private folder (nothing changes in your system), then restart ChatToon:</source>
+      <translation>Instale numa pasta privada (nada muda no seu sistema) e reinicie o ChatToon:</translation>
+    </message>
+    <message>
+      <source>Copy command</source>
+      <translation>Copiar comando</translation>
+    </message>
+    <message>
+      <source>Euler Stream API key (optional, raises the daily limit)</source>
+      <translation>Chave da API do Euler Stream (opcional, aumenta o limite diário)</translation>
+    </message>
+    <message>
+      <source>API key</source>
+      <translation>Chave da API</translation>
+    </message>
+    <message>
+      <source>TikTok has no official API for LIVE comments. The unofficial TikTokLive library asks Euler Stream (a third-party service) to sign each connection: it receives the live's room id and your IP address, never your login. It may stop working without notice.</source>
+      <translation>O TikTok não tem API oficial para comentários de LIVE. A biblioteca não oficial TikTokLive pede ao Euler Stream (um serviço de terceiros) para assinar cada conexão: ele recebe o id da sala da live e o seu endereço IP, nunca o seu login. Pode parar de funcionar sem aviso.</translation>
+    </message>
+    <message>
+      <source>Token saved</source>
+      <translation>Token guardado</translation>
+    </message>
+    <message>
+      <source>No token</source>
+      <translation>Sem token</translation>
+    </message>
+    <message>
+      <source>Page or user access token</source>
+      <translation>Token de acesso da Página ou do usuário</translation>
+    </message>
+    <message>
+      <source>Access token</source>
+      <translation>Token de acesso</translation>
+    </message>
+    <message>
+      <source>Create your own app at developers.facebook.com (it can stay in Development mode), open the Graph API Explorer, choose your Page and the permissions pages_read_engagement, pages_read_user_content, pages_show_list (plus instagram_basic and instagram_manage_comments for Instagram), generate the token and extend it in the Access Token Debugger. Only Pages and professional Instagram accounts can be read.</source>
+      <translation>Crie seu próprio app em developers.facebook.com (pode ficar no modo de Desenvolvimento), abra o Graph API Explorer, escolha a sua Página e as permissões pages_read_engagement, pages_read_user_content, pages_show_list (mais instagram_basic e instagram_manage_comments para o Instagram), gere o token e estenda no Access Token Debugger. Só Páginas e contas profissionais do Instagram podem ser lidas.</translation>
+    </message>
+    <message>
+      <source>Bearer token saved</source>
+      <translation>Bearer token guardado</translation>
+    </message>
+    <message>
+      <source>Bearer token of your X developer app</source>
+      <translation>Bearer token do seu app de desenvolvedor do X</translation>
+    </message>
+    <message>
+      <source>Bearer token</source>
+      <translation>Bearer token</translation>
+    </message>
+    <message>
+      <source>X has no API for the chat of live videos or Spaces. ChatToon can read replies to the post that announces your live, using the paid X API (charged per post read, about every 20 seconds).</source>
+      <translation>O X não tem API para o chat de vídeos ao vivo nem de Spaces. O ChatToon consegue ler as respostas ao post que anuncia a sua live, usando a API paga do X (cobrada por post lido, a cada 20 segundos mais ou menos).</translation>
+    </message>
+    <message>
+      <source>What each platform allows</source>
+      <translation>O que cada plataforma permite</translation>
+    </message>
+    <message>
+      <source>Tested with the official documentation in October 2026. Platforms change their rules; ChatToon tells you when a source stops working.</source>
+      <translation>Conferido na documentação oficial em outubro de 2026. As plataformas mudam as regras; o ChatToon avisa quando uma fonte para de funcionar.</translation>
+    </message>
+    <message>
+      <source>Saved — type to replace</source>
+      <translation>Guardado — digite para trocar</translation>
+    </message>
+    <message>
+      <source>Save in the keyring</source>
+      <translation>Guardar no chaveiro</translation>
+    </message>
+    <message>
+      <source>Delete from this computer</source>
+      <translation>Apagar deste computador</translation>
+    </message>
+  </context>
+  <context>
     <name>Preview</name>
     <message>
       <source>Preview needs QtWebEngine (package qt6-webengine)</source>
@@ -1641,8 +2243,36 @@
       <translation>Privacidade e segurança</translation>
     </message>
     <message>
-      <source>AI and voice run on this computer (Ollama and TTS BigLinux). Only the YouTube chat is read from the internet.</source>
-      <translation>IA e voz rodam neste computador (Ollama e TTS BigLinux). Só o chat do YouTube vem da internet.</translation>
+      <source>AI and voice run on this computer (Ollama and TTS BigLinux). Only the chats of your streaming platforms are read from the internet.</source>
+      <translation>IA e voz rodam neste computador (Ollama e TTS BigLinux). Só os chats das suas plataformas de streaming vêm da internet.</translation>
+    </message>
+    <message>
+      <source>Platform logins use official sign-in or tokens you paste — never passwords — and stay in the system keyring. Profiles never include them.</source>
+      <translation>Os logins das plataformas usam a entrada oficial ou tokens que você cola — nunca senhas — e ficam no chaveiro do sistema. Os perfis nunca os incluem.</translation>
+    </message>
+    <message>
+      <source>Login storage</source>
+      <translation>Onde ficam os logins</translation>
+    </message>
+    <message>
+      <source>system keyring</source>
+      <translation>chaveiro do sistema</translation>
+    </message>
+    <message>
+      <source>private file (no keyring found)</source>
+      <translation>arquivo privado (sem chaveiro)</translation>
+    </message>
+    <message>
+      <source>TikTok support (TikTokLive)</source>
+      <translation>Suporte ao TikTok (TikTokLive)</translation>
+    </message>
+    <message>
+      <source>installed</source>
+      <translation>instalado</translation>
+    </message>
+    <message>
+      <source>optional — chattoon extras install tiktok</source>
+      <translation>opcional — chattoon extras install tiktok</translation>
     </message>
     <message>
       <source>The overlay server listens only on 127.0.0.1 and requires a secret address.</source>
@@ -1702,6 +2332,296 @@
     <message>
       <source>available</source>
       <translation>disponível</translation>
+    </message>
+  </context>
+  <context>
+    <name>SourceDialog</name>
+    <message>
+      <source>Edit source</source>
+      <translation>Editar fonte</translation>
+    </message>
+    <message>
+      <source>Add a streaming platform</source>
+      <translation>Adicionar uma plataforma de streaming</translation>
+    </message>
+    <message>
+      <source>Paste the link of your live or channel — the platform is recognised automatically.</source>
+      <translation>Cole o link da sua live ou do canal — a plataforma é reconhecida sozinha.</translation>
+    </message>
+    <message>
+      <source>Link, channel or @user</source>
+      <translation>Link, canal ou @usuário</translation>
+    </message>
+    <message>
+      <source>Recognised: %1 · %2</source>
+      <translation>Reconhecido: %1 · %2</translation>
+    </message>
+    <message>
+      <source>Name shown in ChatToon (optional)</source>
+      <translation>Nome mostrado no ChatToon (opcional)</translation>
+    </message>
+    <message>
+      <source>e.g. Main channel</source>
+      <translation>ex.: Canal principal</translation>
+    </message>
+    <message>
+      <source>How to read</source>
+      <translation>Como ler</translation>
+    </message>
+    <message>
+      <source>Guest mode: no login, read-only. Twitch keeps it working, but does not document it.</source>
+      <translation>Modo visitante: sem login, só leitura. A Twitch mantém funcionando, mas não documenta.</translation>
+    </message>
+    <message>
+      <source>Official EventSub with your Twitch account (connect it in Accounts).</source>
+      <translation>EventSub oficial com a sua conta da Twitch (conecte em Contas).</translation>
+    </message>
+    <message>
+      <source>Uses your Twitch account when connected; otherwise guest mode.</source>
+      <translation>Usa a sua conta da Twitch quando conectada; senão, o modo visitante.</translation>
+    </message>
+    <message>
+      <source>Automatic</source>
+      <translation>Automático</translation>
+    </message>
+    <message>
+      <source>Account</source>
+      <translation>Conta</translation>
+    </message>
+    <message>
+      <source>Guest</source>
+      <translation>Visitante</translation>
+    </message>
+    <message>
+      <source>Official webhooks: your Kick app plus a public HTTPS address forwarding to this computer.</source>
+      <translation>Webhooks oficiais: o seu app da Kick mais um endereço HTTPS público encaminhado para este computador.</translation>
+    </message>
+    <message>
+      <source>Public chat socket used by kick.com. Unofficial: may change without notice.</source>
+      <translation>Conexão pública de chat usada pelo kick.com. Não oficial: pode mudar sem aviso.</translation>
+    </message>
+    <message>
+      <source>Public chat</source>
+      <translation>Chat público</translation>
+    </message>
+    <message>
+      <source>Official webhook</source>
+      <translation>Webhook oficial</translation>
+    </message>
+    <message>
+      <source>Chatroom number (only if the automatic lookup is blocked)</source>
+      <translation>Número da sala de chat (só se a busca automática for bloqueada)</translation>
+    </message>
+    <message>
+      <source>Chatroom number</source>
+      <translation>Número da sala de chat</translation>
+    </message>
+    <message>
+      <source>Read this chat when the live starts</source>
+      <translation>Ler este chat quando a live começar</translation>
+    </message>
+    <message>
+      <source>Test connection</source>
+      <translation>Testar conexão</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>Cancelar</translation>
+    </message>
+    <message>
+      <source>Save</source>
+      <translation>Salvar</translation>
+    </message>
+    <message>
+      <source>Add</source>
+      <translation>Adicionar</translation>
+    </message>
+  </context>
+  <context>
+    <name>Status</name>
+    <message>
+      <source>Ready — connects on Start</source>
+      <translation>Pronta — conecta ao Iniciar</translation>
+    </message>
+    <message>
+      <source>Connecting…</source>
+      <translation>Conectando…</translation>
+    </message>
+    <message>
+      <source>Connected</source>
+      <translation>Conectado</translation>
+    </message>
+    <message>
+      <source>Reconnecting…</source>
+      <translation>Reconectando…</translation>
+    </message>
+    <message>
+      <source>Waiting for the live</source>
+      <translation>Aguardando a live</translation>
+    </message>
+    <message>
+      <source>Live ended</source>
+      <translation>Live encerrada</translation>
+    </message>
+    <message>
+      <source>Login required</source>
+      <translation>Login necessário</translation>
+    </message>
+    <message>
+      <source>Error</source>
+      <translation>Erro</translation>
+    </message>
+    <message>
+      <source>Not available</source>
+      <translation>Indisponível</translation>
+    </message>
+    <message>
+      <source>Disconnected</source>
+      <translation>Desconectada</translation>
+    </message>
+    <message>
+      <source>Disabled</source>
+      <translation>Desativada</translation>
+    </message>
+    <message>
+      <source>Supported</source>
+      <translation>Suportada</translation>
+    </message>
+    <message>
+      <source>Limited</source>
+      <translation>Limitada</translation>
+    </message>
+    <message>
+      <source>Experimental</source>
+      <translation>Experimental</translation>
+    </message>
+    <message>
+      <source>Unavailable</source>
+      <translation>Indisponível</translation>
+    </message>
+    <message>
+      <source>Network problem — trying again.</source>
+      <translation>Problema de rede — tentando de novo.</translation>
+    </message>
+    <message>
+      <source>The platform asked to slow down — waiting before trying again.</source>
+      <translation>A plataforma pediu para ir com calma — aguardando antes de tentar de novo.</translation>
+    </message>
+    <message>
+      <source>Not live right now. ChatToon keeps checking and connects when the live starts.</source>
+      <translation>Fora do ar agora. O ChatToon continua verificando e conecta quando a live começar.</translation>
+    </message>
+    <message>
+      <source>Not live right now.</source>
+      <translation>Fora do ar agora.</translation>
+    </message>
+    <message>
+      <source>This live has ended.</source>
+      <translation>Esta live terminou.</translation>
+    </message>
+    <message>
+      <source>Connect the account for this platform in Accounts below.</source>
+      <translation>Conecte a conta desta plataforma em Contas, logo abaixo.</translation>
+    </message>
+    <message>
+      <source>The login failed.</source>
+      <translation>O login falhou.</translation>
+    </message>
+    <message>
+      <source>Set the Twitch Client ID in Accounts below.</source>
+      <translation>Informe o Client ID da Twitch em Contas, logo abaixo.</translation>
+    </message>
+    <message>
+      <source>Official Kick webhooks need your Kick app (Client ID and secret) in Accounts below.</source>
+      <translation>Os webhooks oficiais da Kick precisam do seu app da Kick (Client ID e secret) em Contas, logo abaixo.</translation>
+    </message>
+    <message>
+      <source>An optional component is not installed — see Accounts below.</source>
+      <translation>Um componente opcional não está instalado — veja Contas, logo abaixo.</translation>
+    </message>
+    <message>
+      <source>Not available on this computer or platform.</source>
+      <translation>Indisponível neste computador ou plataforma.</translation>
+    </message>
+    <message>
+      <source>This platform has no API to read this kind of live.</source>
+      <translation>Esta plataforma não tem API para ler este tipo de live.</translation>
+    </message>
+    <message>
+      <source>Your API plan does not allow reading these posts.</source>
+      <translation>O seu plano da API não permite ler esses posts.</translation>
+    </message>
+    <message>
+      <source>Channel or live not found.</source>
+      <translation>Canal ou live não encontrado.</translation>
+    </message>
+    <message>
+      <source>This link or name is not valid for this platform.</source>
+      <translation>Este link ou nome não é válido para esta plataforma.</translation>
+    </message>
+    <message>
+      <source>This video has no live chat (not live, ended or chat disabled).</source>
+      <translation>Este vídeo não tem chat ao vivo (não está ao vivo, terminou ou o chat está desativado).</translation>
+    </message>
+    <message>
+      <source>The platform blocked the automatic lookup. Type the chatroom number in the source options.</source>
+      <translation>A plataforma bloqueou a busca automática. Digite o número da sala de chat nas opções da fonte.</translation>
+    </message>
+    <message>
+      <source>Age-restricted live: it cannot be read without a login.</source>
+      <translation>Live com restrição de idade: não dá para ler sem login.</translation>
+    </message>
+    <message>
+      <source>The platform refused to send this chat.</source>
+      <translation>A plataforma recusou enviar este chat.</translation>
+    </message>
+    <message>
+      <source>Unexpected problem in this connector — the other platforms keep working.</source>
+      <translation>Problema inesperado neste conector — as outras plataformas continuam funcionando.</translation>
+    </message>
+    <message>
+      <source>No answer from the platform in time.</source>
+      <translation>A plataforma não respondeu a tempo.</translation>
+    </message>
+    <message>
+      <source>The TikTok signing service (Euler Stream) failed — trying again.</source>
+      <translation>O serviço de assinatura do TikTok (Euler Stream) falhou — tentando de novo.</translation>
+    </message>
+    <message>
+      <source>Kick's chat server refused the connection.</source>
+      <translation>O servidor de chat da Kick recusou a conexão.</translation>
+    </message>
+    <message>
+      <source>This Kick channel has no chatroom.</source>
+      <translation>Este canal da Kick não tem sala de chat.</translation>
+    </message>
+    <message>
+      <source>Another source already reads this chat.</source>
+      <translation>Outra fonte já lê este chat.</translation>
+    </message>
+    <message>
+      <source>Meta refused the request.</source>
+      <translation>A Meta recusou o pedido.</translation>
+    </message>
+    <message>
+      <source>The platform refused the request.</source>
+      <translation>A plataforma recusou o pedido.</translation>
+    </message>
+    <message>
+      <source>The local webhook port is in use. Choose another port in Accounts.</source>
+      <translation>A porta local do webhook está em uso. Escolha outra porta em Contas.</translation>
+    </message>
+    <message>
+      <source>Receiving official Kick webhooks — keep your public HTTPS address forwarding to ChatToon.</source>
+      <translation>Recebendo os webhooks oficiais da Kick — mantenha o seu endereço HTTPS público encaminhando para o ChatToon.</translation>
+    </message>
+    <message>
+      <source>Live now — the chat can be read.</source>
+      <translation>Ao vivo agora — o chat pode ser lido.</translation>
+    </message>
+    <message>
+      <source>Ready — the chat can be read.</source>
+      <translation>Pronto — o chat pode ser lido.</translation>
     </message>
   </context>
   <context>
@@ -1927,6 +2847,34 @@
     <message>
       <source>Name + message</source>
       <translation>Nome + mensagem</translation>
+    </message>
+    <message>
+      <source>Say which platform the message came from</source>
+      <translation>Dizer de qual plataforma veio a mensagem</translation>
+    </message>
+    <message>
+      <source>Only while two or more platforms are live, e.g. “On Twitch, Ana asked…”.</source>
+      <translation>Só quando duas ou mais plataformas estão ao vivo, ex.: “Na Twitch, a Ana perguntou…”.</translation>
+    </message>
+    <message>
+      <source>Every message says its platform, even with only one live.</source>
+      <translation>Toda mensagem diz a plataforma, mesmo com uma live só.</translation>
+    </message>
+    <message>
+      <source>Never — just the name (and the message).</source>
+      <translation>Nunca — só o nome (e a mensagem).</translation>
+    </message>
+    <message>
+      <source>Never</source>
+      <translation>Nunca</translation>
+    </message>
+    <message>
+      <source>Multistream</source>
+      <translation>Multistream</translation>
+    </message>
+    <message>
+      <source>Always</source>
+      <translation>Sempre</translation>
     </message>
     <message>
       <source>Read at most</source>

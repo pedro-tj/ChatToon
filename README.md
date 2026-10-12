@@ -1,11 +1,12 @@
-# ChatToon 2.1.0
+# ChatToon 2.2.0
 
-**Um personagem 3D que participa da sua live no YouTube:** ele lê o chat — inclusive em voz
-alta, dizendo quem escreveu e o quê —, responde com humor próprio usando a **IA local do
-BigLinux** (Ollama), fala com voz de verdade pelo **TTS BigLinux** (agora também com as vozes
-neurais **Kokoro**) e continua vivo entre uma mensagem e outra: respira, olha em volta e faz
-gestos do seu jeito — tudo num overlay com fundo transparente para o OBS Studio. Fora o chat do YouTube, tudo roda no seu computador: sem nuvem, sem chave de API,
-sem mensalidade.
+**Um personagem 3D que participa da sua live — no YouTube, na Twitch, na Kick, no TikTok e em
+outras plataformas ao mesmo tempo:** ele lê os chats — inclusive em voz alta, dizendo quem
+escreveu, o quê e de onde ("Na Twitch, a Ana perguntou…") —, responde com humor próprio usando
+a **IA local do BigLinux** (Ollama), fala com voz de verdade pelo **TTS BigLinux** (também com
+as vozes neurais **Kokoro**) e continua vivo entre uma mensagem e outra: respira, olha em volta
+e faz gestos do seu jeito — tudo num overlay com fundo transparente para o OBS Studio. Fora a
+leitura dos chats, tudo roda no seu computador: sem nuvem, sem mensalidade.
 
 > **Autor:** Pedro Bezerra — canal **InfoRecarga** ([youtube.com/@pedro_bezerra](https://www.youtube.com/@pedro_bezerra))
 > **Colaborador:** Rafael Ruscher ([github.com/ruscher](https://github.com/ruscher))
@@ -18,6 +19,8 @@ sem mensalidade.
 | ![Painel](docs/screenshots/dashboard.png) | ![Personagens](docs/screenshots/characters.png) |
 | **Falando (o balão acompanha a voz)** | **Português, tema escuro** |
 | ![Falando](docs/screenshots/speaking.png) | ![Painel em português](docs/screenshots/dashboard-pt-dark.png) |
+| **Plataformas de streaming (2.2)** | **Todos os chats num só lugar (2.2)** |
+| ![Plataformas de streaming](docs/screenshots/platforms-pt-dark.png) | ![Chat ao vivo unificado](docs/screenshots/live-chat-pt-dark.png) |
 
 ---
 
@@ -114,6 +117,27 @@ bichinhos!". A versão 2.1.0 responde a tudo isso:
   **Cachorro** que abana o rabo para qualquer atualização do pacman;
 - e um **sistema de animação** que deixa todos vivos mesmo quando ninguém está falando.
 
+### Uma live, várias plataformas (a versão 2.2.0)
+
+Muita gente transmite a mesma live no YouTube, na Twitch, na Kick e no TikTok ao mesmo tempo —
+e o personagem só enxergava o YouTube. A 2.2.0 transforma o ChatToon num co-apresentador
+**multiplataforma**:
+
+- uma página **Plataformas de streaming** onde você cola o link da live ou do canal — a
+  plataforma é reconhecida sozinha —, testa a conexão e liga ou desliga cada fonte **durante
+  a live**, sem reiniciar;
+- uma página **Chat ao vivo** com as mensagens de todas as plataformas numa lista só, com busca,
+  filtros, contadores e o botão "Responder agora";
+- uma **fila justa**: o chat mais movimentado não leva todas as respostas (modos Equilibrado,
+  Prioridade personalizada e Inteligente com divisão entre plataformas);
+- o personagem **diz de onde veio a mensagem** e o balão do OBS ganha uma etiqueta discreta
+  "Twitch • Ana" — e continua sendo **uma voz de cada vez**;
+- logins oficiais só onde a plataforma exige, guardados no **chaveiro do sistema**, nunca em
+  perfis exportados.
+
+Cada plataforma está classificada com honestidade — funcional, limitada, experimental ou
+indisponível — de acordo com o que ela realmente permite (veja a tabela abaixo).
+
 ### Software livre, feito por voluntários
 
 O ChatToon é software livre (GPL-3.0-or-later) e nasceu dentro da comunidade **BigLinux**, feito
@@ -144,20 +168,27 @@ melhorias. É assim que o projeto cresce.
   Geek, Caos controlado, Personalizado), nove ajustes de humor, contexto do canal, noção do
   horário real, memória de curto prazo, bordões e chamadas para ação ocasionais. As mensagens
   dos espectadores são tratadas como dados, **nunca como instruções**.
-- **Chat ao vivo do YouTube** a partir do link colado (watch, live, youtu.be, live_chat,
-  pop-out): sem login, sem chave de API, sem duplicatas (pelo id da mensagem), reconexão com
-  espera progressiva e detecção de fim de transmissão.
-- **Seleção de mensagens**: inteligente, todas, menções, perguntas, moderadores, membros,
-  aleatória ou manual; intervalo por espectador, validade da mensagem, limite de fila, palavras
-  bloqueadas e prioridade para Super Chat.
-- **Três modos**: Demonstração (sem YouTube), Assistido (você aprova cada resposta) e
+- **Várias plataformas ao mesmo tempo** (multistream): YouTube, Twitch, Kick, TikTok, Facebook,
+  Instagram e X, inclusive **vários canais da mesma plataforma**. Cada fonte tem a sua própria
+  conexão, estado, reconexão com espera progressiva e aleatória, e tratamento de erros — **a
+  queda de uma nunca derruba as outras**. IDs e espectadores são separados por plataforma e
+  fonte: a "ana" da Twitch e a "ana" do YouTube são pessoas diferentes.
+- **Chat ao vivo unificado**: lista virtualizada (fluida com milhares de mensagens), busca,
+  filtro por plataforma, mensagens puladas e o motivo, resposta gerada embaixo de cada mensagem,
+  "Responder agora" e "Pular", e mensagens apagadas por moderadores somem da fila.
+- **Seleção de mensagens**: inteligente (com divisão justa entre plataformas), equilibrada,
+  prioridade personalizada por fonte, ordem de chegada, menções, perguntas, moderadores, membros,
+  aleatória ou manual; intervalo por espectador, validade da mensagem, limite de fila que
+  descarta primeiro do chat mais cheio, espectadores favoritos, palavras bloqueadas e prioridade
+  para mensagens pagas (Super Chat, Bits, Kicks, presentes — nunca comparados por valor).
+- **Três modos**: Demonstração (sem plataforma), Assistido (você aprova cada resposta) e
   Automático.
 - **Uma voz de cada vez, sempre**: vozes do TTS BigLinux (Piper, RHVoice, espeak-ng e
   **Kokoro**) geradas uma única vez e tocadas pelo aplicativo **ou** pela fonte do OBS — nunca
   pelos dois, e a leitura nunca se sobrepõe à resposta.
 - **Overlay para o OBS** num endereço local secreto: fundo transparente ou chroma key, balão de
-  fala, controles de tamanho, posição, câmera, luz, qualidade e FPS, com prévia ao vivo dentro do
-  aplicativo.
+  fala com a etiqueta da plataforma (opcional), controles de tamanho, posição, câmera, luz,
+  qualidade e FPS, com prévia ao vivo dentro do aplicativo.
 - **Controles ao vivo**: iniciar, pausar, parar, interromper, silenciar, limpar fila, mandar o
   personagem dizer uma frase, disparar reações e um **botão de emergência** que cala tudo de uma
   vez.
@@ -174,13 +205,14 @@ makepkg -si
 ```
 
 Depois abra **ChatToon** pelo menu (ou rode `chattoon`). Para conferir a versão:
-`chattoon --version` → `chattoon 2.1.0`. Para remover: `sudo pacman -R chattoon`.
+`chattoon --version` → `chattoon 2.2.0`. Para remover: `sudo pacman -R chattoon`.
 
 | Tipo | Pacotes |
 |---|---|
 | Obrigatórios | `python`, `pyside6`, `python-aiohttp`, `qt6-svg`, `qt6-webengine` |
 | Para compilar | `python-build`, `python-installer`, `python-setuptools`, `python-wheel`, `qt6-tools` |
-| Opcionais | `tts-biglinux` (voz, repositório do BigLinux), `ollama` (IA — ou um Ollama em outra máquina da rede), `pipewire-audio` / `pulseaudio-utils` / `alsa-utils` (áudio no desktop), `obs-studio` |
+| Opcionais | `tts-biglinux` (voz, repositório do BigLinux), `ollama` (IA — ou um Ollama em outra máquina da rede), `pipewire-audio` / `pulseaudio-utils` / `alsa-utils` (áudio no desktop), `obs-studio`, `python-gobject` + `libsecret` (logins no chaveiro do sistema), `python-cryptography` (webhooks oficiais da Kick) |
+| Extra (TikTok) | `chattoon extras install tiktok` — instala a biblioteca TikTokLive numa pasta privada (`~/.local/share/chattoon/extras`), sem mexer no sistema |
 
 O PKGBUILD compila a partir deste repositório (nada é baixado durante o build): gera a tradução
 com `lrelease`, monta o *wheel* com `python -m build`, instala com `python -m installer` e
@@ -191,7 +223,7 @@ Para rodar direto do código-fonte, sem instalar:
 ```bash
 sudo pacman -S --needed pyside6 python-aiohttp qt6-svg qt6-webengine
 python -m chattoon            # aplicativo
-python -m chattoon doctor     # verifica Ollama, TTS BigLinux e áudio
+python -m chattoon doctor     # verifica Ollama, TTS BigLinux, áudio e plataformas
 python -m chattoon ask "Meu Windows travou!" --character tux
 ```
 
@@ -212,6 +244,28 @@ comandos do Kokoro dele, então **toda voz que funciona no TTS BigLinux funciona
 própria voz, velocidade e tom (página **Voz**, com botão de prévia); a leitura das mensagens
 pode usar outra voz. Detalhes em [docs/06-tts.md](docs/06-tts.md).
 
+### Plataformas de streaming
+
+| Plataforma | Situação | Como o ChatToon lê | O que você precisa |
+|---|---|---|---|
+| **YouTube** | ✅ funcional | chat público da live (como a janela pop-out) | só o link da live — ou o `@canal`, que acompanha toda live nova |
+| **Twitch** | ✅ funcional | **EventSub** oficial com a sua conta, ou modo visitante (IRC só leitura, sem login) | nada para o modo visitante; para o oficial, um app gratuito "Public" em dev.twitch.tv e **Conectar conta** (código na tela, sem senha) |
+| **Kick** | 🧪 experimental | conexão pública de chat usada pelo próprio kick.com (não oficial) · ou **webhooks oficiais** | nada; para o oficial, o seu app da Kick (Client ID + secret) **e** um endereço HTTPS público que você encaminha para `127.0.0.1` |
+| **TikTok** | 🧪 experimental | biblioteca não oficial TikTokLive + serviço de assinatura Euler Stream (terceiro) | `chattoon extras install tiktok`; a live precisa estar no ar |
+| **Facebook** | ⚠️ limitada | Graph API oficial (comentários da live) | **Página** (perfil pessoal não) + token do seu próprio app da Meta |
+| **Instagram** | ⚠️ limitada | Graph API oficial (`live_media`) | conta **profissional** ligada a uma Página + token do seu app da Meta |
+| **X** | ⚠️ limitada / ⛔ | não existe API para o chat de vídeos ao vivo nem de Spaces; dá para ler **respostas ao post** que anuncia a live | o seu Bearer token da API do X (paga por post lido) |
+
+Para adicionar: **Plataformas de streaming → Adicionar plataforma**, cole o link
+(`twitch.tv/canal`, `kick.com/canal`, `tiktok.com/@canal/live`, `youtube.com/@canal`…), clique
+em **Testar conexão** e em **Adicionar**. Quem já usava a 2.1 não precisa fazer nada: o link do
+YouTube salvo vira a primeira fonte automaticamente.
+
+Tokens e segredos são colados em **Plataformas de streaming → Contas** e ficam no **chaveiro do
+sistema** (KWallet, Chaveiro do GNOME). O ChatToon **nunca pede senha**, nunca abre portas para a
+internet e nunca coloca credenciais em logs, no overlay ou em perfis exportados. Detalhes e
+fontes da pesquisa em [docs/14-platform-api-research.md](docs/14-platform-api-research.md).
+
 ## Como usar
 
 1. **Primeira execução**: o assistente verifica o Ollama e a voz e deixa você escolher um
@@ -221,7 +275,9 @@ pode usar outra voz. Detalhes em [docs/06-tts.md](docs/06-tts.md).
 3. Página **Voz**: escolha a voz de cada personagem (Piper, RHVoice, espeak-ng ou Kokoro) e, em
    **Leitura das mensagens**, se ele lê só o nome, nome + mensagem ou responde direto.
 4. **Experimente** no modo **Demonstração**: digite no Painel como se fosse alguém do chat.
-5. Página **Chat do YouTube**: cole o link da live e escolha como as mensagens são selecionadas.
+5. Página **Plataformas de streaming**: adicione cada plataforma onde a live passa (link ou
+   canal), teste a conexão e escolha como a atenção é dividida entre elas. Durante a live, a
+   página **Chat ao vivo** mostra tudo junto.
 6. Página **Contexto da live**: canal, assunto, convidados, temas proibidos e chamadas
    para ação.
 7. Página **OBS Studio**: copie o endereço do overlay → no OBS, adicione uma fonte
@@ -230,7 +286,9 @@ pode usar outra voz. Detalhes em [docs/06-tts.md](docs/06-tts.md).
 8. Mude para **Assistido** ou **Automático** e aperte **Iniciar** (`Ctrl+Espaço`).
 
 Atalhos: `Ctrl+Espaço` iniciar/pausar · `Ctrl+.` interromper · `Ctrl+M` silenciar ·
-`Ctrl+Shift+X` ou `Pause` parada de emergência · `Ctrl+1…9` páginas.
+`Ctrl+Shift+X` ou `Pause` parada de emergência · `Ctrl+1…9` páginas. Na voz, a opção **Dizer
+de qual plataforma veio a mensagem** fica em *Leitura das mensagens* (padrão: só quando duas
+ou mais plataformas estão ao vivo).
 
 ## Detalhes técnicos
 
@@ -244,7 +302,7 @@ Atalhos: `Ctrl+Espaço` iniciar/pausar · `Ctrl+.` interromper · `Ctrl+M` silen
 │  │ (gui/qml)    │  sinais Qt em  │   ▲ EventBus (core/events)  │ │
 │  └──────────────┘     fila       │   │                         │ │
 │        │ prévia QtWebEngine      │ ChatToonEngine (core/engine)│ │
-│        ▼                         │  ├ LiveChatClient (youtube) │ │
+│        ▼                         │  ├ Conectores (multistream) │ │
 │  página do overlay (prévia)      │  ├ MessageSelector          │ │
 │                                  │  ├ Brain (personalidade)    │ │
 │                                  │  ├ OllamaClient ──► Ollama  │ │
@@ -263,6 +321,9 @@ Atalhos: `Ctrl+Espaço` iniciar/pausar · `Ctrl+.` interromper · `Ctrl+M` silen
 | Controlador (máquina de estados `stopped/running/paused/emergency`, fases `idle/thinking/speaking`) | `chattoon/core/engine.py` |
 | Configurações (dataclasses, leitura tolerante, gravação atômica com permissão 0600, perfis) | `chattoon/core/config.py` |
 | Leitor do chat do YouTube | `chattoon/core/youtube_chat.py` |
+| Multistream: contrato dos conectores, gerenciador, links, conectores | `chattoon/core/streams/` |
+| Logins no chaveiro do sistema e máscara de segredos nos logs | `chattoon/core/credentials.py` |
+| Chat unificado (modelo Qt virtualizado) | `chattoon/gui/feed.py` |
 | Fila e seleção de mensagens | `chattoon/core/messages.py` |
 | Personalidade e personagens | `chattoon/core/brain.py`, `chattoon/core/characters.py` |
 | Cliente do Ollama (streaming, *schema* JSON, *timeout*, cancelamento) | `chattoon/core/ollama.py` |
@@ -272,15 +333,16 @@ Atalhos: `Ctrl+Espaço` iniciar/pausar · `Ctrl+.` interromper · `Ctrl+M` silen
 | Laço asyncio em thread própria | `chattoon/core/runtime.py` |
 | Interface (PySide6 + QML) | `chattoon/gui/` |
 | Animação dos personagens | `chattoon/web/overlay/rig.js`, `chattoon/web/overlay/characters/*.js` |
-| Linha de comando (`gui`, `doctor`, `ask`, `--version`) | `chattoon/cli.py` |
+| Linha de comando (`gui`, `doctor`, `ask`, `extras`, `--version`) | `chattoon/cli.py` |
 
 ### O caminho de uma mensagem
 
 ```
-mensagem do chat
+mensagem de qualquer plataforma (YouTube, Twitch, Kick, TikTok…)
+ → normalização (plataforma, fonte, id e espectador separados por fonte)
  → validação (limpeza, caracteres de controle/bidi, tamanho)
  → filtro (vazia, !comandos, palavras bloqueadas, duplicadas, repetidas, modo menções)
- → seleção (modo, pontuação, intervalo por espectador, validade)
+ → seleção (modo, pontuação, divisão justa entre plataformas, intervalo por espectador, validade)
  → contexto (prompt do sistema + memória + contexto da live)
  → Ollama (schema JSON, streaming, timeout, cancelamento)
  → validação da resposta (JSON, remove Markdown/emoji/URL, limite de frases e caracteres,
@@ -338,7 +400,17 @@ leitura → pausa configurável → resposta, nunca as duas ao mesmo tempo.
   *timeouts* em tudo que é rede.
 - **Permissões mínimas**: roda como usuário comum, nunca pede root; configurações com permissão
   0600, áudios temporários em pasta 0700.
-- **Sem telemetria**: as únicas conexões externas são o chat do YouTube e o Ollama configurado.
+- **Logins sem senha**: entrada oficial (código de dispositivo da Twitch) ou tokens que você
+  cola, com só as permissões de leitura necessárias, guardados no **chaveiro do sistema** (Secret
+  Service/libsecret; sem chaveiro, num arquivo 0600). "Desconectar" revoga e apaga a cópia local.
+- **Segredos nunca vazam**: um filtro mascara tokens em todos os logs; perfis exportados, URLs do
+  overlay e eventos do OBS nunca levam credenciais; opções de fonte que pareçam segredo são
+  descartadas.
+- **Links colados não viram requisições arbitrárias**: o reconhecimento é só análise de texto, e
+  cada conector fala apenas com os servidores fixos da sua plataforma (sem SSRF). O webhook
+  oficial da Kick escuta só em `127.0.0.1` e confere a assinatura RSA, o horário e duplicatas.
+- **Sem telemetria**: as únicas conexões externas são os chats das plataformas configuradas
+  (no TikTok, também o serviço de assinatura Euler Stream) e o Ollama configurado.
 
 Mais em [docs/09-security.md](docs/09-security.md).
 
@@ -348,6 +420,9 @@ Mais em [docs/09-security.md](docs/09-security.md).
 |---|---|
 | `~/.config/chattoon/settings.json` | configurações (permissão 0600) |
 | `~/.config/chattoon/profiles/*.json` | perfis de transmissão salvos (sem segredos) |
+| chaveiro do sistema (`org.biglinux.ChatToon`) | logins e tokens das plataformas |
+| `~/.local/share/chattoon/credentials.json` | só se não houver chaveiro: logins (permissão 0600) |
+| `~/.local/share/chattoon/extras/` | componentes opcionais (TikTokLive), só se você instalar |
 | `$TMPDIR/chattoon-tts-*/` | últimas 20 respostas geradas (0700), apagadas ao sair |
 
 ### Desempenho medido
@@ -365,7 +440,11 @@ sudo pacman -S --needed python-pytest
 python -m pytest
 ```
 
-São mais de 160 casos de teste cobrindo motor, seleção de mensagens, configurações, Ollama, personalidade, TTS
+São mais de 290 casos de teste cobrindo multistream (quatro plataformas ao mesmo tempo, falhas
+isoladas, reconexão, justiça da fila, migração), cada conector contra servidores falsos locais
+(Twitch IRC/EventSub/OAuth, Kick Pusher/webhook com assinatura RSA, TikTok, Facebook, Instagram,
+X), chaveiro e ausência de segredos em logs, perfis e overlay, motor, seleção de mensagens,
+configurações, Ollama, personalidade, TTS
 (incluindo o Kokoro com um `koko` simulado: modo sem reprodução, conversão do WAV, erros,
 cancelamento e *timeout*), leitura das mensagens (ordem, interrupção, pausa, filtros, modos
 Demonstração/Assistido/Automático), overlay, chat do YouTube, tradução, interface e
@@ -389,6 +468,11 @@ rosto, memória de GPU estável nas trocas e boca parada quando não há áudio 
 | OBS não mostra nada | O aplicativo precisa estar aberto; confira o endereço; deixe *Shutdown source when not visible* desmarcado na fonte do OBS |
 | Voz duas vezes | Não acontece por projeto; se ouvir eco, o OBS está capturando o *Áudio do desktop* **e** a fonte |
 | Respostas lentas | Diminua a *Memória da conversa*, use um modelo menor, deixe só um modelo carregado |
+| Fonte em "Aguardando a live" | O canal não está ao vivo; o ChatToon conecta sozinho quando a live começar |
+| Fonte em "Login necessário" | Conecte a conta (Twitch) ou cole o token (Meta, X) em *Plataformas de streaming → Contas* |
+| Kick "bloqueado" | Abra `kick.com/api/v2/channels/<canal>` no navegador, copie `chatroom.id` e cole em *Número da sala de chat* na fonte |
+| TikTok "não instalado" | `chattoon extras install tiktok` e reinicie o ChatToon |
+| Diagnóstico das plataformas | `chattoon doctor` ou *Configurações → Diagnóstico* |
 
 ## Limitações conhecidas e próximos passos
 
@@ -399,8 +483,12 @@ rosto, memória de GPU estável nas trocas e boca parada quando não há áudio 
 - Comemorações de novos inscritos/membros dependem de eventos que o chat público não informa.
 - A fonte do OBS é adicionada à mão (com passo a passo no aplicativo); sem obs-websocket ainda.
 - A boca acompanha o volume, não os fonemas.
-- Conectores para Twitch e Rumble ainda não existem — a interface de conector já está pronta
-  (`ChatMessage` tem o campo `platform`), retomando a ideia do script de Rumble do protótipo.
+- **Kick** (modo padrão) e **TikTok** usam métodos não oficiais e podem parar sem aviso; o
+  TikTok depende de um serviço de terceiros (Euler Stream, ~2.500 conexões/dia grátis).
+- **Facebook/Instagram** exigem um app próprio na Meta e só leem Páginas e contas profissionais;
+  **X** não tem API para o chat de lives nem de Spaces (só respostas a um post, pela API paga).
+- O conector do Rumble (ideia do protótipo) ainda não existe; a arquitetura de conectores já
+  permite adicioná-lo.
 
 Lista completa em [docs/11-release.md](docs/11-release.md).
 
@@ -410,10 +498,19 @@ Lista completa em [docs/11-release.md](docs/11-release.md).
 [Ollama](docs/04-ollama.md) · [YouTube](docs/05-youtube.md) · [TTS](docs/06-tts.md) ·
 [Avatares](docs/07-avatars.md) · [OBS](docs/08-obs.md) · [Segurança](docs/09-security.md) ·
 [Testes](docs/10-testing.md) · [Lançamento](docs/11-release.md) ·
-[Personagens, Kokoro e leitura (2.1)](docs/12-character-tts-upgrade.md)
+[Personagens, Kokoro e leitura (2.1)](docs/12-character-tts-upgrade.md) ·
+**Multistream (2.2):** [auditoria](docs/13-multistream-audit.md) ·
+[pesquisa das APIs](docs/14-platform-api-research.md) · [arquitetura](docs/15-multistream-architecture.md) ·
+[conectores](docs/16-connectors.md) · [UI/UX](docs/17-multistream-ui-ux.md) ·
+[segurança e login](docs/18-security-authentication.md) · [testes](docs/19-multistream-tests.md) ·
+[lançamento](docs/20-multistream-release.md)
 
 ## Histórico de versões
 
+- **2.2.0** — multistream: YouTube, Twitch, Kick, TikTok, Facebook, Instagram e X ao mesmo
+  tempo, com várias fontes por plataforma, página Plataformas de streaming, Chat ao vivo
+  unificado, fila justa entre plataformas, leitura com a plataforma de origem, etiqueta no balão
+  do OBS, logins no chaveiro do sistema e migração automática da 2.1.
 - **2.1.0** — leitura do nome e da mensagem antes da resposta, vozes Kokoro, Tux de cartola,
   Gata, Coruja e Cachorro, motor de animações em repouso com estados e gestos, nova página de
   personagens com prévia interativa e troca de personagem sem travar.

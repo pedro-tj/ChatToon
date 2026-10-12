@@ -138,6 +138,19 @@ Page {
             }
         }
         SettingRow {
+            visible: cfg.reading.mode !== "off"
+            label: qsTr("Say which platform the message came from")
+            description: cfg.reading.platform === "multi" ? qsTr("Only while two or more platforms are live, e.g. “On Twitch, Ana asked…”.")
+                       : cfg.reading.platform === "always" ? qsTr("Every message says its platform, even with only one live.")
+                       : qsTr("Never — just the name (and the message).")
+            Segmented {
+                model: [{ value: "never", label: qsTr("Never") }, { value: "multi", label: qsTr("Multistream") },
+                        { value: "always", label: qsTr("Always") }]
+                current: cfg.reading.platform
+                onActivated: v => backend.setConfig("reading.platform", v)
+            }
+        }
+        SettingRow {
             visible: cfg.reading.mode === "name_message"
             label: qsTr("Read at most")
             description: qsTr("Longer messages are cut at a word boundary — never summarised or rewritten.")

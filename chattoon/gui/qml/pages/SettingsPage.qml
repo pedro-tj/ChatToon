@@ -67,7 +67,8 @@ Page {
         iconName: "shield"
         Repeater {
             model: [
-                qsTr("AI and voice run on this computer (Ollama and TTS BigLinux). Only the YouTube chat is read from the internet."),
+                qsTr("AI and voice run on this computer (Ollama and TTS BigLinux). Only the chats of your streaming platforms are read from the internet."),
+                qsTr("Platform logins use official sign-in or tokens you paste — never passwords — and stay in the system keyring. Profiles never include them."),
                 qsTr("The overlay server listens only on 127.0.0.1 and requires a secret address."),
                 qsTr("Chat messages are never executed and cannot change the avatar's rules."),
                 qsTr("History stays in memory and is lost when you close the app, unless you export it."),
@@ -93,14 +94,23 @@ Page {
                 { label: qsTr("TTS BigLinux"), ok: backend.services.tts.ok, text: backend.services.tts.ok ? qsTr("%n voice(s)", "", (backend.services.tts.voices || []).length) : (backend.services.tts.error || "") },
                 { label: qsTr("Audio player"), ok: backend.services.player, text: backend.services.player ? qsTr("found") : qsTr("missing") },
                 { label: qsTr("3D preview (QtWebEngine)"), ok: webEngineAvailable, text: webEngineAvailable ? qsTr("available") : qsTr("missing") },
-            ]
+                { label: qsTr("Login storage"), ok: backend.accounts.store ? backend.accounts.encrypted : undefined,
+                  text: backend.accounts.encrypted ? qsTr("system keyring") : backend.accounts.store === "file" ? qsTr("private file (no keyring found)") : "" },
+                { label: qsTr("TikTok support (TikTokLive)"), ok: !!(backend.accounts.tiktok && backend.accounts.tiktok.installed),
+                  text: backend.accounts.tiktok && backend.accounts.tiktok.installed ? qsTr("installed") : qsTr("optional — chattoon extras install tiktok") },
+            ].concat(backend.sources.map(s => ({
+                label: (win.platformInfo[s.platform] || {}).label + " · " + (s.label || s.status.channel || s.target),
+                ok: !s.enabled ? undefined : s.status.state === "connected" ? true
+                    : ["error", "auth_required", "unsupported"].indexOf(s.status.state) >= 0 ? false : undefined,
+                text: Status.label(s.enabled ? s.status.state : "disabled") + (s.status.code ? " — " + Status.reason(s.status.code, "") : "")
+            })))
             RowLayout {
                 required property var modelData
                 Layout.fillWidth: true
                 spacing: 10
                 Icon { name: modelData.ok ? "check" : modelData.ok === false ? "x" : "clock"; size: 16; color: modelData.ok ? Theme.success : modelData.ok === false ? Theme.danger : Theme.textFaint }
-                Text { Layout.preferredWidth: 220; text: modelData.label; color: Theme.text; font.pixelSize: 13 }
-                Text { Layout.fillWidth: true; text: modelData.text || ""; color: Theme.textMuted; font.pixelSize: 12; elide: Text.ElideRight }
+                Text { Layout.preferredWidth: 220; text: modelData.label; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: 13; elide: Text.ElideRight }
+                Text { Layout.fillWidth: true; text: modelData.text || ""; textFormat: Text.PlainText; color: Theme.textMuted; font.pixelSize: 12; elide: Text.ElideRight }
             }
         }
         Text { text: "ChatToon " + Qt.application.version + " · GPL-3.0-or-later"; color: Theme.textFaint; font.pixelSize: 11 }
