@@ -193,6 +193,7 @@ def test_overlay_audio_goes_to_one_sink_and_ws_is_read_only(tmp_path):
             preview = await s.ws_connect(ws_url + "?role=preview")
             obs1 = await s.ws_connect(ws_url)
             obs2 = await s.ws_connect(ws_url)
+            browser = await s.ws_connect(ws_url + "?role=browser")  # newest, yet never the sink
             await asyncio.sleep(0.1)
             counts = server.counts()
             await server.broadcast({"type": "config", "character": "tux"}, keep=True)
@@ -200,7 +201,7 @@ def test_overlay_audio_goes_to_one_sink_and_ws_is_read_only(tmp_path):
             await obs1.send_str("not json")
             ended = await server.speak({"type": "speak", "id": "u1", "text": "oi"}, wav, play_in_overlay=True)
             received = {}
-            for name, ws in (("preview", preview), ("obs1", obs1), ("obs2", obs2)):
+            for name, ws in (("preview", preview), ("obs1", obs1), ("obs2", obs2), ("browser", browser)):
                 while True:
                     msg = await ws.receive_json(timeout=2)
                     if msg["type"] == "speak":
@@ -215,13 +216,13 @@ def test_overlay_audio_goes_to_one_sink_and_ws_is_read_only(tmp_path):
             await asyncio.wait_for(ended.wait(), 2)
             late = await s.ws_connect(ws_url + "?role=preview")
             snapshot = await late.receive_json(timeout=2)
-            for ws in (preview, obs1, obs2, late):
+            for ws in (preview, obs1, obs2, browser, late):
                 await ws.close()
         await server.stop()
         return counts, received, audio_status, ignored, snapshot
 
     counts, received, audio_status, ignored, snapshot = asyncio.run(go())
-    assert counts == {"obs": 2, "preview": 1}
-    assert received == {"preview": None, "obs1": None, "obs2": "audio/u1.wav"}  # exactly one player
+    assert counts == {"obs": 2, "preview": 1, "browser": 1}
+    assert received == {"preview": None, "obs1": None, "obs2": "audio/u1.wav", "browser": None}  # one player
     assert audio_status == 200 and ignored is False
     assert snapshot == {"type": "config", "character": "tux"}  # late clients get current config

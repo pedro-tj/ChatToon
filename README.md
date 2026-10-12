@@ -470,6 +470,7 @@ rosto, memória de GPU estável nas trocas e boca parada quando não há áudio 
 | Chat "indisponível"/"desativado" | A live não está no ar, o chat está desligado ou é só para membros; a mensagem diz qual |
 | OBS não mostra nada | O aplicativo precisa estar aberto; confira o endereço; deixe *Shutdown source when not visible* desmarcado na fonte do OBS |
 | "forbidden" pelo domínio | Preencha *OBS Studio → Acesso de outro computador* com o endereço `https://` exato do proxy (domínio e porta) |
+| Voz fora do OBS com *Dentro do OBS* | Ative *Control audio via OBS* nas propriedades da fonte Navegador; sem isso o OBS toca a voz direto nos alto-falantes |
 | Voz duas vezes | Não acontece por projeto; se ouvir eco, o OBS está capturando o *Áudio do desktop* **e** a fonte |
 | Respostas lentas | Diminua a *Memória da conversa*, use um modelo menor, deixe só um modelo carregado |
 | Fonte em "Aguardando a live" | O canal não está ao vivo; o ChatToon conecta sozinho quando a live começar |
@@ -513,7 +514,9 @@ Lista completa em [docs/11-release.md](docs/11-release.md).
 
 - **2.2.1** — overlay acessível de outro computador por um proxy reverso HTTPS (Caddy, nginx…):
   novo campo *Acesso de outro computador* na página OBS Studio, com o link público pronto
-  para copiar; o ChatToon continua escutando só em `127.0.0.1`.
+  para copiar; o ChatToon continua escutando só em `127.0.0.1`. Com a voz *Dentro do OBS*, só
+  as fontes do OBS recebem o áudio: abrir o link num navegador para conferir não tira mais a voz
+  do OBS.
 - **2.2.0** — multistream: YouTube, Twitch, Kick, TikTok, Facebook, Instagram e X ao mesmo
   tempo, com várias fontes por plataforma, página Plataformas de streaming, Chat ao vivo
   unificado, fila justa entre plataformas, leitura com a plataforma de origem, etiqueta no balão

@@ -8,7 +8,8 @@ Security model:
   public host the user configured for an HTTPS reverse proxy (Caddy, nginx…) running on
   this computer — the proxy terminates TLS and forwards to 127.0.0.1;
 * the WebSocket is one-way: the overlay can only say "hello" (its role) and
-  "ended" (audio finished). No settings or administrative actions exist here — the
+  "ended" (audio finished). Only an "obs" client (an OBS Browser Source) receives the
+  audio; "preview" (the app) and "browser" (a plain browser tab) just watch. No settings or administrative actions exist here — the
   desktop app controls the engine in-process.
 """
 
@@ -159,7 +160,8 @@ class OverlayServer:
     async def _ws(self, request: web.Request) -> web.WebSocketResponse:
         ws = web.WebSocketResponse(heartbeat=20, max_msg_size=4096)
         await ws.prepare(request)
-        role = "preview" if request.query.get("role") == "preview" else "obs"
+        role = request.query.get("role")
+        role = role if role in ("preview", "browser") else "obs"
         self._clients[ws] = role
         if role == "obs":
             self._audio_sink = ws  # the newest OBS source plays audio; others stay silent

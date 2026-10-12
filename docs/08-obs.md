@@ -11,6 +11,10 @@
      application audio capture of ChatToon.
    - **Inside OBS**: enable *Control audio via OBS* on the source; the voice is part of the
      source (stream + monitoring). If no OBS source is connected the app plays it instead.
+     Without that option OBS plays the voice straight to the speakers of the OBS computer,
+     outside the mix. Only real OBS Browser Sources (detected by `window.obsstudio`) receive the
+     audio: the link opened in a normal browser tab only shows the avatar (add `?role=obs` to
+     force it).
 5. Position and resize the source; the background is transparent (or choose *Green (chroma
    key)* and add a Chroma Key filter).
 
