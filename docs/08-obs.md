@@ -25,7 +25,8 @@ connected sources.
 
 ChatToon never listens on the network: the overlay stays on `127.0.0.1`. To open it from
 another computer (or from anywhere), run an HTTPS reverse proxy on the ChatToon computer and
-tell ChatToon its public address:
+tell ChatToon its public address. Step-by-step guide in Portuguese, from a free domain to the
+router: [21 — Seu próprio domínio para o overlay](21-dominio-proprio.md).
 
 1. Point a domain to your public IP and forward a TCP port on the router to this computer
    (e.g. **8443**; it is also one of the ports Cloudflare's proxy accepts).

@@ -7,7 +7,7 @@ from datetime import datetime
 import pytest
 from aiohttp import web
 
-from chattoon.core.brain import PRESETS, Brain, apply_preset, time_context
+from chattoon.core.brain import PRESETS, Brain, apply_preset, time_context, token_budget
 from chattoon.core.characters import ALIEN, CHARACTERS, TUX, WORM
 from chattoon.core.config import ChannelContext, Personality
 from chattoon.core.messages import ChatMessage
@@ -212,6 +212,37 @@ def test_messages_wrap_untrusted_text():
 def test_parse_cleans_reply(raw, expected):
     r = Brain().parse(raw, WORM, "pt-BR", 2, 200)
     assert (r.text, r.emotion, r.intensity) == expected
+
+
+@pytest.mark.parametrize(("raw", "expected"), [
+    # cut by the token limit: the unfinished sentence is dropped, the JSON never spoken
+    ('{"say": "Oi, gente! Isso aqui parece um kernel compil', ("Oi, gente!", "neutral", 0.5)),
+    ('{"say": "Fala, Ana! Bem-vinda.", "emotion": "happy", "inten', ("Fala, Ana! Bem-vinda.", "happy", 0.5)),
+    # the model echoed old JSON inside "say"
+    ('{"say": "{\\"say\\": \\"Que zoeira, hein!\\", \\"emotion\\": \\"laugh\\"}", "emotion": "neutral"}',
+     ("Que zoeira, hein!", "laugh", 0.5)),
+    ('{"say": "{\\"say\\": \\"Que zoeira, hein! E o', ("Que zoeira, hein!", "neutral", 0.5)),
+    # JSON wrapped in other words
+    ('Claro! {"say": "Linux roda até em torradeira!", "emotion": "laugh", "intensity": 0.8} pronto',
+     ("Linux roda até em torradeira!", "laugh", 0.8)),
+    ('{"say": "Oi!", "emotion": "happy", "intensity": "alta"}', ("Oi!", "happy", 0.5)),
+])
+def test_parse_never_speaks_json(raw, expected):
+    r = Brain().parse(raw, WORM, "pt-BR", 3, 200)
+    assert (r.text, r.emotion, r.intensity) == expected
+    assert "{" not in r.text and '"say"' not in r.text
+
+
+@pytest.mark.parametrize("raw", ['{"say": "', '{"say": "{\\"say\\": \\"', '{"emotion": "happy"}', '{"say": 42}',
+                                 '[1, 2]'])
+def test_parse_unusable_json_falls_back(raw):
+    r = Brain(rng=random.Random(0)).parse(raw, WORM, "pt-BR", 2, 200)
+    assert r.source == "fallback" and "{" not in r.text and "say" not in r.text
+
+
+def test_token_budget_fits_the_reply():
+    assert token_budget(40, 240) >= 120
+    assert token_budget(400, 240) == 400
 
 
 def test_parse_length_limit_and_fallbacks():

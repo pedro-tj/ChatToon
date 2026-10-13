@@ -10,7 +10,7 @@ import uuid
 from collections import OrderedDict, deque
 from dataclasses import dataclass, field
 
-from .brain import REPLY_SCHEMA, Brain, Reply
+from .brain import REPLY_SCHEMA, Brain, Reply, token_budget
 from .characters import EMOTIONS, Character, get_character
 from .config import Settings, SourceConfig
 from .events import EventBus
@@ -640,7 +640,7 @@ class ChatToonEngine:
         started = time.monotonic()
         try:
             result = await self.ollama.chat(
-                ai.model, messages, temperature=ai.temperature, max_tokens=ai.max_tokens,
+                ai.model, messages, temperature=ai.temperature, max_tokens=token_budget(ai.max_tokens, max_chars),
                 context_window=ai.context_window, schema=REPLY_SCHEMA, keep_alive=ai.keep_alive,
                 timeout=ai.timeout,
             )

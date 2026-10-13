@@ -283,7 +283,8 @@ fontes da pesquisa em [docs/14-platform-api-research.md](docs/14-platform-api-re
 7. Página **OBS Studio**: copie o endereço do overlay → no OBS, adicione uma fonte
    **Navegador** com esse endereço, em 1920×1080. Se a voz deve sair pelo OBS, escolha
    *Dentro do OBS* na página Voz e ative *Control audio via OBS* nas propriedades da fonte no OBS.
-   O OBS está em outro computador? Veja [OBS em outro computador](docs/08-obs.md#obs-on-another-computer-https).
+   O OBS está em outro computador? Siga o tutorial [Seu próprio domínio para o overlay](docs/21-dominio-proprio.md)
+   (domínio grátis no DigitalPlat, DNS na Cloudflare, roteador e Caddy).
 8. Mude para **Assistido** ou **Automático** e aperte **Iniciar** (`Ctrl+Espaço`).
 
 Atalhos: `Ctrl+Espaço` iniciar/pausar · `Ctrl+.` interromper · `Ctrl+M` silenciar ·
@@ -469,7 +470,7 @@ rosto, memória de GPU estável nas trocas e boca parada quando não há áudio 
 | Voz "Indisponível" | `sudo pacman -S tts-biglinux` |
 | Chat "indisponível"/"desativado" | A live não está no ar, o chat está desligado ou é só para membros; a mensagem diz qual |
 | OBS não mostra nada | O aplicativo precisa estar aberto; confira o endereço; deixe *Shutdown source when not visible* desmarcado na fonte do OBS |
-| "forbidden" pelo domínio | Preencha *OBS Studio → Acesso de outro computador* com o endereço `https://` exato do proxy (domínio e porta) |
+| "forbidden" pelo domínio | Preencha *OBS Studio → Acesso de outro computador* com o endereço `https://` exato do proxy (domínio e porta). Outros erros: [tutorial do domínio](docs/21-dominio-proprio.md#solução-de-problemas) |
 | Voz fora do OBS com *Dentro do OBS* | Ative *Control audio via OBS* nas propriedades da fonte Navegador; sem isso o OBS toca a voz direto nos alto-falantes |
 | Voz duas vezes | Não acontece por projeto; se ouvir eco, o OBS está capturando o *Áudio do desktop* **e** a fonte |
 | Respostas lentas | Diminua a *Memória da conversa*, use um modelo menor, deixe só um modelo carregado |
@@ -508,7 +509,8 @@ Lista completa em [docs/11-release.md](docs/11-release.md).
 [pesquisa das APIs](docs/14-platform-api-research.md) · [arquitetura](docs/15-multistream-architecture.md) ·
 [conectores](docs/16-connectors.md) · [UI/UX](docs/17-multistream-ui-ux.md) ·
 [segurança e login](docs/18-security-authentication.md) · [testes](docs/19-multistream-tests.md) ·
-[lançamento](docs/20-multistream-release.md)
+[lançamento](docs/20-multistream-release.md) ·
+**2.2.1:** [seu próprio domínio para o overlay](docs/21-dominio-proprio.md)
 
 ## Histórico de versões
 
@@ -516,7 +518,8 @@ Lista completa em [docs/11-release.md](docs/11-release.md).
   novo campo *Acesso de outro computador* na página OBS Studio, com o link público pronto
   para copiar; o ChatToon continua escutando só em `127.0.0.1`. Com a voz *Dentro do OBS*, só
   as fontes do OBS recebem o áudio: abrir o link num navegador para conferir não tira mais a voz
-  do OBS.
+  do OBS. Tutorial passo a passo com domínio grátis (DigitalPlat), Cloudflare, roteador e Caddy
+  em [docs/21](docs/21-dominio-proprio.md).
 - **2.2.0** — multistream: YouTube, Twitch, Kick, TikTok, Facebook, Instagram e X ao mesmo
   tempo, com várias fontes por plataforma, página Plataformas de streaming, Chat ao vivo
   unificado, fila justa entre plataformas, leitura com a plataforma de origem, etiqueta no balão

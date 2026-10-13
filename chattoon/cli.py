@@ -80,7 +80,7 @@ def _doctor_streams(settings) -> None:
 
 
 async def _ask(text: str, character: str | None) -> int:
-    from .core.brain import REPLY_SCHEMA, Brain
+    from .core.brain import REPLY_SCHEMA, Brain, token_budget
     from .core.characters import get_character
     from .core.config import Settings
     from .core.messages import ChatMessage
@@ -99,7 +99,8 @@ async def _ask(text: str, character: str | None) -> int:
             return 1
         try:
             result = await client.chat(model, brain.messages(system, c, ChatMessage("cli", "You", text), s.ai.reply_language),
-                                       schema=REPLY_SCHEMA, temperature=s.ai.temperature, max_tokens=s.ai.max_tokens)
+                                       schema=REPLY_SCHEMA, temperature=s.ai.temperature,
+                                       max_tokens=token_budget(s.ai.max_tokens, s.ai.max_chars))
         except OllamaError as e:
             print(e, file=sys.stderr)
             return 1

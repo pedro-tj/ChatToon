@@ -74,7 +74,7 @@ def test_obs_overlay_stays_transparent_while_moving_and_supports_chroma_key():
         for cid in IDS:
             await server.broadcast({"type": "config", "character": cid, "background": "transparent", "showBubble": True,
                                     "quality": "medium", "fps": 60, "scale": 1, "x": 0, "y": -0.15, "zoom": 1}, keep=True)
-            await page.eval(f"chattoonCapture.advance(0.2); chattoonCapture.character() && 1")
+            await page.eval("chattoonCapture.advance(0.2); chattoonCapture.character() && 1")
             shots = []
             for action in ("", "react('celebrate')", "react('surprised')", "gesture(chattoonCapture.character().gestureNames()[4])"):
                 if action:
