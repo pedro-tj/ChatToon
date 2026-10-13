@@ -54,6 +54,41 @@ _PERIODS_EN = ((0, "late night"), (5, "morning"), (12, "afternoon"), (18, "eveni
 _WEEKDAYS_PT = ("segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo")
 
 
+# "say" may be unterminated when the token limit cuts the JSON in the middle of the line
+_SAY_FIELD = re.compile(r'"(?:say|text)"\s*:\s*"((?:[^"\\]|\\.)*)', re.S)
+_EMOTION_FIELD = re.compile(r'"emotion"\s*:\s*"(\w+)"')
+# JSON keys or escaped quotes that survived parsing: speaking them would read code aloud
+_JSON_LEFTOVER = re.compile(r'\\"|"?\b(?:say|emotion|intensity)"?\s*:\s*["{\d]', re.I)
+
+
+def token_budget(max_tokens: int, max_chars: int) -> int:
+    """Tokens the model may generate: never fewer than a full reply of ``max_chars`` plus the
+    JSON around it, or the token limit cuts the JSON in half."""
+    return max(int(max_tokens), int(max_chars) // 3 + 40)
+
+
+def _loads_object(text: str) -> dict | None:
+    """The JSON object in ``text``, also when the model wrapped it in other words."""
+    for candidate in (text, text[text.find("{"):text.rfind("}") + 1] if "{" in text else ""):
+        if not candidate:
+            continue
+        try:
+            data = json.loads(candidate)
+        except (ValueError, TypeError):
+            continue
+        if isinstance(data, dict):
+            return data
+    return None
+
+
+def _unescape(fragment: str) -> str:
+    fragment = re.sub(r"\\u[0-9a-fA-F]{0,3}$|\\$", "", fragment)  # escape cut in half
+    try:
+        return json.loads(f'"{fragment}"')
+    except ValueError:
+        return fragment.replace('\\"', '"').replace("\\n", " ").replace("\\\\", "\\")
+
+
 def apply_preset(personality: Personality, preset: str) -> Personality:
     personality.preset = preset
     for key, value in PRESETS.get(preset, {}).items():
@@ -258,25 +293,49 @@ class Brain:
 
     def parse(self, raw: str, character: Character, language: str, max_sentences: int, max_chars: int,
               forbidden_topics: str = "") -> Reply:
-        text, emotion, intensity = raw, "neutral", 0.5
-        candidate = raw.strip()
-        if candidate.startswith("```"):
-            candidate = candidate.strip("`").removeprefix("json").strip()
-        try:
-            data = json.loads(candidate)
-            if isinstance(data, dict):
-                text = str(data.get("say") or data.get("text") or "")
-                emotion = str(data.get("emotion") or "neutral")
-                intensity = float(data.get("intensity", 0.5))
-        except (ValueError, TypeError):
-            pass
+        text, emotion, intensity = self.extract(raw)
         text = self.clean_reply(text, character, max_sentences, max_chars)
         if emotion not in EMOTIONS:
             emotion = "neutral"
+        try:
+            intensity = float(intensity)
+        except (ValueError, TypeError):
+            intensity = 0.5
         intensity = min(1.0, max(0.0, intensity if intensity == intensity else 0.5))
-        if not text or self.violates(text, forbidden_topics):
+        if not text or _JSON_LEFTOVER.search(text) or self.violates(text, forbidden_topics):
             return self.fallback(character, language)
         return Reply(text, emotion, intensity)
+
+    @staticmethod
+    def extract(raw: str) -> tuple[str, str, object]:
+        """(say, emotion, intensity) from the model output, even when the JSON is wrapped in
+        text, cut by the token limit or nested inside "say" (the model echoing old replies).
+        The JSON itself is never returned as speech."""
+        text, emotion, intensity = raw.strip(), "neutral", 0.5
+        for _ in range(4):  # unwrap {"say": "{\"say\": ...}"}
+            candidate = text.strip()
+            if candidate.startswith("```"):
+                candidate = candidate.strip("`").removeprefix("json").strip()
+            data = _loads_object(candidate)
+            if data is not None:
+                say = data.get("say", data.get("text"))
+                text = say if isinstance(say, str) else ""
+                emotion = str(data.get("emotion") or emotion)
+                intensity = data.get("intensity", intensity)
+                continue
+            partial = _SAY_FIELD.search(candidate)
+            if partial:  # truncated or malformed JSON: keep only the words of "say"
+                text = _unescape(partial.group(1))
+                end = max(text.rfind(p) for p in ".!?…")
+                if end > 0:
+                    text = text[:end + 1]  # drop the sentence the token limit cut in half
+                found = _EMOTION_FIELD.search(candidate)
+                emotion = found.group(1) if found else emotion
+                continue
+            if candidate.startswith(("{", "[")):
+                return "", emotion, intensity  # JSON without a usable "say": never spoken
+            break
+        return text, emotion, intensity
 
     @staticmethod
     def clean_reply(text: str, character: Character, max_sentences: int, max_chars: int) -> str:
@@ -284,7 +343,7 @@ class Brain:
         text = re.sub(r"(?<!\w)\*[^*\n]{1,80}\*(?!\w)", " ", text)  # *risos*, *balança o corpo*
         text = re.sub(r"https?://\S+", " ", text)
         text = re.sub(r"#\w+", " ", text)  # hashtags are not spoken
-        text = re.sub(r"[*_`~>|#]+", " ", text)  # Markdown leftovers
+        text = re.sub(r"[*_`~>|#{}\[\]]+", " ", text)  # Markdown and JSON leftovers
         text = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]", " ", text)  # emojis: not spoken
         text = re.sub(r"\s+([,.!?…;:])", r"\1", text)
         names = "|".join(re.escape(n) for n in (character.name, *character.aliases))
@@ -312,7 +371,8 @@ class Brain:
                      source="fallback")
 
     def remember(self, msg: ChatMessage, reply: Reply) -> None:
-        self.memory.append((msg.author, msg.text, reply.text, msg.key))
+        if not _JSON_LEFTOVER.search(reply.text):  # the model would copy it into the next replies
+            self.memory.append((msg.author, msg.text, reply.text, msg.key))
         self.replies_since_promo += 1
 
     def forget(self) -> None:
