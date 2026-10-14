@@ -1,4 +1,4 @@
-# ChatToon 2.2.1
+# ChatToon 2.2.2
 
 **Um personagem 3D que participa da sua live — no YouTube, na Twitch, na Kick, no TikTok e em
 outras plataformas ao mesmo tempo:** ele lê os chats — inclusive em voz alta, dizendo quem
@@ -205,7 +205,7 @@ makepkg -si
 ```
 
 Depois abra **ChatToon** pelo menu (ou rode `chattoon`). Para conferir a versão:
-`chattoon --version` → `chattoon 2.2.1`. Para remover: `sudo pacman -R chattoon`.
+`chattoon --version` → `chattoon 2.2.2`. Para remover: `sudo pacman -R chattoon`.
 
 | Tipo | Pacotes |
 |---|---|
@@ -514,6 +514,10 @@ Lista completa em [docs/11-release.md](docs/11-release.md).
 
 ## Histórico de versões
 
+- **2.2.2** — correção: o personagem nunca mais fala nem mostra no balão pedaços do JSON da
+  resposta (`{"say": ...`). A fala é recuperada mesmo quando o modelo corta, aninha ou cerca o
+  JSON de texto; sem fala aproveitável, entra uma resposta reserva do personagem. Falas com
+  restos de JSON não vão para a memória, e o limite de tokens sempre cabe uma fala inteira.
 - **2.2.1** — overlay acessível de outro computador por um proxy reverso HTTPS (Caddy, nginx…):
   novo campo *Acesso de outro computador* na página OBS Studio, com o link público pronto
   para copiar; o ChatToon continua escutando só em `127.0.0.1`. Com a voz *Dentro do OBS*, só
