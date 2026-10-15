@@ -127,9 +127,13 @@ class OllamaClient:
         except aiohttp.ClientConnectorError as e:
             raise OllamaUnavailable(f"Ollama is not reachable at {self.host}") from e
 
-    async def preload(self, model: str, keep_alive: str = "15m") -> None:
-        """Load the model into memory so the first viewer does not wait for it."""
-        await self._json("POST", "/api/generate", {"model": model, "keep_alive": keep_alive}, timeout=180)
+    async def preload(self, model: str, keep_alive: str = "15m", context_window: int | None = None) -> None:
+        """Load the model into memory so the first viewer does not wait for it. With the
+        same ``num_ctx`` as the chat calls — another size would make Ollama load it again."""
+        payload: dict = {"model": model, "keep_alive": keep_alive}
+        if context_window:
+            payload["options"] = {"num_ctx": context_window}
+        await self._json("POST", "/api/generate", payload, timeout=180)
 
     # -- chat -------------------------------------------------------------
 

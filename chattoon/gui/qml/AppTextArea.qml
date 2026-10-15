@@ -6,7 +6,10 @@ ScrollView {
     id: root
     property alias text: area.text
     property alias placeholderText: area.placeholderText
+    property alias readOnly: area.readOnly
     signal editingFinished()
+
+    function edit() { area.forceActiveFocus(); area.cursorPosition = area.length }
 
     implicitHeight: Math.max(84, Math.min(180, area.contentHeight + 24))
     clip: true

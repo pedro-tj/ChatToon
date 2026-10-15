@@ -47,10 +47,6 @@
       <translation>Modelo</translation>
     </message>
     <message>
-      <source>Smaller models answer faster. 3–4 billion parameters is a good balance for live chat.</source>
-      <translation>Modelos menores respondem mais rápido. 3 a 4 bilhões de parâmetros é um bom equilíbrio para lives.</translation>
-    </message>
-    <message>
       <source>Model in use</source>
       <translation>Modelo em uso</translation>
     </message>
@@ -95,16 +91,167 @@
       <translation>Limite de tokens</translation>
     </message>
     <message>
+      <source>Live context</source>
+      <translation>Contexto da live</translation>
+    </message>
+    <message>
+      <source>Latest exchanges with other viewers sent with each message (more = slower).</source>
+      <translation>Últimas conversas com outros espectadores enviadas junto de cada mensagem (mais = mais lento).</translation>
+    </message>
+    <message>
+      <source>Answer quality</source>
+      <translation>Qualidade das respostas</translation>
+    </message>
+    <message>
+      <source>Correct first, funny second: a funny wrong answer is worse than a correct plain one.</source>
+      <translation>Primeiro correto, depois engraçado: uma resposta engraçada e errada é pior que uma correta e sem graça.</translation>
+    </message>
+    <message>
+      <source>Precision first</source>
+      <translation>Precisão em primeiro lugar</translation>
+    </message>
+    <message>
+      <source>Math, facts and explanations are answered with little randomness; jokes and greetings keep the creativity set above.</source>
+      <translation>Contas, fatos e explicações são respondidos com pouca aleatoriedade; piadas e cumprimentos mantêm a criatividade escolhida acima.</translation>
+    </message>
+    <message>
+      <source>Exact calculator</source>
+      <translation>Calculadora exata</translation>
+    </message>
+    <message>
+      <source>Arithmetic in the chat (“how much is 15 times 3?”) is computed by ChatToon — never guessed — and the avatar says the result.</source>
+      <translation>Contas no chat (“quanto é 15 vezes 3?”) são calculadas pelo ChatToon — nunca no chute — e o avatar diz o resultado.</translation>
+    </message>
+    <message>
+      <source>Verified reference</source>
+      <translation>Referência verificada</translation>
+    </message>
+    <message>
+      <source>Questions about computing and Linux get short checked facts (what CPU stands for, which distro BigLinux is based on…).</source>
+      <translation>Perguntas sobre computação e Linux recebem fatos curtos e conferidos (o que significa CPU, em qual distro o BigLinux é baseado…).</translation>
+    </message>
+    <message>
+      <source>Check every reply</source>
+      <translation>Conferir cada resposta</translation>
+    </message>
+    <message>
+      <source>When a reply misses the verified result or repeats its own instructions, the avatar tries once more.</source>
+      <translation>Quando uma resposta não diz o resultado verificado ou repete as próprias instruções, o avatar tenta mais uma vez.</translation>
+    </message>
+    <message>
       <source>Conversation memory</source>
       <translation>Memória da conversa</translation>
+    </message>
+    <message>
+      <source>The avatar remembers what each viewer told it — separately per platform and account, so two people with the same name never mix.</source>
+      <translation>O avatar lembra o que cada espectador contou — separado por plataforma e conta, então duas pessoas com o mesmo nome nunca se misturam.</translation>
+    </message>
+    <message>
+      <source>See memories</source>
+      <translation>Ver memórias</translation>
+    </message>
+    <message>
+      <source>Remember during the live</source>
+      <translation>Lembrar durante a live</translation>
+    </message>
+    <message>
+      <source>Follow-ups like “do you remember my app?” work. Kept in RAM only.</source>
+      <translation>Continuações como “lembra do meu aplicativo?” funcionam. Fica só na memória RAM.</translation>
+    </message>
+    <message>
+      <source>Remember between lives</source>
+      <translation>Lembrar entre lives</translation>
+    </message>
+    <message>
+      <source>Saves what was really said in a private file on this computer, never sent anywhere. Off by default.</source>
+      <translation>Guarda o que foi realmente dito num arquivo privado neste computador, nunca enviado a lugar nenhum. Desligado por padrão.</translation>
+    </message>
+    <message>
+      <source>Keep saved memories for</source>
+      <translation>Manter memórias salvas por</translation>
+    </message>
+    <message>
+      <source>1 day</source>
+      <translation>1 dia</translation>
+    </message>
+    <message>
+      <source>7 days</source>
+      <translation>7 dias</translation>
+    </message>
+    <message>
+      <source>30 days</source>
+      <translation>30 dias</translation>
+    </message>
+    <message>
+      <source>90 days</source>
+      <translation>90 dias</translation>
+    </message>
+    <message>
+      <source>1 year</source>
+      <translation>1 ano</translation>
+    </message>
+    <message>
+      <source>Until I erase them</source>
+      <translation>Até eu apagar</translation>
+    </message>
+    <message>
+      <source>Summarize long conversations</source>
+      <translation>Resumir conversas longas</translation>
+    </message>
+    <message>
+      <source>While the chat is quiet, the model folds a long conversation into a short note. Cancelled as soon as someone writes.</source>
+      <translation>Enquanto o chat está quieto, o modelo resume uma conversa longa numa nota curta. Cancelado assim que alguém escreve.</translation>
+    </message>
+    <message>
+      <source>%1 viewer(s) remembered in this live · %2 exchange(s) saved on disk</source>
+      <translation>%1 espectador(es) lembrado(s) nesta live · %2 conversa(s) salva(s) no disco</translation>
+    </message>
+    <message>
+      <source>Generation diagnostics</source>
+      <translation>Diagnóstico da geração</translation>
+    </message>
+    <message>
+      <source>The latest replies: what kind of message it was, the settings used and the time spent. Nothing leaves this computer.</source>
+      <translation>As últimas respostas: que tipo de mensagem era, as configurações usadas e o tempo gasto. Nada sai deste computador.</translation>
+    </message>
+    <message>
+      <source>No reply generated yet. Simulate a message on the Characters page or go live.</source>
+      <translation>Nenhuma resposta gerada ainda. Simule uma mensagem na página Personagens ou entre ao vivo.</translation>
+    </message>
+    <message>
+      <source>exact result</source>
+      <translation>resultado exato</translation>
+    </message>
+    <message>
+      <source>safe line</source>
+      <translation>fala segura</translation>
+    </message>
+    <message numerus="yes">
+      <source>%n memory item(s)</source>
+      <translation>
+        <numerusform>%n memória</numerusform>
+        <numerusform>%n memórias</numerusform>
+      </translation>
+    </message>
+    <message>
+      <source>reference</source>
+      <translation>referência</translation>
+    </message>
+    <message>
+      <source>retried</source>
+      <translation>nova tentativa</translation>
+    </message>
+    <message>
+      <source>temp. %1 · %2 + %3 tokens · %4 s</source>
+      <translation>temp. %1 · %2 + %3 tokens · %4 s</translation>
     </message>
     <message>
       <source> messages</source>
       <translation> mensagens</translation>
     </message>
     <message>
-      <source>Recent exchanges the avatar remembers (more = slower).</source>
-      <translation>Conversas recentes que o avatar lembra (mais = mais lento).</translation>
+      <source>Smaller models answer faster; bigger ones know more facts. With a dedicated GPU, a 7–8 billion parameter model answers about as fast as a small one.</source>
+      <translation>Modelos menores respondem mais rápido; os maiores sabem mais fatos. Com uma placa de vídeo dedicada, um modelo de 7 a 8 bilhões de parâmetros responde quase tão rápido quanto um pequeno.</translation>
     </message>
     <message>
       <source>Timeout</source>
@@ -264,6 +411,10 @@
     <message>
       <source>Link of the post that announces the live</source>
       <translation>Link do post que anuncia a live</translation>
+    </message>
+    <message>
+      <source>No spontaneous line is available for this category. Add curiosities or fill in the stream topic.</source>
+      <translation>Não há fala espontânea disponível para esta categoria. Adicione curiosidades ou preencha o assunto da live.</translation>
     </message>
     <message>
       <source>Alien explorer</source>
@@ -506,6 +657,18 @@
       <translation>Oi! Essa é a minha voz. Pronto para a live?</translation>
     </message>
     <message>
+      <source>Memories of this viewer erased</source>
+      <translation>Memórias deste espectador apagadas</translation>
+    </message>
+    <message>
+      <source>All memories erased</source>
+      <translation>Todas as memórias apagadas</translation>
+    </message>
+    <message>
+      <source>Suggestion applied</source>
+      <translation>Sugestão aplicada</translation>
+    </message>
+    <message>
       <source>Copied to the clipboard</source>
       <translation>Copiado para a área de transferência</translation>
     </message>
@@ -571,6 +734,10 @@
     <message>
       <source>Celebrate</source>
       <translation>Comemorar</translation>
+    </message>
+    <message>
+      <source>Thinking</source>
+      <translation>Pensando</translation>
     </message>
     <message>
       <source>Pick who joins your stream. Each one has its own look, voice, gestures and sense of humour.</source>
@@ -727,6 +894,38 @@
     <message>
       <source>E.g.: Minhocou!</source>
       <translation>Ex.: Minhocou!</translation>
+    </message>
+    <message>
+      <source>Curiosities and spontaneous lines</source>
+      <translation>Curiosidades e falas espontâneas</translation>
+    </message>
+    <message>
+      <source>What %1 may say on its own when the chat is quiet. Facts are checked and spoken exactly as written; fiction is clearly part of the character.</source>
+      <translation>O que %1 pode falar por conta própria quando o chat está quieto. Fatos são conferidos e ditos exatamente como escritos; a ficção é claramente parte do personagem.</translation>
+    </message>
+    <message>
+      <source>Try a spontaneous line</source>
+      <translation>Testar uma fala espontânea</translation>
+    </message>
+    <message>
+      <source>Lines of %1</source>
+      <translation>Falas de %1</translation>
+    </message>
+    <message>
+      <source>Your own curiosities (one per line)</source>
+      <translation>Suas próprias curiosidades (uma por linha)</translation>
+    </message>
+    <message>
+      <source>E.g.: Our community has been streaming every Friday since 2019!</source>
+      <translation>Ex.: Nossa comunidade faz live toda sexta-feira desde 2019!</translation>
+    </message>
+    <message>
+      <source>Spoken as you write them, so check what you claim. When, how often and what kinds of lines: Settings › Spontaneous lines.</source>
+      <translation>São faladas do jeito que você escrever, então confira o que afirma. Quando, com que frequência e que tipos de fala: Configurações › Falas espontâneas.</translation>
+    </message>
+    <message>
+      <source>Spontaneous line settings</source>
+      <translation>Configurar falas espontâneas</translation>
     </message>
     <message>
       <source>Animation demo · simulated lip sync</source>
@@ -1171,8 +1370,20 @@
       <translation>digitado</translation>
     </message>
     <message>
+      <source>exact result</source>
+      <translation>resultado exato</translation>
+    </message>
+    <message>
+      <source>spontaneous</source>
+      <translation>espontânea</translation>
+    </message>
+    <message>
       <source>safe reply</source>
       <translation>resposta segura</translation>
+    </message>
+    <message>
+      <source>remembered</source>
+      <translation>lembrou</translation>
     </message>
     <message>
       <source>no voice</source>
@@ -1204,6 +1415,10 @@
     <message>
       <source>Not answered</source>
       <translation>Não respondida</translation>
+    </message>
+    <message>
+      <source>Interrupted</source>
+      <translation>Interrompida</translation>
     </message>
     <message>
       <source>Not queued</source>
@@ -1274,6 +1489,14 @@
       <translation>Acompanhar novas mensagens</translation>
     </message>
     <message>
+      <source>Memory</source>
+      <translation>Memória</translation>
+    </message>
+    <message>
+      <source>What the avatar remembers about each viewer</source>
+      <translation>O que o avatar lembra de cada espectador</translation>
+    </message>
+    <message>
       <source>Clear the list (the queue is kept)</source>
       <translation>Limpar a lista (a fila é mantida)</translation>
     </message>
@@ -1312,6 +1535,14 @@
     <message>
       <source>member</source>
       <translation>membro</translation>
+    </message>
+    <message>
+      <source>remembered</source>
+      <translation>lembrou</translation>
+    </message>
+    <message>
+      <source>This reply used %1 memory item(s) about this viewer</source>
+      <translation>Esta resposta usou %1 lembrança(s) sobre este espectador</translation>
     </message>
     <message>
       <source>Answer now</source>
@@ -1360,6 +1591,92 @@
     <message>
       <source>Manual mode: only the messages you pick are answered.</source>
       <translation>Modo manual: só as mensagens que você escolher são respondidas.</translation>
+    </message>
+    <message>
+      <source>Back to everyone</source>
+      <translation>Voltar para todos</translation>
+    </message>
+    <message>
+      <source>Conversation memory</source>
+      <translation>Memória da conversa</translation>
+    </message>
+    <message>
+      <source>Close</source>
+      <translation>Fechar</translation>
+    </message>
+    <message>
+      <source>Memory is off (AI page).</source>
+      <translation>A memória está desligada (página Inteligência artificial).</translation>
+    </message>
+    <message>
+      <source>%1 viewer(s) in this live · %2 saved exchange(s)</source>
+      <translation>%1 espectador(es) nesta live · %2 conversa(s) salva(s)</translation>
+    </message>
+    <message>
+      <source>not saved between lives</source>
+      <translation>não é salva entre lives</translation>
+    </message>
+    <message>
+      <source>Search what was said…</source>
+      <translation>Buscar o que foi dito…</translation>
+    </message>
+    <message>
+      <source>Search the memory</source>
+      <translation>Buscar na memória</translation>
+    </message>
+    <message>
+      <source>Forget</source>
+      <translation>Esquecer</translation>
+    </message>
+    <message>
+      <source>Remembered viewers</source>
+      <translation>Espectadores lembrados</translation>
+    </message>
+    <message numerus="yes">
+      <source>%n exchange(s)</source>
+      <translation>
+        <numerusform>%n conversa</numerusform>
+        <numerusform>%n conversas</numerusform>
+      </translation>
+    </message>
+    <message>
+      <source>saved</source>
+      <translation>salvo</translation>
+    </message>
+    <message numerus="yes">
+      <source>%n note(s)</source>
+      <translation>
+        <numerusform>%n anotação</numerusform>
+        <numerusform>%n anotações</numerusform>
+      </translation>
+    </message>
+    <message>
+      <source>Nothing found.</source>
+      <translation>Nada encontrado.</translation>
+    </message>
+    <message>
+      <source>No memories yet. They appear after the avatar really answers someone.</source>
+      <translation>Nenhuma memória ainda. Elas aparecem depois que o avatar responde alguém de verdade.</translation>
+    </message>
+    <message>
+      <source>Erase all memories…</source>
+      <translation>Apagar todas as memórias…</translation>
+    </message>
+    <message>
+      <source>Forget this viewer?</source>
+      <translation>Esquecer este espectador?</translation>
+    </message>
+    <message>
+      <source>Everything the avatar remembers about this person is erased, in RAM and on disk.</source>
+      <translation>Tudo o que o avatar lembra desta pessoa é apagado, da RAM e do disco.</translation>
+    </message>
+    <message>
+      <source>Erase all memories?</source>
+      <translation>Apagar todas as memórias?</translation>
+    </message>
+    <message>
+      <source>The avatar forgets every viewer, in RAM and on disk. This cannot be undone.</source>
+      <translation>O avatar esquece todos os espectadores, da RAM e do disco. Não dá para desfazer.</translation>
     </message>
   </context>
   <context>
@@ -2235,6 +2552,106 @@
       <translation>Padrão do sistema</translation>
     </message>
     <message>
+      <source>Spontaneous lines</source>
+      <translation>Falas espontâneas</translation>
+    </message>
+    <message>
+      <source>When the chat is quiet, the avatar speaks up on its own — invitations, curiosities, comments on the topic. Viewers always come first: a message cancels a line still being prepared.</source>
+      <translation>Quando o chat está quieto, o avatar fala por conta própria — convites, curiosidades, comentários sobre o assunto. Os espectadores vêm sempre primeiro: uma mensagem cancela uma fala que ainda está sendo preparada.</translation>
+    </message>
+    <message>
+      <source>Try one now</source>
+      <translation>Testar agora</translation>
+    </message>
+    <message>
+      <source>Speak on its own</source>
+      <translation>Falar por conta própria</translation>
+    </message>
+    <message>
+      <source>Only while live and in Automatic or Demo mode — never paused, after an emergency stop or in Assisted mode.</source>
+      <translation>Só durante a live, nos modos Automático ou Demonstração — nunca em pausa, depois de uma parada de emergência ou no modo Assistido.</translation>
+    </message>
+    <message>
+      <source>Frequency</source>
+      <translation>Frequência</translation>
+    </message>
+    <message>
+      <source>Rarely</source>
+      <translation>Raramente</translation>
+    </message>
+    <message>
+      <source>Normal</source>
+      <translation>Normal</translation>
+    </message>
+    <message>
+      <source>Often</source>
+      <translation>Frequentemente</translation>
+    </message>
+    <message>
+      <source>Quiet chat for at least</source>
+      <translation>Chat quieto por pelo menos</translation>
+    </message>
+    <message>
+      <source>Seconds without any viewer message before the avatar may speak.</source>
+      <translation>Segundos sem nenhuma mensagem de espectador antes de o avatar poder falar.</translation>
+    </message>
+    <message>
+      <source>At most one line every</source>
+      <translation>No máximo uma fala a cada</translation>
+    </message>
+    <message>
+      <source>Energy</source>
+      <translation>Energia</translation>
+    </message>
+    <message>
+      <source>How strong the expressions and gestures of these lines are.</source>
+      <translation>A força das expressões e dos gestos dessas falas.</translation>
+    </message>
+    <message>
+      <source>Calm</source>
+      <translation>Calmo</translation>
+    </message>
+    <message>
+      <source>Lively</source>
+      <translation>Animada</translation>
+    </message>
+    <message>
+      <source>What it may say</source>
+      <translation>O que pode falar</translation>
+    </message>
+    <message>
+      <source>Try this kind of line now</source>
+      <translation>Testar este tipo de fala agora</translation>
+    </message>
+    <message>
+      <source>Curiosities are checked facts, spoken exactly as written. Calls to action come from Stream context. Catchphrases come from the character and the channel.</source>
+      <translation>Curiosidades são fatos conferidos, ditos exatamente como escritos. As chamadas para ação vêm do Contexto da live. Os bordões vêm do personagem e do canal.</translation>
+    </message>
+    <message>
+      <source>Let the AI vary invitations and comments</source>
+      <translation>Deixar a IA variar convites e comentários</translation>
+    </message>
+    <message>
+      <source>The AI never writes facts: lines with numbers or “did you know” are replaced by a written one.</source>
+      <translation>A IA nunca escreve fatos: falas com números ou “você sabia” são trocadas por uma fala escrita.</translation>
+    </message>
+    <message>
+      <source>Quiet hours</source>
+      <translation>Horário silencioso</translation>
+    </message>
+    <message>
+      <source>No spontaneous lines between these times (HH:MM). Leave empty to allow them at any time.</source>
+      <translation>Nenhuma fala espontânea entre estes horários (HH:MM). Deixe vazio para permitir a qualquer hora.</translation>
+    </message>
+    <message>
+      <source>Quiet hours start</source>
+      <translation>Início do horário silencioso</translation>
+    </message>
+    <message>
+      <source>Quiet hours end</source>
+      <translation>Fim do horário silencioso</translation>
+    </message>
+    <message>
       <source>Stream profiles</source>
       <translation>Perfis de transmissão</translation>
     </message>
@@ -2273,6 +2690,34 @@
     <message>
       <source>Platform logins use official sign-in or tokens you paste — never passwords — and stay in the system keyring. Profiles never include them.</source>
       <translation>Os logins das plataformas usam a entrada oficial ou tokens que você cola — nunca senhas — e ficam no chaveiro do sistema. Os perfis nunca os incluem.</translation>
+    </message>
+    <message>
+      <source>Conversation memories stay in RAM during the live. Saving them between lives is optional, stays on this computer and is erased after the period you choose. Messages removed by moderators are forgotten.</source>
+      <translation>As memórias das conversas ficam na RAM durante a live. Salvar entre lives é opcional, fica neste computador e é apagado depois do período que você escolher. Mensagens removidas por moderadores são esquecidas.</translation>
+    </message>
+    <message>
+      <source>Memories</source>
+      <translation>Memórias</translation>
+    </message>
+    <message>
+      <source>Everything the avatar remembers about viewers: this live and, if enabled, earlier ones.</source>
+      <translation>Tudo o que o avatar lembra dos espectadores: desta live e, se ativado, das anteriores.</translation>
+    </message>
+    <message>
+      <source>See and manage</source>
+      <translation>Ver e gerenciar</translation>
+    </message>
+    <message>
+      <source>Erase all memories…</source>
+      <translation>Apagar todas as memórias…</translation>
+    </message>
+    <message>
+      <source>Erase all memories?</source>
+      <translation>Apagar todas as memórias?</translation>
+    </message>
+    <message>
+      <source>The avatar forgets every viewer, in RAM and on disk. This cannot be undone.</source>
+      <translation>O avatar esquece todos os espectadores, da RAM e do disco. Não dá para desfazer.</translation>
     </message>
     <message>
       <source>Login storage</source>
@@ -2508,6 +2953,162 @@
       <translation>Desativada</translation>
     </message>
     <message>
+      <source>Math</source>
+      <translation>Conta</translation>
+    </message>
+    <message>
+      <source>Comparison</source>
+      <translation>Comparação</translation>
+    </message>
+    <message>
+      <source>Fact</source>
+      <translation>Fato</translation>
+    </message>
+    <message>
+      <source>Explanation</source>
+      <translation>Explicação</translation>
+    </message>
+    <message>
+      <source>Tech</source>
+      <translation>Tecnologia</translation>
+    </message>
+    <message>
+      <source>About the avatar</source>
+      <translation>Sobre o avatar</translation>
+    </message>
+    <message>
+      <source>Follow-up</source>
+      <translation>Continuação</translation>
+    </message>
+    <message>
+      <source>Greeting</source>
+      <translation>Cumprimento</translation>
+    </message>
+    <message>
+      <source>Goodbye</source>
+      <translation>Despedida</translation>
+    </message>
+    <message>
+      <source>Joke</source>
+      <translation>Piada</translation>
+    </message>
+    <message>
+      <source>Teasing</source>
+      <translation>Provocação</translation>
+    </message>
+    <message>
+      <source>Good news</source>
+      <translation>Boa notícia</translation>
+    </message>
+    <message>
+      <source>A problem</source>
+      <translation>Um problema</translation>
+    </message>
+    <message>
+      <source>Feelings</source>
+      <translation>Sentimentos</translation>
+    </message>
+    <message>
+      <source>About the live</source>
+      <translation>Sobre a live</translation>
+    </message>
+    <message>
+      <source>Opinion</source>
+      <translation>Opinião</translation>
+    </message>
+    <message>
+      <source>Order ignored</source>
+      <translation>Ordem ignorada</translation>
+    </message>
+    <message>
+      <source>Unclear</source>
+      <translation>Pouco claro</translation>
+    </message>
+    <message>
+      <source>Chat</source>
+      <translation>Conversa</translation>
+    </message>
+    <message>
+      <source>Character fiction</source>
+      <translation>Ficção do personagem</translation>
+    </message>
+    <message>
+      <source>Invitation</source>
+      <translation>Convite</translation>
+    </message>
+    <message>
+      <source>Humour</source>
+      <translation>Humor</translation>
+    </message>
+    <message>
+      <source>Thought</source>
+      <translation>Pensamento</translation>
+    </message>
+    <message>
+      <source>Yours</source>
+      <translation>Sua</translation>
+    </message>
+    <message>
+      <source>Invitations to talk</source>
+      <translation>Convites para conversar</translation>
+    </message>
+    <message>
+      <source>Curiosities</source>
+      <translation>Curiosidades</translation>
+    </message>
+    <message>
+      <source>Comments on the topic</source>
+      <translation>Comentários sobre o assunto</translation>
+    </message>
+    <message>
+      <source>Funny thoughts</source>
+      <translation>Reflexões engraçadas</translation>
+    </message>
+    <message>
+      <source>Catchphrases</source>
+      <translation>Bordões</translation>
+    </message>
+    <message>
+      <source>Calls to action</source>
+      <translation>Chamadas para ação</translation>
+    </message>
+    <message>
+      <source>Information found</source>
+      <translation>Informações encontradas</translation>
+    </message>
+    <message>
+      <source>Not live right now</source>
+      <translation>Fora do ar agora</translation>
+    </message>
+    <message>
+      <source>The platform does not provide it</source>
+      <translation>A plataforma não fornece</translation>
+    </message>
+    <message>
+      <source>Needs the platform login</source>
+      <translation>Precisa do login da plataforma</translation>
+    </message>
+    <message>
+      <source>Not found</source>
+      <translation>Não encontrado</translation>
+    </message>
+    <message>
+      <source>No connection</source>
+      <translation>Sem conexão</translation>
+    </message>
+    <message>
+      <source>Invalid link</source>
+      <translation>Link inválido</translation>
+    </message>
+    <message>
+      <source>Too many requests — try later</source>
+      <translation>Muitos pedidos — tente mais tarde</translation>
+    </message>
+    <message>
+      <source>Could not read</source>
+      <translation>Não foi possível ler</translation>
+    </message>
+    <message>
       <source>Supported</source>
       <translation>Suportada</translation>
     </message>
@@ -2695,6 +3296,74 @@
       <translation>Descrição</translation>
     </message>
     <message>
+      <source>Channel</source>
+      <translation>Canal</translation>
+    </message>
+    <message>
+      <source>Live title</source>
+      <translation>Título da live</translation>
+    </message>
+    <message>
+      <source>Category</source>
+      <translation>Categoria</translation>
+    </message>
+    <message>
+      <source>Tags</source>
+      <translation>Tags</translation>
+    </message>
+    <message>
+      <source>Link</source>
+      <translation>Link</translation>
+    </message>
+    <message>
+      <source>Suggest with AI from your sources</source>
+      <translation>Sugerir com IA a partir das suas fontes</translation>
+    </message>
+    <message>
+      <source>Suggest %1 with AI</source>
+      <translation>Sugerir %1 com IA</translation>
+    </message>
+    <message>
+      <source>From your sources</source>
+      <translation>Das suas fontes</translation>
+    </message>
+    <message>
+      <source>What your streaming platforms publish about the channel and this live. The AI suggestions use it; nothing changes without your approval.</source>
+      <translation>O que as suas plataformas de streaming publicam sobre o canal e esta live. As sugestões da IA usam isso; nada muda sem a sua aprovação.</translation>
+    </message>
+    <message>
+      <source>Reading…</source>
+      <translation>Lendo…</translation>
+    </message>
+    <message>
+      <source>Read from sources</source>
+      <translation>Ler das fontes</translation>
+    </message>
+    <message>
+      <source>Add a streaming platform first (Streaming platforms page).</source>
+      <translation>Adicione uma plataforma de streaming primeiro (página Plataformas de streaming).</translation>
+    </message>
+    <message>
+      <source>Press “Read from sources” to see what each platform says about this live.</source>
+      <translation>Clique em “Ler das fontes” para ver o que cada plataforma diz sobre esta live.</translation>
+    </message>
+    <message>
+      <source>read at %1</source>
+      <translation>lido às %1</translation>
+    </message>
+    <message>
+      <source>Read with: %1</source>
+      <translation>Lido com: %1</translation>
+    </message>
+    <message>
+      <source>(unofficial)</source>
+      <translation>(não oficial)</translation>
+    </message>
+    <message>
+      <source>(official)</source>
+      <translation>(oficial)</translation>
+    </message>
+    <message>
       <source>A few lines about the channel and this live stream.</source>
       <translation>Algumas linhas sobre o canal e esta live.</translation>
     </message>
@@ -2739,6 +3408,10 @@
       <translation>Acrescentadas de vez em quando a uma resposta — nunca em todas.</translation>
     </message>
     <message>
+      <source>Suggest</source>
+      <translation>Sugerir</translation>
+    </message>
+    <message>
       <source>Enable calls to action</source>
       <translation>Ativar chamadas para ação</translation>
     </message>
@@ -2757,6 +3430,98 @@
     <message>
       <source>And never more often than</source>
       <translation>E nunca com intervalo menor que</translation>
+    </message>
+    <message>
+      <source>There is nothing to suggest from: fill in the topic or connect a source that publishes the live's information.</source>
+      <translation>Não há de onde tirar uma sugestão: preencha o assunto ou conecte uma fonte que publique as informações da live.</translation>
+    </message>
+    <message>
+      <source>Choose an Ollama model on the Artificial intelligence page first.</source>
+      <translation>Escolha antes um modelo do Ollama na página Inteligência artificial.</translation>
+    </message>
+    <message>
+      <source>The AI could not write a suggestion this time. Try again.</source>
+      <translation>A IA não conseguiu escrever uma sugestão desta vez. Tente de novo.</translation>
+    </message>
+    <message>
+      <source>No platform says who the guests are, so ChatToon does not guess. Type them yourself.</source>
+      <translation>Nenhuma plataforma informa quem são os convidados, então o ChatToon não chuta. Digite você mesmo.</translation>
+    </message>
+    <message>
+      <source>This field has no assistant.</source>
+      <translation>Este campo não tem assistente.</translation>
+    </message>
+    <message>
+      <source>AI assistant — %1</source>
+      <translation>Assistente de IA — %1</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>Cancelar</translation>
+    </message>
+    <message>
+      <source>Use:</source>
+      <translation>Usar:</translation>
+    </message>
+    <message>
+      <source>Reading your sources and writing a suggestion…</source>
+      <translation>Lendo as suas fontes e escrevendo uma sugestão…</translation>
+    </message>
+    <message>
+      <source>Information found</source>
+      <translation>Informações encontradas</translation>
+    </message>
+    <message>
+      <source>Your sources disagree — choose which ones to use above:</source>
+      <translation>As suas fontes não concordam — escolha acima quais usar:</translation>
+    </message>
+    <message>
+      <source>Current value</source>
+      <translation>Valor atual</translation>
+    </message>
+    <message>
+      <source>(empty)</source>
+      <translation>(vazio)</translation>
+    </message>
+    <message>
+      <source>Suggestion</source>
+      <translation>Sugestão</translation>
+    </message>
+    <message>
+      <source>written by AI — check it</source>
+      <translation>escrito pela IA — confira</translation>
+    </message>
+    <message>
+      <source>taken from your sources</source>
+      <translation>tirado das suas fontes</translation>
+    </message>
+    <message>
+      <source>New items come after yours; nothing you wrote is removed.</source>
+      <translation>Os itens novos vêm depois dos seus; nada do que você escreveu é removido.</translation>
+    </message>
+    <message>
+      <source>This is the account name on the platform — confirm it is how the host wants to be called.</source>
+      <translation>Este é o nome da conta na plataforma — confirme se é assim que o apresentador quer ser chamado.</translation>
+    </message>
+    <message>
+      <source>Calls to action are switched off. Applying keeps them off; switch them on yourself if you want.</source>
+      <translation>As chamadas para ação estão desligadas. Aplicar não as liga; ligue você mesmo se quiser.</translation>
+    </message>
+    <message>
+      <source>Category on the platform: %1</source>
+      <translation>Categoria na plataforma: %1</translation>
+    </message>
+    <message>
+      <source>Edit</source>
+      <translation>Editar</translation>
+    </message>
+    <message>
+      <source>Regenerate</source>
+      <translation>Gerar outra</translation>
+    </message>
+    <message>
+      <source>Apply suggestion</source>
+      <translation>Aplicar sugestão</translation>
     </message>
   </context>
   <context>

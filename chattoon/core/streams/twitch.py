@@ -28,8 +28,8 @@ import time
 import aiohttp
 
 from ..messages import ChatMessage
-from .base import (AuthRequired, Connector, FatalError, ProbeResult, RateLimited, TransientError, Unsupported,
-                   retry_after)
+from .base import (AuthRequired, Connector, FatalError, ProbeResult, RateLimited, StreamMetadata, TransientError,
+                   Unsupported, retry_after)
 
 ID_BASE = "https://id.twitch.tv"
 API_BASE = "https://api.twitch.tv"
@@ -463,6 +463,37 @@ class TwitchConnector(Connector):
             self.retract(message_id=event.get("message_id", ""))
         elif kind == "channel.chat.clear_user_messages":
             self.retract(author_id=str(event.get("target_user_id", "")))
+
+    # -- stream information ---------------------------------------------------------------
+
+    async def metadata(self) -> StreamMetadata:
+        """Title, category and tags from the official Helix API (needs the connected account)."""
+        md = StreamMetadata(self.source.id, "twitch", method="Twitch Helix API (official)",
+                            url=f"https://www.twitch.tv/{self.login}", channel=self.login)
+        auth = self.auth()
+        has = bool(await asyncio.to_thread(auth.account)) if self.ctx.credentials is not None else False
+        if not has or not client_id(self.ctx.apps):
+            md.ok, md.code = False, "auth-required"
+            md.detail = "Connect a Twitch account (Settings › Accounts) to read the title and category."
+            return md
+        try:
+            http = await self._http()
+            account = await auth.ensure(http)
+            broadcaster, display = await self._broadcaster(account)
+            status, data = await self._helix("GET", "/helix/channels", account, params={"broadcaster_id": broadcaster})
+            if status != 200:
+                raise TransientError(f"Twitch channels: HTTP {status}")
+            info = (data.get("data") or [{}])[0]
+            _, streams = await self._helix("GET", "/helix/streams", account, params={"user_id": broadcaster})
+        finally:
+            await self.close()
+        md.channel = info.get("broadcaster_name") or display
+        md.title = info.get("title") or ""
+        md.category = info.get("game_name") or ""
+        md.tags = [str(t) for t in info.get("tags") or []]
+        md.live = bool(streams.get("data"))
+        md.detail = "Twitch does not publish a channel description through this API."
+        return md
 
     # -- test connection ----------------------------------------------------------------
 

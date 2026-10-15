@@ -371,6 +371,12 @@ export class Owl extends Character {
       nod: { duration: 1.2, weight: 1, cooldown: 3, states: ["speaking"] },
       wingSweep: { duration: 1.8, weight: 0.7, cooldown: 6, states: ["speaking"] },
     });
+    // the teacher: mostly pensive, turns the head to look around, puffs up when startled
+    this.setPersona({
+      idleMoods: { thinking: 3, happy: 2, surprised: 1 },
+      moodGestures: { thinking: "headTurn", happy: "hoot", surprised: "surprisePuff" },
+      speechGestures: { thinking: "teach", happy: "nod", laugh: "wingSweep", celebrate: "wingFlap", surprised: "explain" },
+    });
   }
 
   // depth factor of the body's front by height (flatter belly bottom behind the branch)

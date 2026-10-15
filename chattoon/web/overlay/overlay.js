@@ -28,7 +28,10 @@ const config = {
   showPlatform: true,
 };
 // phase: what the avatar is doing (idle/listening/reading/thinking/speaking); app: running/paused/stopped/emergency
-const state = { phase: "idle", app: "stopped", speech: null, connected: false };
+// next: the line's own emotion, applied when a short lead reaction ends (surprised → celebrate)
+const state = { phase: "idle", app: "stopped", speech: null, connected: false, next: null };
+const EMOTIONS = ["neutral", "happy", "laugh", "surprised", "confused", "annoyed", "celebrate", "thinking"];
+const LEAD_SECONDS = 0.9;
 const capture = params.has("capture");
 let captureClock = performance.now() / 1000;
 const clock = () => (capture ? captureClock : performance.now() / 1000);
@@ -284,14 +287,39 @@ function startSpeech(msg) {
   if (continuing) { playAudio(msg, speech); return; }
   if (kind === "reading" && msg.superchat) character?.react("celebrate"); // a Super Chat deserves a party
   if (kind === "reply") {
-    character?.setEmotion(msg.emotion || "neutral", msg.intensity ?? 0.7, speech.duration + 2.5);
-    // strong emotions get a short body reaction at the start of the line
-    if (["laugh", "surprised", "celebrate"].includes(msg.emotion) && (msg.intensity ?? 0) >= 0.75) character?.react(msg.emotion);
+    const emotion = EMOTIONS.includes(msg.emotion) ? msg.emotion : "neutral";
+    const lead = EMOTIONS.includes(msg.lead) && msg.lead !== emotion ? msg.lead : "";
+    state.next = null;
+    if (lead) {
+      // a quick first reaction (surprise at good news), then the line's own emotion
+      character?.react(lead);
+      state.next = { emotion, intensity: msg.intensity ?? 0.7, at: clock() + LEAD_SECONDS, seconds: speech.duration + 2.5 };
+    } else {
+      applyEmotion(emotion, msg.intensity ?? 0.7, speech.duration + 2.5);
+    }
+    // the species' own gesture for this kind of line (asked for, or one that fits the emotion)
+    if (typeof msg.gesture === "string" && msg.gesture) character?.director.play(msg.gesture, false);
+    else if (emotion !== "neutral" && Math.random() < 0.45) character?.speechGesture(emotion);
   }
   showBubble(msg.text || "", msg.author || "", kind, { reveal: msg.reveal, question: msg.question, superchat: msg.superchat,
                                                        paidKind: msg.paidKind, platformLabel: msg.platformLabel,
                                                        platformColor: msg.platformColor });
   playAudio(msg, speech);
+}
+
+function applyEmotion(emotion, intensity, seconds) {
+  character?.setEmotion(emotion, intensity, seconds);
+  // strong emotions get a short body reaction at the start of the line
+  if (["laugh", "surprised", "celebrate"].includes(emotion) && intensity >= 0.75) character?.react(emotion);
+}
+
+// the emotion that follows a lead reaction, once its moment came (frame loop and capture mode)
+function settleEmotion(now) {
+  const n = state.next;
+  if (n && now >= n.at) {
+    state.next = null;
+    applyEmotion(n.emotion, n.intensity, Math.max(1, n.seconds - LEAD_SECONDS));
+  }
 }
 
 function playAudio(msg, speech) {
@@ -363,6 +391,7 @@ function frame(now) {
   const dt = capture ? 1 / 60 : Math.min(timer.getDelta(), 0.1);
   if (capture) captureClock += dt;
   const seconds = clock();
+  settleEmotion(seconds);
   const s = state.speech;
   if (s) revealBubble(lineProgress(s));
   if (!s && seconds > bubbleHideAt) hideBubble();
@@ -426,7 +455,7 @@ function connect() {
         if (state.speech && (state.speech.group === msg.id || state.speech.id === msg.id)) stopSpeech(false);
         if (msg.kind !== "reading") state.phase = "idle";
         break;
-      case "stop": stopSpeech(true); state.phase = "idle"; character?.setEmotion("neutral"); break;
+      case "stop": stopSpeech(true); state.next = null; state.phase = "idle"; character?.setEmotion("neutral"); break;
       case "react": character?.react(msg.emotion); break;
       case "gesture": if (typeof msg.name === "string") character?.gesture(msg.name); break;
     }
@@ -483,6 +512,7 @@ if (capture) {
     advance(seconds) {
       for (let i = 0, n = Math.round(seconds * 60); i < n; i++) {
         captureClock += 1 / 60;
+        settleEmotion(captureClock);
         const s = state.speech;
         if (s) revealBubble(lineProgress(s));
         if (!s && captureClock > bubbleHideAt) hideBubble();

@@ -12,7 +12,7 @@ import re
 import aiohttp
 
 from ..youtube_chat import _UA, BASE, ChatError, ChatStatus, LiveChatClient, extract_video_id
-from .base import Connector, FatalError, NotLive, ProbeResult, TransientError
+from .base import Connector, FatalError, NotLive, ProbeResult, StreamMetadata, TransientError
 
 _CANONICAL = re.compile(r'<link rel="canonical" href="https://www\.youtube\.com/watch\?v=([A-Za-z0-9_-]{11})"')
 
@@ -74,6 +74,35 @@ class YouTubeConnector(Connector):
         elif status.state == "reconnecting":
             self.status.attempt = status.attempt
             self.set_status("reconnecting", "network", status.detail)
+
+    async def metadata(self) -> StreamMetadata:
+        """Title and channel of the live through YouTube's official oEmbed endpoint (no key,
+        no login). Description and tags would need the YouTube Data API: not provided."""
+        md = StreamMetadata(self.source.id, "youtube", method="YouTube oEmbed (official)")
+        handle = re.search(r"/(@[^/]+)/live$", self.channel_url)
+        md.channel = handle.group(1) if handle else ""
+        md.url = self.channel_url.removesuffix("/live") if self.channel_url else ""
+        try:
+            video = await self.resolve_live() if self.channel_url else self.video_id
+        except NotLive:
+            md.live, md.code = False, "offline"
+            md.detail = "The channel is not live right now: only its handle is known."
+            return md
+        url = f"https://www.youtube.com/watch?v={video}"
+        async with aiohttp.ClientSession(headers={"User-Agent": _UA}, timeout=aiohttp.ClientTimeout(total=15)) as http:
+            async with http.get(f"{self.base_url}/oembed", params={"url": url, "format": "json"}) as resp:
+                if resp.status in (401, 403, 404):
+                    return StreamMetadata(self.source.id, "youtube", ok=False, code="not-found", method=md.method,
+                                          detail="YouTube has no public information about this video.")
+                if resp.status >= 400:
+                    raise TransientError(f"oEmbed: HTTP {resp.status}")
+                data = await resp.json(content_type=None)
+        md.title = str(data.get("title") or "")
+        md.channel = str(data.get("author_name") or md.channel)
+        md.url = str(data.get("author_url") or md.url)
+        md.live = True if self.channel_url else None
+        md.detail = "Description and tags need the YouTube Data API, which ChatToon does not use."
+        return md
 
     async def probe(self) -> ProbeResult:
         try:

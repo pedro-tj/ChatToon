@@ -1,0 +1,383 @@
+{
+ "about": "Second held-out set, written after the verified reference sheet (knowledge.REFERENCE) was created and frozen before any evaluation on it. Holdout #1 became partly contaminated because the reference sheet was written after seeing some of its failures; this set is the clean generalization measure. Some subjects are covered by the reference sheet and many are not (PDF, SSH, rm, CSS, Canonical, general knowledge).",
+ "cases": [
+  {
+   "id": "h2-math-01",
+   "category": "math",
+   "objective": true,
+   "text": "Quanto é 6 vezes 9?",
+   "checks": [
+    {
+     "number": 54
+    }
+   ]
+  },
+  {
+   "id": "h2-math-02",
+   "category": "math",
+   "objective": true,
+   "text": "Quanto é 90 dividido por 3?",
+   "checks": [
+    {
+     "number": 30
+    }
+   ]
+  },
+  {
+   "id": "h2-math-03",
+   "category": "math",
+   "objective": true,
+   "text": "Quanto é 15% de 300?",
+   "checks": [
+    {
+     "number": 45
+    }
+   ]
+  },
+  {
+   "id": "h2-math-04",
+   "category": "math",
+   "objective": true,
+   "text": "quanto é cinquenta mais vinte e cinco",
+   "checks": [
+    {
+     "number": 75
+    }
+   ]
+  },
+  {
+   "id": "h2-math-05",
+   "category": "math",
+   "objective": true,
+   "text": "Qual é a metade de 120?",
+   "checks": [
+    {
+     "number": 60
+    }
+   ]
+  },
+  {
+   "id": "h2-logic-01",
+   "category": "logic",
+   "objective": true,
+   "text": "Que mês vem depois de março?",
+   "checks": [
+    {
+     "any": [
+      "abril"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-logic-02",
+   "category": "logic",
+   "objective": true,
+   "text": "Quantos lados tem um triângulo?",
+   "checks": [
+    {
+     "number": 3
+    }
+   ]
+  },
+  {
+   "id": "h2-logic-03",
+   "category": "logic",
+   "objective": true,
+   "text": "Se eu tenho 3 maçãs e como uma, quantas sobram?",
+   "checks": [
+    {
+     "number": 2
+    }
+   ]
+  },
+  {
+   "id": "h2-fact-01",
+   "category": "factual",
+   "objective": true,
+   "text": "Qual é a capital de Portugal?",
+   "checks": [
+    {
+     "any": [
+      "lisboa"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-fact-02",
+   "category": "factual",
+   "objective": true,
+   "text": "Quem pintou o teto da Capela Sistina?",
+   "checks": [
+    {
+     "any": [
+      "michelangelo",
+      "miguel ângelo",
+      "miguel angelo"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-fact-03",
+   "category": "factual",
+   "objective": true,
+   "text": "Qual é o maior animal do mundo?",
+   "checks": [
+    {
+     "any": [
+      "baleia azul",
+      "baleia-azul"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-fact-04",
+   "category": "factual",
+   "objective": true,
+   "text": "Qual é o idioma oficial do México?",
+   "checks": [
+    {
+     "any": [
+      "espanhol",
+      "castelhano"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-fact-05",
+   "category": "factual",
+   "objective": true,
+   "text": "Que gás as plantas absorvem na fotossíntese?",
+   "checks": [
+    {
+     "any": [
+      "gás carbônico",
+      "gas carbonico",
+      "dióxido de carbono",
+      "dioxido de carbono",
+      "co2",
+      "co₂"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-fact-06",
+   "category": "factual",
+   "objective": true,
+   "text": "Em que ano o homem pisou na Lua pela primeira vez?",
+   "checks": [
+    {
+     "any": [
+      "1969"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-tech-01",
+   "category": "linux",
+   "objective": true,
+   "text": "O que significa PDF?",
+   "checks": [
+    {
+     "any": [
+      "portable document format",
+      "formato de documento portátil",
+      "formato de documento portatil",
+      "documento portátil",
+      "documento portatil"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-tech-02",
+   "category": "linux",
+   "objective": true,
+   "text": "Qual empresa criou o Windows?",
+   "checks": [
+    {
+     "any": [
+      "microsoft"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-tech-03",
+   "category": "linux",
+   "objective": true,
+   "text": "Qual linguagem é usada para estilizar páginas web?",
+   "checks": [
+    {
+     "any": [
+      "css"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-tech-04",
+   "category": "linux",
+   "objective": true,
+   "text": "Qual comando do Linux apaga um arquivo?",
+   "checks": [
+    {
+     "word": [
+      "rm"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-tech-05",
+   "category": "linux",
+   "objective": true,
+   "text": "O que significa SSH?",
+   "checks": [
+    {
+     "any": [
+      "secure shell",
+      "shell seguro"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-tech-06",
+   "category": "linux",
+   "objective": true,
+   "text": "Qual distribuição Linux é mantida pela Canonical?",
+   "checks": [
+    {
+     "any": [
+      "ubuntu"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-tech-07",
+   "category": "linux",
+   "objective": true,
+   "text": "O que faz o comando sudo?",
+   "checks": [
+    {
+     "any": [
+      "administrador",
+      "root",
+      "superusuário",
+      "superusuario",
+      "privilégio",
+      "privilegio",
+      "permiss"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-cont-01",
+   "category": "continuity",
+   "objective": true,
+   "setup": [
+    {
+     "author": "Paula",
+     "text": "Tenho uma cachorrinha chamada Pipoca."
+    },
+    {
+     "author": "Igor",
+     "text": "Tux, qual seu jogo favorito?"
+    },
+    {
+     "author": "Bia",
+     "text": "Boa noite!"
+    },
+    {
+     "author": "Ana",
+     "text": "Essa live está muito boa."
+    }
+   ],
+   "author": "Paula",
+   "text": "Tux, você lembra o nome da minha cachorrinha?",
+   "checks": [
+    {
+     "any": [
+      "pipoca"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-cont-02",
+   "category": "continuity",
+   "objective": true,
+   "setup": [
+    {
+     "author": "Diego",
+     "text": "Estou estudando para a prova de cálculo amanhã."
+    },
+    {
+     "author": "Ana",
+     "text": "Alguém joga Counter-Strike no Linux?"
+    },
+    {
+     "author": "Pedro",
+     "text": "Kkkkk boa"
+    }
+   ],
+   "author": "Diego",
+   "text": "Tux, me deseja sorte naquilo que eu te contei?",
+   "checks": [
+    {
+     "any": [
+      "cálculo",
+      "calculo",
+      "prova"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-cont-03",
+   "category": "continuity",
+   "objective": true,
+   "setup": [
+    {
+     "author": "Rita",
+     "author_id": "rita-1",
+     "text": "Minha cor favorita é verde."
+    },
+    {
+     "author": "Igor",
+     "text": "Oi Tux!"
+    }
+   ],
+   "author": "Rita",
+   "author_id": "rita-2",
+   "text": "Tux, qual é a minha cor favorita?",
+   "checks": [
+    {
+     "none": [
+      "verde"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h2-unk-01",
+   "category": "unknown",
+   "objective": false,
+   "text": "Qual é o nome da minha mãe?",
+   "checks": [
+    {
+     "abstain": true
+    }
+   ]
+  }
+ ]
+}

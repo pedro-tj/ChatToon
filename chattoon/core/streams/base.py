@@ -130,6 +130,36 @@ class ProbeResult:
 
 
 @dataclass
+class StreamMetadata:
+    """Public information about a source's channel and current live (Stream context › AI).
+
+    Platforms differ a lot: each connector fills only what its official API (or the
+    endpoint it already uses to read the chat) really provides, and says how it got it.
+    Nothing is guessed; a field the platform does not provide stays empty."""
+
+    source_id: str
+    platform: str
+    ok: bool = True
+    code: str = "found"  # found | offline | unavailable | auth-required | not-found | network | error
+    detail: str = ""
+    method: str = ""  # how it was read, shown to the streamer (e.g. "YouTube oEmbed (official)")
+    live: bool | None = None
+    channel: str = ""
+    title: str = ""
+    description: str = ""
+    category: str = ""
+    tags: list[str] = field(default_factory=list)
+    url: str = ""
+    fetched_at: float = field(default_factory=time.time)
+
+    def to_dict(self) -> dict:
+        return {"sourceId": self.source_id, "platform": self.platform, "ok": self.ok, "code": self.code,
+                "detail": self.detail[:300], "method": self.method, "live": self.live, "channel": self.channel[:120],
+                "title": self.title[:300], "description": self.description[:1500], "category": self.category[:120],
+                "tags": [str(t)[:40] for t in self.tags[:20]], "url": self.url[:300], "fetchedAt": self.fetched_at}
+
+
+@dataclass
 class ConnectorContext:
     """What connectors may use from the application (injected, so tests can fake it)."""
 
@@ -226,6 +256,12 @@ class Connector:
     async def probe(self) -> ProbeResult:
         """Check the source without reading messages (the "Test connection" button)."""
         return ProbeResult(True, "unknown")
+
+    async def metadata(self) -> StreamMetadata:
+        """Title, description, category… of the channel and its live, when the platform
+        offers a sanctioned way to read them. The default: it does not."""
+        return StreamMetadata(self.source.id, self.platform, ok=False, code="unavailable",
+                              detail="This platform offers ChatToon no way to read the live's title or description.")
 
     async def close(self) -> None:
         """Release resources (called when the task stops, also on cancellation)."""
