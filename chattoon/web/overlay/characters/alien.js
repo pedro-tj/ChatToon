@@ -112,6 +112,12 @@ export class Alien extends Character {
       probe: { duration: 2.2, weight: 0.8, cooldown: 16 },
       point: { duration: 1.5, weight: 1.4, cooldown: 4, states: ["speaking"] },
     });
+    // a puzzled scientist: surprised and confused by everything on Earth
+    this.setPersona({
+      idleMoods: { surprised: 3, confused: 2, thinking: 2, happy: 1 },
+      moodGestures: { surprised: "scan", confused: "probe", thinking: "beep", happy: "wave" },
+      speechGestures: { thinking: "point", surprised: "beep", happy: "beep", celebrate: "wave", confused: "point" },
+    });
   }
 
   hear(text) {

@@ -1,8 +1,16 @@
-"""Application controller: chat → selection → reading → AI → validation → voice → animation → history."""
+"""Application controller: chat → selection → reading → AI → validation → voice → animation → history.
+
+Per message: identity (platform + source + author) → cleaning → intent (local rules,
+exact arithmetic) → memories → prompt → Ollama → validation (one retry when the verified
+result is missing or the prompt leaks) → emotion → voice → animation + lip sync → and
+only once the line was really spoken, the exchange becomes a memory. When the chat is
+quiet the avatar may speak on its own (lowest priority, cancelled by any viewer).
+"""
 
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 import time
@@ -10,14 +18,19 @@ import uuid
 from collections import OrderedDict, deque
 from dataclasses import dataclass, field
 
+from . import assistant, knowledge
+from . import emotion as feelings
 from .brain import REPLY_SCHEMA, Brain, Reply, token_budget
 from .characters import EMOTIONS, Character, get_character
-from .config import Settings, SourceConfig
+from .config import Settings, SourceConfig, data_dir
 from .events import EventBus
+from .intent import Intent, classify, objective_temperature
+from .memory import Memory
 from .messages import ChatMessage, MessageSelector, SelectorConfig, clean_text
 from .ollama import OllamaClient, OllamaError
 from .overlay_server import OverlayServer
 from .reading import Reading, build_reading
+from .spontaneous import Plan, Scheduler, acceptable
 from .streams import PLATFORMS, platform_label
 from .streams.base import ConnectorContext, ProbeResult
 from .streams.manager import MultiStreamManager
@@ -94,7 +107,12 @@ class ChatToonEngine:
         self.server = server or OverlayServer(settings.overlay.token, settings.overlay.port)
         self.server.set_public_address(settings.overlay.public_address)
         self.server.on_clients_changed = lambda counts: self.bus.emit("overlay_clients", counts)
-        self.brain = Brain()
+        m = settings.memory
+        self.memory = Memory(data_dir() / "memory.sqlite3", persist=m.persist, retention_days=m.retention_days,
+                             enabled=m.enabled)
+        self.brain = Brain(memory=self.memory)
+        self.scheduler = Scheduler()
+        self.diagnostics: deque[dict] = deque(maxlen=20)  # latest generations (AI page)
         self.selector = MessageSelector(self._selector_config())
         self.stats = Stats()
         self.history: deque[dict] = deque(maxlen=300)
@@ -110,6 +128,7 @@ class ChatToonEngine:
         self.streams = MultiStreamManager(self._on_chat_message, self._on_streams_change, ctx, connector_factories,
                                           on_retract=self._on_retract)
         self.streams.configure(settings.stream_sources())
+        self.metadata = assistant.MetadataService(ctx, connector_factories)
         self.selector.on_discard = self._on_discard
         self.recent: OrderedDict[str, ChatMessage] = OrderedDict()  # uid -> message (manual picks from the feed)
         self._active: ChatMessage | None = None  # message being read/answered right now
@@ -118,6 +137,9 @@ class ChatToonEngine:
         self._current: asyncio.Task | None = None
         self._speech_lock = asyncio.Lock()
         self._last_speech_end = 0.0
+        self._last_chat = time.monotonic()  # latest viewer message: spontaneous lines wait for a quiet chat
+        self._current_kind = ""  # "" (a viewer's message) | spontaneous | summary — what _current is doing
+        self._interrupted: OrderedDict[str, None] = OrderedDict()  # cut by the streamer while being spoken
         self._started = False
 
     # -- setup ------------------------------------------------------------
@@ -156,6 +178,8 @@ class ChatToonEngine:
         self.streams.configure(self.settings.stream_sources())
         self.ollama.host = self.settings.ai.host.rstrip("/")
         self.ollama.timeout = self.settings.ai.timeout
+        m = self.settings.memory
+        self.memory.configure(m.enabled, m.persist, m.retention_days)
         public_url = self.server.public_url
         self.server.set_public_address(self.settings.overlay.public_address)
         if self._started and self.server.public_url != public_url:
@@ -177,9 +201,17 @@ class ChatToonEngine:
         await self.stop()
         if self._worker:
             self._worker.cancel()
+            try:
+                await self._worker
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001 - closing anyway
+                pass
         await self.server.stop()
         await self.ollama.close()
         self.tts.shutdown()
+        self.close_memory()
+
+    def close_memory(self) -> None:
+        self.memory.close()
 
     # -- diagnostics ------------------------------------------------------
 
@@ -236,7 +268,8 @@ class ChatToonEngine:
                 pass
         if self.settings.ai.model:
             try:
-                await self.ollama.preload(self.settings.ai.model, self.settings.ai.keep_alive)
+                await self.ollama.preload(self.settings.ai.model, self.settings.ai.keep_alive,
+                                          self.settings.ai.context_window)
             except OllamaError as e:
                 self._error("ai", str(e))
 
@@ -364,10 +397,40 @@ class ChatToonEngine:
             stats = self.streams.stats.get(msg.source_id)
             if stats:
                 stats.dropped += 1
+        self._heard(msg, reason)
         self._remember_message(msg)
         self.bus.emit("message", dict(msg.to_dict(), dropped=reason))
         self._emit_queue()
         self._on_streams_change()  # counters per platform (coalesced, 4 per second at most)
+
+    def _heard(self, msg: ChatMessage, reason: str) -> None:
+        """A viewer wrote: the chat is not quiet, a spontaneous line being prepared gives way,
+        and the message is kept (RAM, this live only) for follow-ups even if not answered."""
+        if reason in ("not running", "event", "command"):
+            return
+        self._last_chat = time.monotonic()
+        if reason in ("", "repeated", "queue full", "no mention"):
+            self.memory.heard(msg, remember=classify(msg.text).remember)
+        if not reason and self._current_kind in ("spontaneous", "summary") and self._current is not None:
+            if self._current_kind == "summary" or self.phase != "speaking":
+                asyncio.ensure_future(self._cancel_background())
+
+    async def _cancel_background(self) -> None:
+        """Viewers first: drop a spontaneous line still being prepared (or a summary)."""
+        if self._current_kind in ("spontaneous", "summary") and (self._current_kind == "summary"
+                                                                 or self.phase != "speaking"):
+            quiet = self._current_kind == "summary"
+            task, self._current = self._current, None
+            if task and not task.done():
+                task.cancel()
+                try:
+                    await task
+                except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                    pass
+            self.scheduler.postpone(20)
+            if not quiet:
+                await self.server.broadcast({"type": "stop"})
+                self._set_phase("idle")
 
     def _remember_message(self, msg: ChatMessage) -> None:
         self.recent[msg.uid] = msg
@@ -391,6 +454,11 @@ class ChatToonEngine:
         for uid in [uid for uid, m in self.recent.items() if gone(m)]:
             self._message_state(self.recent.pop(uid), "deleted")  # cannot be picked by hand any more
             self._retracted[uid] = None
+        # what moderators removed is not remembered either
+        if message_id:
+            self.memory.forget_message(source_id, message_id)
+        if author_id:
+            self.memory.forget_author(source_id, author_id)
         while len(self._retracted) > 2000:
             self._retracted.popitem(last=False)
         if gone(self._active):
@@ -407,7 +475,8 @@ class ChatToonEngine:
         self.bus.emit("message_state", {"id": msg.uid, "state": "dropped", "reason": reason})
 
     def _failed(self, msg: ChatMessage) -> None:
-        if msg.uid not in self._retracted:  # a deleted message stays "deleted"
+        # a deleted message stays "deleted", one cut while being spoken stays "interrupted"
+        if msg.uid not in self._retracted and msg.uid not in self._interrupted:
             self._message_state(msg, "failed")
 
     def _message_state(self, msg: ChatMessage | None, state: str, **extra) -> None:
@@ -422,6 +491,7 @@ class ChatToonEngine:
         reason = self.selector.offer(msg)
         if reason:
             self.stats.dropped += 1
+        self._heard(msg, reason)
         self._remember_message(msg)
         self.bus.emit("message", dict(msg.to_dict(), dropped=reason))
         self._emit_queue()
@@ -484,9 +554,11 @@ class ChatToonEngine:
                 continue
             msg = self.selector.next()
             if msg is None:
+                await self._idle_turn()
                 continue
             self._emit_queue()
             self._message_state(msg, "answering")
+            self._current_kind = ""
             self._current = asyncio.create_task(self._answer(msg))
             try:
                 reply = await self._current
@@ -500,6 +572,38 @@ class ChatToonEngine:
                 log.exception("answering failed")
             finally:
                 self._current = None
+
+    def _quiet_for(self) -> float:
+        return time.monotonic() - max(self._last_chat, self._last_speech_end)
+
+    def _free(self) -> bool:
+        """Nothing to answer, approve or say: the lowest-priority work may run."""
+        return (self.state == "running" and self.phase == "idle" and self._current is None
+                and len(self.selector) == 0 and not self.suggestions)
+
+    async def _idle_turn(self) -> None:
+        """The queue is empty: a spontaneous line when it is time, else a memory summary."""
+        if not self._free():
+            return
+        if self.settings.mode != "assisted" and self.scheduler.due(self.settings.spontaneous, self._quiet_for()):
+            await self._background("spontaneous", self._spontaneous())
+        elif (self.settings.memory.enabled and self.settings.memory.summaries and self.settings.ai.model
+              and self._quiet_for() > 25 and self.memory.needs_summary()):
+            await self._background("summary", self._summarize())
+
+    async def _background(self, kind: str, coro) -> None:
+        self._current_kind = kind
+        self._current = asyncio.create_task(coro)
+        try:
+            await self._current
+        except asyncio.CancelledError:
+            if asyncio.current_task().cancelling():
+                raise
+        except Exception:  # noqa: BLE001
+            log.exception("%s failed", kind)
+        finally:
+            self._current = None
+            self._current_kind = ""
 
     async def _answer(self, msg: ChatMessage, force_speak: bool = False) -> Reply | None:
         self._active = msg
@@ -517,6 +621,10 @@ class ChatToonEngine:
                 self.suggestions[msg.uid] = reply
                 self._message_state(msg, "suggested", reply=reply.text)
                 self._emit_queue()
+            if self.phase == "thinking":
+                # the suggestion waits for the streamer; the avatar does not stay "thinking"
+                # (and the next messages are prepared even if this one is rejected)
+                self._set_phase("idle")
             return reply
         async with self._speech_lock:
             return await self._converse(msg)
@@ -582,6 +690,150 @@ class ChatToonEngine:
             reply = Reply(text, emotion if emotion in EMOTIONS else "neutral", 0.6, source="manual")
             await self._run_exclusive(self.speak(reply, voice_id))
 
+    # -- spontaneous lines ------------------------------------------------
+
+    async def spontaneous_now(self, category: str = "") -> bool:
+        """"Try a spontaneous line" button: plan and speak one now, whatever the mode."""
+        plan = self._plan(category)
+        if plan is None:
+            self._error("spontaneous", "No line available for this category.", code="no-spontaneous")
+            return False
+        await self._run_exclusive(self._spontaneous(plan, test=True))
+        return True
+
+    def _plan(self, category: str = "") -> Plan | None:
+        cs = self.settings.character_settings()
+        return self.scheduler.plan(self.settings.spontaneous, self.character.id, self.settings.ai.reply_language,
+                                   self.settings.context, cs.catchphrases, cs.curiosities, category)
+
+    async def _spontaneous(self, plan: Plan | None = None, test: bool = False) -> Reply | None:
+        """Prepare and speak one spontaneous line (lowest priority: cancelled by any viewer
+        while it is still being prepared)."""
+        plan = plan or self._plan()
+        if plan is None:
+            self.scheduler.postpone(60)
+            return None
+        text = plan.text
+        if not text:
+            text = await self._write_spontaneous(plan)
+            if not text:  # the model failed or stated facts: a curated line of the same kind instead
+                fallback = self.scheduler.plan(self.settings.spontaneous.__class__(
+                    categories=[plan.category], use_ai=False), self.character.id, self.settings.ai.reply_language,
+                    self.settings.context, self.settings.character_settings().catchphrases,
+                    self.settings.character_settings().curiosities, plan.category)
+                text = fallback.text if fallback else ""
+        if not text:
+            self.scheduler.postpone(60)
+            return None
+        reply = Reply(text, plan.emotion, plan.intensity, source="spontaneous", lead=plan.lead, category=plan.category)
+        reply.diagnostics = {"gesture": plan.gesture, "category": plan.category, "kind": plan.kind}
+        if not test and (self.state != "running" or len(self.selector)):
+            self.scheduler.postpone(20)  # a viewer came first
+            return None
+        self.scheduler.spoken(plan)
+        self.bus.emit("spontaneous", {"category": plan.category, "kind": plan.kind, "text": text})
+        await self.speak(reply)
+        return reply
+
+    async def _write_spontaneous(self, plan: Plan) -> str:
+        ai = self.settings.ai
+        if not ai.model:
+            return ""
+        cs = self.settings.character_settings()
+        max_sentences, max_chars = min(2, ai.max_sentences), min(200, ai.max_chars)
+        system = self.brain.system_prompt(self.character, cs.personality, self.settings.context, ai.reply_language,
+                                          max_sentences, max_chars, catchphrases=cs.catchphrases,
+                                          platforms=self._stream_platforms())
+        self._set_phase("thinking", stage="spontaneous")
+        prompt = self.brain.live_context(ai.reply_language) + "\n\n" + self.scheduler.instruction(
+            plan, self.settings.context, ai.reply_language, self._quiet_for() / 60)
+        try:
+            reply = await self._ask([{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+                                    max(0.7, ai.temperature), max_chars, max_sentences, {"prompt": 0, "eval": 0})
+        except OllamaError as e:
+            self._error("ai", str(e))
+            return ""
+        finally:
+            if self.phase == "thinking":
+                self._set_phase("idle")
+        if reply.source != "ai" or not acceptable(reply.text):
+            return ""
+        if self.brain.check(reply, None, system, self.character, ai.reply_language):
+            return ""
+        return reply.text
+
+    async def _summarize(self) -> None:
+        """While the chat is quiet: fold a long conversation into a short summary memory."""
+        viewer = self.memory.needs_summary()
+        if viewer is None:
+            return
+        pt = self.settings.ai.reply_language.lower().startswith("pt")
+        lines = [f'{viewer.author}: "{e.message}" / {"você" if pt else "you"}: "{e.reply}"'
+                 for e in list(viewer.exchanges)[-10:]]
+        old = next((n.text for n in viewer.notes if n.kind == "summary"), "")
+        instruction = (
+            f"Resuma em até duas frases, em terceira pessoa, o que {viewer.author} contou sobre si e sobre o que "
+            "vocês conversaram. Use somente o que está abaixo; não invente nada, não inclua opiniões nem dados "
+            "sensíveis (saúde, religião, política, documentos, contatos). Responda só com o resumo, sem aspas."
+            if pt else
+            f"Summarize in up to two sentences, in the third person, what {viewer.author} told about themselves and "
+            "what you talked about. Use only what is below; invent nothing, no opinions or sensitive data (health, "
+            "religion, politics, documents, contacts). Reply with the summary only, no quotes.")
+        if old:
+            instruction += ("\nResumo anterior: " if pt else "\nPrevious summary: ") + old
+        text = "\n".join(lines).replace("<<<", "‹‹‹").replace(">>>", "›››")
+        try:
+            result = await self.ollama.chat(
+                self.settings.ai.model, [{"role": "system", "content": instruction},
+                                         {"role": "user", "content": f"<<<\n{text}\n>>>"}],
+                temperature=0.2, max_tokens=120, context_window=self.settings.ai.context_window,
+                keep_alive=self.settings.ai.keep_alive, timeout=self.settings.ai.timeout)
+        except OllamaError:
+            viewer.since_summary = 0  # do not insist; the next exchanges will ask again
+            return
+        summary = clean_text(re.sub(r"[*_`#{}\[\]]", "", result.text), 300)
+        if summary and "<<<" not in summary:
+            self.memory.set_summary(viewer.key, summary)
+
+    # -- stream context assistant -------------------------------------------
+
+    def _sources(self, source_ids: list[str] | None = None) -> list[SourceConfig]:
+        return [s for s in self.settings.stream_sources() if not source_ids or s.id in source_ids]
+
+    async def stream_metadata(self, force: bool = False, source_ids: list[str] | None = None) -> list[dict]:
+        """What each source's platform publishes about the channel and the live (cached)."""
+        found = [m.to_dict() for m in await self.metadata.fetch(self._sources(source_ids), force)]
+        self.bus.emit("metadata", {"sources": found, "time": time.time()})
+        return found
+
+    async def suggest_context(self, field_name: str, source_ids: list[str] | None = None) -> dict:
+        """A suggestion for one Stream context field (shown for approval, never saved here)."""
+        sources = self._sources(source_ids)
+        found = await self.metadata.fetch(sources)
+        ai = self.settings.ai
+        result = await assistant.suggest(field_name, self.settings.context, found, sources, self.ollama, ai.model,
+                                         ai.reply_language, ai.timeout, ai.context_window, ai.keep_alive)
+        out = result.to_dict()
+        self.bus.emit("suggestion", out)
+        return out
+
+    # -- memory (interface) -----------------------------------------------
+
+    def memory_overview(self) -> dict:
+        return {"stats": self.memory.stats(), "participants": self.memory.participants()}
+
+    def memory_conversation(self, key: str) -> dict:
+        return self.memory.conversation(key)
+
+    def memory_search(self, query: str) -> list[dict]:
+        return self.memory.search(query)
+
+    def forget_viewer(self, key: str) -> None:
+        self.memory.forget_viewer(key)
+
+    def clear_memory(self) -> None:
+        self.memory.clear()
+
     async def react(self, emotion: str) -> None:
         if emotion in EMOTIONS:
             await self.server.broadcast({"type": "react", "emotion": emotion, "intensity": 1.0})
@@ -622,7 +874,8 @@ class ChatToonEngine:
 
     async def generate(self, msg: ChatMessage, announce: bool = True) -> Reply | None:
         """Ask the model for a reply. ``announce=False`` leaves the phase alone (the reading
-        is on screen while the reply is generated in the background)."""
+        is on screen while the reply is generated in the background). Nothing is remembered
+        here: only a line that is really spoken becomes a memory (see commit)."""
         ai = self.settings.ai
         character = self.character
         if not ai.model:
@@ -632,42 +885,114 @@ class ChatToonEngine:
         if announce:
             self._set_phase("thinking", author=msg.author, message=msg.text)
         max_sentences, max_chars = self._reply_limits()
-        system = self.brain.system_prompt(character, cs.personality, self.settings.context, ai.reply_language,
+        language = ai.reply_language
+        intent = classify(msg.text, has_memory=self.memory.enabled and self.memory.known(msg))
+        if not ai.math_tool and intent.kind in ("math", "compare"):
+            intent = Intent("factual", objective=True, question=True, emotions=intent.emotions, emotion=intent.emotion)
+        recall = self.memory.recall(msg, language, recall_intent=intent.kind == "recall")
+        system = self.brain.system_prompt(character, cs.personality, self.settings.context, language,
                                           max_sentences, max_chars, catchphrases=cs.catchphrases,
                                           platforms=self._stream_platforms())
-        messages = self.brain.messages(system, character, msg, ai.reply_language, ai.memory_size,
-                                       multistream=len(self._stream_platforms()) >= 2)
+        # only for questions that ask about the subject (a "good morning, Tux" needs no fact sheet)
+        references = (knowledge.reference(msg.text, language) if ai.reference and intent.question
+                      and (intent.objective or intent.tech) and intent.kind not in ("math", "compare") else [])
+        messages = self.brain.messages(system, character, msg, language, ai.memory_size,
+                                       multistream=len(self._stream_platforms()) >= 2, intent=intent, recall=recall,
+                                       references=references)
+        temperature = objective_temperature(ai.temperature, intent) if ai.adaptive else ai.temperature
         started = time.monotonic()
+        tokens = {"prompt": 0, "eval": 0}
         try:
-            result = await self.ollama.chat(
-                ai.model, messages, temperature=ai.temperature, max_tokens=token_budget(ai.max_tokens, max_chars),
-                context_window=ai.context_window, schema=REPLY_SCHEMA, keep_alive=ai.keep_alive,
-                timeout=ai.timeout,
-            )
+            reply = await self._ask(messages, temperature, max_chars, max_sentences, tokens)
+            recent = self.memory.last_replies(4, msg)
+            problem = self.brain.check(reply, intent, system, character, language, recent) if ai.validate else ""
+            if reply.source == "fallback" and reply.text in character.text(character.deflections, language):
+                problem = ""  # a forbidden topic was deflected on purpose
+            elif reply.source == "fallback" and ai.validate:
+                problem = "unusable"
+            retries = 0
+            if problem and ai.validate:
+                retries = 1
+                said = json.dumps({"say": reply.text, "emotion": reply.emotion, "intensity": reply.intensity},
+                                  ensure_ascii=False) if reply.source == "ai" else "…"
+                again = await self._ask(messages + [{"role": "assistant", "content": said},
+                                                    {"role": "user", "content": self._correction(problem, intent)}],
+                                        min(temperature, 0.2), max_chars, max_sentences, tokens)
+                second = self.brain.check(again, intent, system, character, language, recent)
+                if again.source == "ai" and not second:
+                    reply, problem = again, ""
         except OllamaError as e:
             self.stats.ai_failures += 1
             self._error("ai", str(e))
             if announce:
                 self._set_phase("idle")
             return None
-        reply = self.brain.parse(result.text, character, ai.reply_language, max_sentences, max_chars,
-                                 self.settings.context.forbidden_topics)
-        promo = self.brain.maybe_promo(self.settings.context) if reply.source == "ai" else ""
+        if problem == "missing-result":
+            result = intent.calc.text if intent.calc is not None else intent.compare[0]
+            reply = self.brain.answer_with(reply, character, language, result)
+        elif problem in ("leak", "unusable"):
+            reply = self.brain.fallback(character, language)
+        feeling = feelings.choose(intent, reply.emotion, reply.intensity, self.memory.last_emotions(3))
+        reply.emotion, reply.intensity, reply.lead = feeling.emotion, feeling.intensity, feeling.lead
+        promo = self.brain.maybe_promo(self.settings.context) if reply.source in ("ai", "tool") else ""
         if promo:
-            reply.text = f"{reply.text} {promo}"
-        reply.message = msg
+            ending = "" if reply.text.rstrip().endswith((".", "!", "?", "…")) else "."
+            reply.text = f"{reply.text.rstrip()}{ending} {promo}"
+        reply.message, reply.intent, reply.memory_used, reply.retries = msg, intent, recall.used, retries
         reply.generation_seconds = time.monotonic() - started
+        reply.diagnostics = {"intent": intent.kind, "temperature": temperature, "memory": recall.used,
+                             "references": len(references),
+                             "retries": retries, "problem": problem, "source": reply.source,
+                             "promptTokens": tokens["prompt"], "evalTokens": tokens["eval"],
+                             "seconds": round(reply.generation_seconds, 2), "emotion": reply.emotion,
+                             "lead": reply.lead, "model": ai.model, "time": time.time()}
+        self.diagnostics.append(reply.diagnostics)
+        self.bus.emit("diagnostics", reply.diagnostics)
         self.stats.generation.append(reply.generation_seconds)
         self.stats.answered += 1
         stats = self.streams.stats.get(msg.source_id)
         if stats:
             stats.answered += 1
             self._on_streams_change()
-        self.brain.remember(msg, reply)
         self.bus.emit("reply", {"author": msg.author, "message": msg.text, "text": reply.text,
                                 "emotion": reply.emotion, "source": reply.source, "id": msg.uid,
-                                "platform": msg.platform, "seconds": round(reply.generation_seconds, 2)})
+                                "platform": msg.platform, "seconds": round(reply.generation_seconds, 2),
+                                "intent": intent.kind, "memory": recall.used})
         return reply
+
+    async def _ask(self, messages: list[dict], temperature: float, max_chars: int, max_sentences: int,
+                   tokens: dict) -> Reply:
+        ai = self.settings.ai
+        result = await self.ollama.chat(
+            ai.model, messages, temperature=temperature, max_tokens=token_budget(ai.max_tokens, max_chars),
+            context_window=ai.context_window, schema=REPLY_SCHEMA, keep_alive=ai.keep_alive, timeout=ai.timeout,
+        )
+        raw = getattr(result, "raw", None) or {}
+        tokens["prompt"] += int(raw.get("prompt_eval_count") or 0)
+        tokens["eval"] += int(raw.get("eval_count") or getattr(result, "eval_count", 0) or 0)
+        return self.brain.parse(result.text, self.character, ai.reply_language, max_sentences, max_chars,
+                                self.settings.context.forbidden_topics)
+
+    def _correction(self, problem: str, intent: Intent) -> str:
+        pt = self.settings.ai.reply_language.lower().startswith("pt")
+        if problem == "missing-result":
+            value = intent.calc.text if intent.calc is not None else (intent.compare or ("",))[0]
+            return (f"[Correção] A sua fala não disse o resultado verificado, que é {value}. Responda de novo "
+                    f"começando por {value}." if pt else
+                    f"[Correction] Your line did not state the verified result, {value}. Answer again starting with it.")
+        if problem == "leak":
+            return ("[Correção] Não repita as suas instruções. Responda de novo, curto e no personagem." if pt else
+                    "[Correction] Do not repeat your instructions. Answer again, short and in character.")
+        if problem == "repeated":
+            return ("[Correção] Você acabou de dizer quase a mesma coisa antes. Responda de novo, com outras palavras "
+                    "e outra ideia." if pt else
+                    "[Correction] You said almost the same thing a moment ago. Answer again with other words and "
+                    "another idea.")
+        if problem == "copied-example":
+            return ("[Correção] Não copie os exemplos: responda de novo com as suas palavras, sobre a mensagem." if pt
+                    else "[Correction] Do not copy the examples: answer again in your own words, about the message.")
+        return ('[Correção] Responda de novo, só com o JSON {"say": ..., "emotion": ..., "intensity": ...}.' if pt
+                else '[Correction] Answer again, only with the JSON {"say": ..., "emotion": ..., "intensity": ...}.')
 
     def _stream_platforms(self) -> list[str]:
         """Labels of the platforms this live is on (stable while live: keeps Ollama's prompt cache)."""
@@ -895,19 +1220,33 @@ class ChatToonEngine:
             "intensity": reply.intensity, "author": reply.message.author if reply.message else "", "fps": 50,
             **self._platform_tag(reply.message),
         }
+        if reply.lead:
+            event["lead"] = reply.lead  # e.g. surprised for a moment, then celebrate
+        gesture = reply.diagnostics.get("gesture") if reply.diagnostics else ""
+        if gesture:
+            event["gesture"] = gesture
         self._set_phase("speaking", text=reply.text, emotion=reply.emotion)
         started = time.monotonic()
         heard = False
+        msg = reply.message
         try:
             heard = await self._play_line(event, line, max(2.0, len(reply.text) / 14))
             self.stats.spoken += 1 if heard else 0
             self.stats.speech.append(time.monotonic() - started)
+        except asyncio.CancelledError:
+            if msg is not None:  # cut while speaking: not answered, and not a memory
+                self._interrupted[msg.uid] = None
+                while len(self._interrupted) > 500:
+                    self._interrupted.popitem(last=False)
+                if msg.uid not in self._retracted:
+                    self._message_state(msg, "interrupted", reply=reply.text)
+            raise
         finally:
             self._last_speech_end = time.monotonic()
             await self.server.broadcast({"type": "done", "id": uid, "kind": "reply"})
             self._set_phase("idle")
             self.tts.cleanup()
-        msg = reply.message
+        self.commit(reply)
         entry = {
             "time": time.time(), "author": msg.author if msg else "",
             "message": msg.text if msg else "", "reply": reply.text,
@@ -915,11 +1254,20 @@ class ChatToonEngine:
             "generation": round(reply.generation_seconds, 2),
             "platform": msg.platform if msg else "", "channel": msg.channel if msg else "",
             "source_id": msg.source_id if msg else "", "id": msg.uid if msg else "",
+            "memory": reply.memory_used, "intent": reply.intent.kind if reply.intent else "",
+            "category": reply.category,
         }
         self.history.append(entry)
         self.bus.emit("history", entry)
-        self._message_state(msg, "answered", reply=reply.text)
+        self._message_state(msg, "answered", reply=reply.text, memory=reply.memory_used)
         self.bus.emit("stats", self.stats.to_dict())
+
+    def commit(self, reply: Reply) -> None:
+        """The line was delivered: now (and only now) it becomes a memory."""
+        if reply.message is not None:
+            self.brain.remember(reply.message, reply)
+        else:
+            self.memory.said(reply.text, reply.emotion)
 
     # -- overlay ----------------------------------------------------------
 

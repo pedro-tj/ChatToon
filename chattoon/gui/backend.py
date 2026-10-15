@@ -14,7 +14,7 @@ import aiohttp
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 
-from ..core import extras
+from ..core import extras, knowledge
 from ..core.brain import apply_preset
 from ..core.characters import CHARACTERS, GESTURES, get_character
 from ..core.config import PLATFORMS as PLATFORM_IDS
@@ -34,7 +34,8 @@ from .feed import ChatFeedFilter, ChatFeedModel, row_from_message
 log = logging.getLogger(__name__)
 
 # settings that require the engine to rebuild its selector/overlay state
-_ENGINE_SECTIONS = {"chat", "overlay", "ai", "mode", "character", "animation", "reading", "streams"}
+_ENGINE_SECTIONS = {"chat", "overlay", "ai", "mode", "character", "animation", "reading", "streams", "memory",
+                    "spontaneous"}
 
 # secrets the interface may store: credential key -> allowed fields (nothing else is accepted)
 _SECRETS = {"kick/app": ("client_secret",), "meta/token": ("access_token",), "x/bearer": ("bearer_token",),
@@ -53,6 +54,11 @@ class Backend(QObject):
     sourcesChanged = Signal()
     accountsChanged = Signal()
     loginChanged = Signal()
+    memoryChanged = Signal()  # who the avatar remembers (Live chat › Memory)
+    memoryViewChanged = Signal()  # one viewer's conversation or a search
+    diagnosticsChanged = Signal()  # latest generations (AI page)
+    metadataChanged = Signal()  # what the platforms publish (Stream context)
+    suggestionChanged = Signal()  # the assistant's proposal for one field
     probeFinished = Signal(str, "QVariantMap")  # source id (or "draft"), result
     toast = Signal(str, str)  # message, kind (info | success | error)
     _event = Signal(str, "QVariant")  # engine thread -> GUI thread
@@ -79,6 +85,14 @@ class Backend(QObject):
         self._accounts: dict = {"store": "", "encrypted": False}
         self._login: dict = {"platform": "", "state": "idle"}
         self._login_future = None
+        self._memory: dict = {"stats": {}, "participants": []}
+        self._memory_view: dict = {"mode": "", "key": "", "items": [], "notes": [], "query": ""}
+        self._diagnostics: list[dict] = []
+        self._metadata: dict = {"sources": [], "time": 0, "loading": False}
+        self._suggestion: dict = {"field": "", "loading": False}
+        self._closing = False
+        self._memory_timer = QTimer(self, singleShot=True, interval=1200)  # a burst of replies → one refresh
+        self._memory_timer.timeout.connect(self.refreshMemory)
         self._feed = ChatFeedModel(self)
         self._feed_filter = ChatFeedFilter(self._feed, self)
         self._feed_pending: list[dict] = []
@@ -103,6 +117,8 @@ class Backend(QObject):
         await self.engine.check_services()
 
     def shutdown(self) -> None:
+        self._closing = True
+        self._memory_timer.stop()
         self.settings.save()
         self._boot_future.cancel()  # closing during start-up must not leave a dangling task
         self.runtime.stop(self.engine.shutdown())
@@ -168,6 +184,22 @@ class Backend(QObject):
         elif kind == "history":
             self._history = ([data] + self._history)[:300]
             self.historyChanged.emit()
+            self._memory_timer.start()
+        elif kind == "memory":
+            self._memory = data
+            self.memoryChanged.emit()
+        elif kind == "memory_view":
+            self._memory_view = data
+            self.memoryViewChanged.emit()
+        elif kind == "diagnostics":
+            self._diagnostics = ([data] + self._diagnostics)[:20]
+            self.diagnosticsChanged.emit()
+        elif kind == "metadata":
+            self._metadata = dict(data, loading=False)
+            self.metadataChanged.emit()
+        elif kind == "suggestion":
+            self._suggestion = dict(data, loading=False)
+            self.suggestionChanged.emit()
         elif kind == "error":
             message = self._error_text(data)
             self._state["lastError"] = message
@@ -192,6 +224,8 @@ class Backend(QObject):
         changes = {"status": state, "reason": data.get("reason", "")}
         if data.get("reply"):
             changes["reply"] = data["reply"]
+        if data.get("memory"):
+            changes["memory"] = int(data["memory"])
         for row in self._feed_pending:  # not shown yet: patch the pending row
             if row["uid"] == uid:
                 row.update(changes)
@@ -226,6 +260,11 @@ class Backend(QObject):
     connectedPlatforms = Property("QVariantList", lambda self: self._connected, notify=sourcesChanged)  # noqa: N815
     accounts = Property("QVariantMap", lambda self: self._accounts, notify=accountsChanged)
     login = Property("QVariantMap", lambda self: self._login, notify=loginChanged)
+    memory = Property("QVariantMap", lambda self: self._memory, notify=memoryChanged)
+    memoryView = Property("QVariantMap", lambda self: self._memory_view, notify=memoryViewChanged)  # noqa: N815
+    diagnostics = Property("QVariantList", lambda self: self._diagnostics, notify=diagnosticsChanged)
+    metadata = Property("QVariantMap", lambda self: self._metadata, notify=metadataChanged)
+    suggestion = Property("QVariantMap", lambda self: self._suggestion, notify=suggestionChanged)
     feed = Property(QObject, lambda self: self._feed_filter, constant=True)
     feedModel = Property(QObject, lambda self: self._feed, constant=True)  # noqa: N815
 
@@ -268,6 +307,8 @@ class Backend(QObject):
             "missing": self.tr("%1 is not installed."),
             "timeout": self.tr("%1 took too long to answer."),
             "failed": self.tr("The voice engine %1 failed."),
+            "no-spontaneous": self.tr("No spontaneous line is available for this category. Add curiosities or fill in "
+                                      "the stream topic."),
         }
         text = known.get(code)
         return text.replace("%1", detail or message) if text else message
@@ -710,6 +751,98 @@ class Backend(QObject):
                 self.bus.emit("error", {"source": "ai", "message": str(e)})
 
         self.runtime.submit(run())
+
+    # -- memory (Live chat › Memory) -------------------------------------------
+    # Runs on the engine's loop (never a worker thread): the memory is only touched there.
+
+    @Slot()
+    def refreshMemory(self) -> None:  # noqa: N802
+        if self._closing:
+            return
+
+        async def run() -> None:
+            self.bus.emit("memory", self.engine.memory_overview())
+        self.runtime.submit(run())
+
+    @Slot(str)
+    def openConversation(self, key: str) -> None:  # noqa: N802
+        async def run() -> None:
+            view = self.engine.memory_conversation(key)
+            self.bus.emit("memory_view", {"mode": "viewer", "key": key, "items": view["exchanges"],
+                                          "notes": view["notes"], "query": ""})
+        self.runtime.submit(run())
+
+    @Slot(str)
+    def searchMemory(self, query: str) -> None:  # noqa: N802
+        query = query.strip()[:80]
+        if not query:
+            self._memory_view = {"mode": "", "key": "", "items": [], "notes": [], "query": ""}
+            self.memoryViewChanged.emit()
+            return
+
+        async def run() -> None:
+            items = self.engine.memory_search(query)
+            self.bus.emit("memory_view", {"mode": "search", "key": "", "items": items, "notes": [], "query": query})
+        self.runtime.submit(run())
+
+    @Slot(str)
+    def forgetViewer(self, key: str) -> None:  # noqa: N802
+        async def run() -> None:
+            self.engine.forget_viewer(key)
+            self.bus.emit("memory_view", {"mode": "", "key": "", "items": [], "notes": [], "query": ""})
+            self.bus.emit("memory", self.engine.memory_overview())
+        self.runtime.submit(run())
+        self.toast.emit(self.tr("Memories of this viewer erased"), "success")
+
+    @Slot()
+    def clearMemory(self) -> None:  # noqa: N802
+        async def run() -> None:
+            self.engine.clear_memory()
+            self.bus.emit("memory_view", {"mode": "", "key": "", "items": [], "notes": [], "query": ""})
+            self.bus.emit("memory", self.engine.memory_overview())
+        self.runtime.submit(run())
+        self.toast.emit(self.tr("All memories erased"), "success")
+
+    # -- stream context assistant ------------------------------------------------
+
+    @Slot(bool)
+    def fetchMetadata(self, force: bool = False) -> None:  # noqa: N802
+        self._metadata = dict(self._metadata, loading=True)
+        self.metadataChanged.emit()
+        self.runtime.submit(self.engine.stream_metadata(force))
+
+    @Slot(str, "QVariantList")
+    def suggestContext(self, field_name: str, source_ids=None) -> None:  # noqa: N802
+        self._suggestion = {"field": field_name, "loading": True}
+        self.suggestionChanged.emit()
+        ids = [str(s) for s in (source_ids or [])]
+
+        async def run() -> None:
+            try:
+                await self.engine.suggest_context(field_name, ids or None)
+            except Exception:  # noqa: BLE001 - shown in the dialog, never a crash
+                log.exception("context suggestion failed")
+                self.bus.emit("suggestion", {"field": field_name, "error": "ai-failed"})
+        self.runtime.submit(run())
+
+    @Slot(str, str)
+    def applySuggestion(self, field_name: str, value: str) -> None:  # noqa: N802
+        if field_name in ("channel_name", "host_name", "topic", "description", "guests", "links", "catchphrases",
+                          "allowed_topics", "forbidden_topics", "promo_messages"):
+            self.setConfig(f"context.{field_name}", value)
+            self.toast.emit(self.tr("Suggestion applied"), "success")
+
+    # -- characters: what they say on their own ------------------------------------
+
+    @Slot(str, result="QVariantList")
+    def curiosities(self, character_id: str) -> list:  # noqa: N802
+        lang = self.settings.ai.reply_language
+        return [{"text": line.text, "kind": line.kind, "category": line.category}
+                for line in knowledge.lines(get_character(character_id).id, lang)]
+
+    @Slot(str)
+    def testSpontaneous(self, category: str = "") -> None:  # noqa: N802
+        self.runtime.submit(self.engine.spontaneous_now(category))
 
     # -- desktop helpers ---------------------------------------------------
 

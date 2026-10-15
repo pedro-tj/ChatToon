@@ -27,6 +27,42 @@ QtObject {
     }
     function busy(state) { return state === "connecting" || state === "reconnecting" }
 
+    // what the local classifier decided a viewer's message was (AI › diagnostics)
+    function intent(kind) {
+        return ({
+            math: qsTr("Math"), compare: qsTr("Comparison"), factual: qsTr("Fact"), explain: qsTr("Explanation"),
+            tech: qsTr("Tech"), personal: qsTr("About the avatar"), recall: qsTr("Follow-up"), greeting: qsTr("Greeting"),
+            farewell: qsTr("Goodbye"), joke: qsTr("Joke"), tease: qsTr("Teasing"), good_news: qsTr("Good news"),
+            bad_news: qsTr("A problem"), sad: qsTr("Feelings"), stream: qsTr("About the live"), opinion: qsTr("Opinion"),
+            injection: qsTr("Order ignored"), ambiguous: qsTr("Unclear"), chat: qsTr("Chat")
+        })[kind] || kind
+    }
+    // kinds of spontaneous lines: a fact is never confused with the character's fiction
+    function lineKind(kind) {
+        return ({ fact: qsTr("Fact"), fiction: qsTr("Character fiction"), invite: qsTr("Invitation"), humor: qsTr("Humour"),
+                  reflection: qsTr("Thought"), channel: qsTr("Yours") })[kind] || kind
+    }
+    function lineTone(kind) {
+        return kind === "fact" ? Theme.success : kind === "fiction" ? Theme.accent2 : kind === "channel" ? Theme.accent
+             : Theme.textMuted
+    }
+    function category(c) {
+        return ({ invite: qsTr("Invitations to talk"), curiosity: qsTr("Curiosities"), context: qsTr("Comments on the topic"),
+                  humor: qsTr("Humour"), reflection: qsTr("Funny thoughts"), catchphrase: qsTr("Catchphrases"),
+                  cta: qsTr("Calls to action") })[c] || c
+    }
+    // what a platform said when asked for the live's information
+    function meta(code) {
+        return ({ found: qsTr("Information found"), offline: qsTr("Not live right now"), unavailable: qsTr("The platform does not provide it"),
+                  "auth-required": qsTr("Needs the platform login"), "not-found": qsTr("Not found"), network: qsTr("No connection"),
+                  invalid: qsTr("Invalid link"), unsupported: qsTr("Not available"), "rate-limited": qsTr("Too many requests — try later") })[code]
+               || qsTr("Could not read")
+    }
+    function metaTone(code) {
+        return code === "found" ? Theme.success : code === "offline" ? Theme.warning
+             : code === "unavailable" || code === "unsupported" ? Theme.textMuted : Theme.danger
+    }
+
     function support(level) {
         return ({ functional: qsTr("Supported"), limited: qsTr("Limited"), experimental: qsTr("Experimental"),
                   unavailable: qsTr("Unavailable") })[level] || level

@@ -11,7 +11,10 @@ Page {
     readonly property var current: backend.characters.find(c => c.id === cfg.character) || {}
     readonly property var expressions: [
         { e: "happy", l: qsTr("Happy") }, { e: "laugh", l: qsTr("Laugh") }, { e: "surprised", l: qsTr("Surprise") },
-        { e: "confused", l: qsTr("Confused") }, { e: "annoyed", l: qsTr("Annoyed") }, { e: "celebrate", l: qsTr("Celebrate") }]
+        { e: "confused", l: qsTr("Confused") }, { e: "annoyed", l: qsTr("Annoyed") }, { e: "celebrate", l: qsTr("Celebrate") },
+        { e: "thinking", l: qsTr("Thinking") }]
+    // what this character says on its own (facts, its fiction, invitations…)
+    readonly property var lines: { cfg; return backend.curiosities(cfg.character) }
 
     title: qsTr("Characters")
     subtitle: qsTr("Pick who joins your stream. Each one has its own look, voice, gestures and sense of humour.")
@@ -301,6 +304,48 @@ Page {
                 placeholderText: qsTr("E.g.: Minhocou!")
                 onEditingFinished: backend.setConfig("current.catchphrases", text)
             }
+        }
+    }
+
+    Section {
+        title: qsTr("Curiosities and spontaneous lines")
+        iconName: "book"
+        description: qsTr("What %1 may say on its own when the chat is quiet. Facts are checked and spoken exactly as written; fiction is clearly part of the character.").arg(page.current.name || "")
+        actions: AppButton { compact: true; iconName: "play"; text: qsTr("Try a spontaneous line"); onClicked: backend.testSpontaneous("") }
+        ListView {
+            id: lineList
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.min(260, contentHeight)
+            clip: true
+            spacing: 4
+            model: page.lines
+            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+            Accessible.role: Accessible.List
+            Accessible.name: qsTr("Lines of %1").arg(page.current.name || "")
+            delegate: RowLayout {
+                required property var modelData
+                width: ListView.view.width
+                spacing: 8
+                Chip { Layout.alignment: Qt.AlignTop; Layout.preferredWidth: 120; text: Status.lineKind(modelData.kind); tone: Status.lineTone(modelData.kind) }
+                Text { Layout.fillWidth: true; text: modelData.text; textFormat: Text.PlainText; color: Theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
+            }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Text { text: qsTr("Your own curiosities (one per line)"); color: Theme.text; font.pixelSize: 13; font.weight: Font.Medium }
+            AppTextArea {
+                Layout.fillWidth: true
+                text: (cur.curiosities || []).join("\n")
+                placeholderText: qsTr("E.g.: Our community has been streaming every Friday since 2019!")
+                onEditingFinished: backend.setConfig("current.curiosities", text)
+            }
+            Text {
+                Layout.fillWidth: true
+                text: qsTr("Spoken as you write them, so check what you claim. When, how often and what kinds of lines: Settings › Spontaneous lines.")
+                color: Theme.textFaint; font.pixelSize: 12; wrapMode: Text.WordWrap
+            }
+            AppButton { compact: true; variant: "ghost"; iconName: "settings"; text: qsTr("Spontaneous line settings"); onClicked: win.go("settings") }
         }
     }
 

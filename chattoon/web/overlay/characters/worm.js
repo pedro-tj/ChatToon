@@ -112,6 +112,12 @@ export class Worm extends Character {
       dig: { duration: 2.2, weight: 0.5, cooldown: 28 },
       sassy: { duration: 1.4, weight: 1.4, cooldown: 4, states: ["speaking"] },
     });
+    // mischievous: giggles to herself, peeks out of the dirt, sways with attitude
+    this.setPersona({
+      idleMoods: { laugh: 3, happy: 2, surprised: 1, thinking: 1, annoyed: 0.6 },
+      moodGestures: { laugh: "wiggle", happy: "headBob", surprised: "peek", thinking: "lookAround", annoyed: "stretch" },
+      speechGestures: { laugh: "sassy", annoyed: "sassy", happy: "wiggle", celebrate: "wiggle" },
+    });
   }
 
   hear(text) {

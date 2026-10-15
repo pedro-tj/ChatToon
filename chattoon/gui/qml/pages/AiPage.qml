@@ -9,6 +9,9 @@ Page {
     readonly property var ollama: backend.services.ollama
     readonly property var models: ollama.models || []
     readonly property var pull: backend.pull
+    readonly property var mem: backend.memory.stats || ({})
+
+    onVisibleChanged: if (visible) backend.refreshMemory()
 
     title: qsTr("Artificial intelligence")
     subtitle: qsTr("ChatToon thinks with Ollama, running on this computer. Nothing is sent to the cloud.")
@@ -39,7 +42,7 @@ Page {
     Section {
         title: qsTr("Model")
         iconName: "sparkles"
-        description: qsTr("Smaller models answer faster. 3–4 billion parameters is a good balance for live chat.")
+        description: qsTr("Smaller models answer faster; bigger ones know more facts. With a dedicated GPU, a 7–8 billion parameter model answers about as fast as a small one.")
         SettingRow {
             label: qsTr("Model in use")
             AppCombo {
@@ -106,9 +109,9 @@ Page {
                 value: cfg.ai.max_tokens; onMoved: v => backend.setConfig("ai.max_tokens", Math.round(v))
             }
             LabeledSlider {
-                label: qsTr("Conversation memory"); from: 0; to: 20; stepSize: 1; suffix: qsTr(" messages")
+                label: qsTr("Live context"); from: 0; to: 10; stepSize: 1; suffix: qsTr(" messages")
                 value: cfg.ai.memory_size; onMoved: v => backend.setConfig("ai.memory_size", Math.round(v))
-                hint: qsTr("Recent exchanges the avatar remembers (more = slower).")
+                hint: qsTr("Latest exchanges with other viewers sent with each message (more = slower).")
             }
             LabeledSlider {
                 label: qsTr("Timeout"); from: 10; to: 180; stepSize: 5; suffix: " s"
@@ -128,6 +131,103 @@ Page {
                 model: [{ v: "pt-BR", t: "Português (Brasil)" }, { v: "en", t: "English" }, { v: "es", t: "Español" }]
                 currentIndex: Math.max(0, indexOfValue(cfg.ai.reply_language))
                 onActivated: backend.setConfig("ai.reply_language", currentValue)
+            }
+        }
+    }
+
+    Section {
+        title: qsTr("Answer quality")
+        iconName: "check"
+        description: qsTr("Correct first, funny second: a funny wrong answer is worse than a correct plain one.")
+        SettingRow {
+            label: qsTr("Precision first")
+            description: qsTr("Math, facts and explanations are answered with little randomness; jokes and greetings keep the creativity set above.")
+            AppSwitch { checked: cfg.ai.adaptive; onToggled: backend.setConfig("ai.adaptive", checked); Accessible.name: qsTr("Precision first") }
+        }
+        SettingRow {
+            label: qsTr("Exact calculator")
+            description: qsTr("Arithmetic in the chat (“how much is 15 times 3?”) is computed by ChatToon — never guessed — and the avatar says the result.")
+            AppSwitch { checked: cfg.ai.math_tool; onToggled: backend.setConfig("ai.math_tool", checked); Accessible.name: qsTr("Exact calculator") }
+        }
+        SettingRow {
+            label: qsTr("Verified reference")
+            description: qsTr("Questions about computing and Linux get short checked facts (what CPU stands for, which distro BigLinux is based on…).")
+            AppSwitch { checked: cfg.ai.reference; onToggled: backend.setConfig("ai.reference", checked); Accessible.name: qsTr("Verified reference") }
+        }
+        SettingRow {
+            label: qsTr("Check every reply")
+            description: qsTr("When a reply misses the verified result or repeats its own instructions, the avatar tries once more.")
+            AppSwitch { checked: cfg.ai.validate; onToggled: backend.setConfig("ai.validate", checked); Accessible.name: qsTr("Check every reply") }
+        }
+    }
+
+    Section {
+        title: qsTr("Conversation memory")
+        iconName: "users"
+        description: qsTr("The avatar remembers what each viewer told it — separately per platform and account, so two people with the same name never mix.")
+        actions: AppButton { compact: true; iconName: "chat"; text: qsTr("See memories"); onClicked: win.go("livechat") }
+        SettingRow {
+            label: qsTr("Remember during the live")
+            description: qsTr("Follow-ups like “do you remember my app?” work. Kept in RAM only.")
+            AppSwitch { checked: cfg.memory.enabled; onToggled: backend.setConfig("memory.enabled", checked); Accessible.name: qsTr("Remember during the live") }
+        }
+        SettingRow {
+            label: qsTr("Remember between lives")
+            description: qsTr("Saves what was really said in a private file on this computer, never sent anywhere. Off by default.")
+            AppSwitch { enabled: cfg.memory.enabled; checked: cfg.memory.persist; onToggled: backend.setConfig("memory.persist", checked); Accessible.name: qsTr("Remember between lives") }
+        }
+        SettingRow {
+            label: qsTr("Keep saved memories for")
+            AppCombo {
+                implicitWidth: 200
+                enabled: cfg.memory.enabled && cfg.memory.persist
+                textRole: "t"; valueRole: "v"
+                model: [{ v: 1, t: qsTr("1 day") }, { v: 7, t: qsTr("7 days") }, { v: 30, t: qsTr("30 days") },
+                        { v: 90, t: qsTr("90 days") }, { v: 365, t: qsTr("1 year") }, { v: 0, t: qsTr("Until I erase them") }]
+                currentIndex: Math.max(0, model.findIndex(m => m.v === Number(cfg.memory.retention_days)))
+                onActivated: backend.setConfig("memory.retention_days", currentValue)
+            }
+        }
+        SettingRow {
+            label: qsTr("Summarize long conversations")
+            description: qsTr("While the chat is quiet, the model folds a long conversation into a short note. Cancelled as soon as someone writes.")
+            AppSwitch { enabled: cfg.memory.enabled; checked: cfg.memory.summaries; onToggled: backend.setConfig("memory.summaries", checked); Accessible.name: qsTr("Summarize long conversations") }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: qsTr("%1 viewer(s) remembered in this live · %2 exchange(s) saved on disk").arg(page.mem.viewers || 0).arg(page.mem.saved || 0)
+            color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.WordWrap
+        }
+    }
+
+    Section {
+        title: qsTr("Generation diagnostics")
+        iconName: "activity"
+        description: qsTr("The latest replies: what kind of message it was, the settings used and the time spent. Nothing leaves this computer.")
+        Text {
+            visible: backend.diagnostics.length === 0
+            text: qsTr("No reply generated yet. Simulate a message on the Characters page or go live.")
+            color: Theme.textFaint; font.pixelSize: 12
+        }
+        Repeater {
+            model: backend.diagnostics.slice(0, 8)
+            RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                spacing: 8
+                Text { text: new Date(modelData.time * 1000).toLocaleTimeString(Qt.locale(), "HH:mm:ss"); color: Theme.textFaint; font.family: Theme.mono; font.pixelSize: 11 }
+                Chip { text: Status.intent(modelData.intent); tone: modelData.intent === "injection" ? Theme.warning : Theme.accent }
+                Chip { visible: modelData.source === "tool"; text: qsTr("exact result"); tone: Theme.success; iconName: "check" }
+                Chip { visible: modelData.source === "fallback"; text: qsTr("safe line"); tone: Theme.warning; iconName: "alert" }
+                Chip { visible: (modelData.memory || 0) > 0; text: qsTr("%n memory item(s)", "", modelData.memory || 0); tone: Theme.accent2; iconName: "users" }
+                Chip { visible: (modelData.references || 0) > 0; text: qsTr("reference"); tone: Theme.success; iconName: "book" }
+                Chip { visible: (modelData.retries || 0) > 0; text: qsTr("retried"); tone: Theme.warning; iconName: "refresh" }
+                Item { Layout.fillWidth: true }
+                Text {
+                    text: qsTr("temp. %1 · %2 + %3 tokens · %4 s").arg(Number(modelData.temperature).toFixed(2))
+                              .arg(modelData.promptTokens || 0).arg(modelData.evalTokens || 0).arg(Number(modelData.seconds).toFixed(2))
+                    color: Theme.textMuted; font.family: Theme.mono; font.pixelSize: 11
+                }
             }
         }
     }

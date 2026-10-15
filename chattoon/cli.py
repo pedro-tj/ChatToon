@@ -53,6 +53,11 @@ async def _doctor() -> int:
         ok = False
         print(f"✘ TTS BigLinux: {t.get('error')}")
     print("✔ audio player found" if report["player"] else "✘ no audio player (install pipewire or alsa-utils)")
+    m, sp = settings.memory, settings.spontaneous
+    print(("✔ conversation memory on" if m.enabled else "· conversation memory off")
+          + (f" · saved between lives for {m.retention_days or '∞'} day(s)" if m.enabled and m.persist else
+             " · not saved between lives" if m.enabled else ""))
+    print("✔ spontaneous lines on" if sp.enabled else "· spontaneous lines off")
     engine.tts.shutdown()
     _doctor_streams(settings)
     return 0 if ok and report["player"] else 1
@@ -80,34 +85,40 @@ def _doctor_streams(settings) -> None:
 
 
 async def _ask(text: str, character: str | None) -> int:
-    from .core.brain import REPLY_SCHEMA, Brain, token_budget
-    from .core.characters import get_character
+    """One reply through the same pipeline as the live (intent, exact math, memory,
+    validation, emotion) — printed, never spoken, and never remembered."""
     from .core.config import Settings
+    from .core.engine import ChatToonEngine
     from .core.messages import ChatMessage
-    from .core.ollama import OllamaClient, OllamaError
 
     s = Settings.load()
-    c = get_character(character or s.character)
-    cs = s.character_settings(c.id)
-    brain = Brain()
-    system = brain.system_prompt(c, cs.personality, s.context, s.ai.reply_language, s.ai.max_sentences, s.ai.max_chars,
-                                 catchphrases=cs.catchphrases)
-    async with OllamaClient(s.ai.host, s.ai.timeout) as client:
-        model = s.ai.model or next(iter([m.name for m in await client.list_models()]), "")
-        if not model:
-            print("No Ollama model installed.", file=sys.stderr)
+    if character:
+        s.character = character
+    s.memory.persist = False  # a question typed in the terminal is nobody's memory
+    engine = ChatToonEngine(s)
+    try:
+        if not s.ai.model:
+            models = [m.name for m in await engine.ollama.list_models()]
+            if not models:
+                print("No Ollama model installed.", file=sys.stderr)
+                return 1
+            s.ai.model = models[0]
+        errors = []
+        engine.bus.subscribe(lambda kind, data: errors.append(data.get("message", "")) if kind == "error" else None)
+        reply = await engine.generate(ChatMessage("cli", "You", text, platform="manual"), announce=False)
+        if reply is None:
+            print(errors[-1] if errors else "No reply.", file=sys.stderr)
             return 1
-        try:
-            result = await client.chat(model, brain.messages(system, c, ChatMessage("cli", "You", text), s.ai.reply_language),
-                                       schema=REPLY_SCHEMA, temperature=s.ai.temperature,
-                                       max_tokens=token_budget(s.ai.max_tokens, s.ai.max_chars))
-        except OllamaError as e:
-            print(e, file=sys.stderr)
-            return 1
-    reply = brain.parse(result.text, c, s.ai.reply_language, s.ai.max_sentences, s.ai.max_chars,
-                        s.context.forbidden_topics)
-    print(f"{c.name} [{reply.emotion}]: {reply.text}")
-    return 0
+        d = reply.diagnostics
+        print(f"{engine.character.name} [{reply.emotion}{'←' + reply.lead if reply.lead else ''}]: {reply.text}")
+        print(f"  ({d.get('intent')}, temperature {d.get('temperature')}, {d.get('seconds')} s"
+              + (", exact result" if reply.source == "tool" else "") + (", retried" if reply.retries else "") + ")",
+              file=sys.stderr)
+        return 0
+    finally:
+        await engine.ollama.close()
+        engine.close_memory()
+        engine.tts.shutdown()
 
 
 def main(argv: list[str] | None = None) -> int:

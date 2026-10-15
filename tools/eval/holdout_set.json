@@ -1,0 +1,398 @@
+{
+ "about": "Held-out cases written before the second round of tuning and never used to tune prompts, hints or the reference sheet. Reported separately from eval_set.json so the accuracy figure is not inflated by fitting the main set.",
+ "cases": [
+  {
+   "id": "ho-math-01",
+   "category": "math",
+   "objective": true,
+   "text": "Quanto é 8 vezes 7?",
+   "checks": [
+    {
+     "number": 56
+    }
+   ]
+  },
+  {
+   "id": "ho-math-02",
+   "category": "math",
+   "objective": true,
+   "text": "Tux, quanto é 144 dividido por 12?",
+   "checks": [
+    {
+     "number": 12
+    }
+   ]
+  },
+  {
+   "id": "ho-math-03",
+   "category": "math",
+   "objective": true,
+   "text": "Quanto é 25% de 80?",
+   "checks": [
+    {
+     "number": 20
+    }
+   ]
+  },
+  {
+   "id": "ho-math-04",
+   "category": "math",
+   "objective": true,
+   "text": "Quanto dá 13 + 29?",
+   "checks": [
+    {
+     "number": 42
+    }
+   ]
+  },
+  {
+   "id": "ho-math-05",
+   "category": "math",
+   "objective": true,
+   "text": "Qual é o dobro de 35?",
+   "checks": [
+    {
+     "number": 70
+    }
+   ]
+  },
+  {
+   "id": "ho-math-06",
+   "category": "math",
+   "objective": true,
+   "text": "quanto é mil menos um",
+   "checks": [
+    {
+     "number": 999
+    }
+   ]
+  },
+  {
+   "id": "ho-logic-01",
+   "category": "logic",
+   "objective": true,
+   "text": "Que dia vem depois de sexta-feira?",
+   "checks": [
+    {
+     "any": [
+      "sábado",
+      "sabado"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-logic-02",
+   "category": "logic",
+   "objective": true,
+   "text": "Quantos meses tem um ano?",
+   "checks": [
+    {
+     "number": 12
+    }
+   ]
+  },
+  {
+   "id": "ho-logic-03",
+   "category": "logic",
+   "objective": true,
+   "text": "Quantas rodas tem uma bicicleta?",
+   "checks": [
+    {
+     "number": 2
+    }
+   ]
+  },
+  {
+   "id": "ho-fact-01",
+   "category": "factual",
+   "objective": true,
+   "text": "Qual é a capital da Argentina?",
+   "checks": [
+    {
+     "any": [
+      "buenos aires"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-fact-02",
+   "category": "factual",
+   "objective": true,
+   "text": "Qual é o planeta mais próximo do Sol?",
+   "checks": [
+    {
+     "any": [
+      "mercúrio",
+      "mercurio"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-fact-03",
+   "category": "factual",
+   "objective": true,
+   "text": "Quem escreveu Romeu e Julieta?",
+   "checks": [
+    {
+     "any": [
+      "shakespeare"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-fact-04",
+   "category": "factual",
+   "objective": true,
+   "text": "Qual é o maior país da América do Sul?",
+   "checks": [
+    {
+     "any": [
+      "brasil"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-fact-05",
+   "category": "factual",
+   "objective": true,
+   "text": "Qual é o símbolo químico do ouro?",
+   "checks": [
+    {
+     "word": [
+      "au"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-fact-06",
+   "category": "factual",
+   "objective": true,
+   "text": "Em que país fica a Torre Eiffel?",
+   "checks": [
+    {
+     "any": [
+      "frança",
+      "franca",
+      "paris"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-tech-01",
+   "category": "linux",
+   "objective": true,
+   "text": "O que significa USB?",
+   "checks": [
+    {
+     "any": [
+      "universal serial bus",
+      "barramento serial universal",
+      "barramento universal"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-tech-02",
+   "category": "linux",
+   "objective": true,
+   "text": "Quem criou o Git?",
+   "checks": [
+    {
+     "any": [
+      "linus",
+      "torvalds"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-tech-03",
+   "category": "linux",
+   "objective": true,
+   "text": "Qual comando do Linux mostra em qual pasta eu estou?",
+   "checks": [
+    {
+     "any": [
+      "pwd"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-tech-04",
+   "category": "linux",
+   "objective": true,
+   "text": "O que é o Wayland?",
+   "checks": [
+    {
+     "any": [
+      "protocolo",
+      "servidor gráfico",
+      "servidor grafico",
+      "x11",
+      "xorg",
+      "sistema gráfico",
+      "sistema grafico",
+      "exibição",
+      "exibicao"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-tech-05",
+   "category": "linux",
+   "objective": true,
+   "text": "Qual navegador é feito pela Mozilla?",
+   "checks": [
+    {
+     "any": [
+      "firefox"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-tech-06",
+   "category": "linux",
+   "objective": true,
+   "text": "O que significa HTML?",
+   "checks": [
+    {
+     "any": [
+      "hypertext",
+      "hipertexto"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-tech-07",
+   "category": "linux",
+   "objective": true,
+   "text": "Qual é o gerenciador de pacotes do Ubuntu?",
+   "checks": [
+    {
+     "any": [
+      "apt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-tech-08",
+   "category": "linux",
+   "objective": true,
+   "text": "Qual empresa mantém o Android?",
+   "checks": [
+    {
+     "any": [
+      "google"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-cont-01",
+   "category": "continuity",
+   "objective": true,
+   "setup": [
+    {
+     "author": "Júlia",
+     "text": "Estou aprendendo a tocar violão."
+    },
+    {
+     "author": "Pedro",
+     "text": "Tux, você joga no Linux?"
+    },
+    {
+     "author": "Bia",
+     "text": "Que horas termina a live?"
+    },
+    {
+     "author": "Carlos",
+     "text": "Boa noite, galera!"
+    },
+    {
+     "author": "Ana",
+     "text": "O som está ótimo."
+    }
+   ],
+   "author": "Júlia",
+   "text": "Tux, lembra o instrumento que estou aprendendo?",
+   "checks": [
+    {
+     "any": [
+      "violão",
+      "violao"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-cont-02",
+   "category": "continuity",
+   "objective": true,
+   "setup": [
+    {
+     "author": "Bruno",
+     "text": "Comprei uma placa de vídeo AMD nova."
+    },
+    {
+     "author": "Ana",
+     "text": "Alguém usa Debian?"
+    },
+    {
+     "author": "Pedro",
+     "text": "Kkkk o Tux é demais"
+    }
+   ],
+   "author": "Bruno",
+   "text": "Tux, qual marca de placa de vídeo eu comprei mesmo?",
+   "checks": [
+    {
+     "any": [
+      "amd",
+      "radeon"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ho-cont-03",
+   "category": "continuity",
+   "objective": true,
+   "setup": [
+    {
+     "author": "Leo",
+     "platform": "kick",
+     "author_id": "kick-leo",
+     "text": "Eu moro em Recife."
+    },
+    {
+     "author": "Bia",
+     "text": "Oi Tux!"
+    }
+   ],
+   "author": "Leo",
+   "platform": "youtube",
+   "author_id": "yt-leo",
+   "text": "Tux, você lembra em que cidade eu moro?",
+   "checks": [
+    {
+     "none": [
+      "recife"
+     ]
+    }
+   ]
+  }
+ ]
+}

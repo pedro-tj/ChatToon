@@ -17,7 +17,7 @@ from PySide6.QtCore import (Property, QAbstractListModel, QByteArray, QModelInde
 LIMIT = 2000
 
 ROLES = ("uid", "platform", "sourceId", "channel", "author", "text", "time", "event", "moderator", "member", "owner",
-         "verified", "paid", "question", "status", "reason", "reply")
+         "verified", "paid", "question", "status", "reason", "reply", "memory")
 _ROLE = {name: Qt.ItemDataRole.UserRole + 1 + i for i, name in enumerate(ROLES)}
 
 
@@ -30,6 +30,7 @@ def row_from_message(data: dict) -> dict:
         "moderator": bool(data.get("moderator")), "member": bool(data.get("member")), "owner": bool(data.get("owner")),
         "verified": bool(data.get("verified")), "paid": data.get("superchat", ""), "question": bool(data.get("question")),
         "status": "dropped" if dropped else "queued", "reason": dropped, "reply": "",
+        "memory": 0,  # memories the reply used (shown as a small indicator)
     }
 
 

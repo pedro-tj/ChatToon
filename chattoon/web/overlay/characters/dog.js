@@ -340,6 +340,13 @@ export class Dog extends Character {
       pawTap: { duration: 1.3, weight: 1, cooldown: 6, states: ["speaking"] },
       wagBurst: { duration: 1.5, weight: 1.2, cooldown: 5, states: ["speaking"] },
     });
+    // pure joy: happy almost all the time, curious sniffs, little celebrations
+    this.setPersona({
+      idleMoods: { happy: 4, celebrate: 1, surprised: 1, thinking: 1 },
+      moodGestures: { happy: "tailWag", celebrate: "joy", surprised: "headTilt", thinking: "curiousSniff" },
+      speechGestures: { happy: "wagBurst", laugh: "wagBurst", celebrate: "wagBurst", thinking: "nodAlong",
+                        surprised: "pawTap" },
+    });
 
     // animation state (preallocated: nothing is created per frame)
     this.excite = 0;

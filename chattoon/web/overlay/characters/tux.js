@@ -198,6 +198,12 @@ export class Tux extends Character {
       explain: { duration: 1.5, weight: 1.6, cooldown: 3, states: ["speaking"] },
       hatTouch: { duration: 1.4, weight: 0.4, cooldown: 18, states: ["speaking"] },
     });
+    // a gentleman: content and pensive; tips the hat, never rolls on the floor
+    this.setPersona({
+      idleMoods: { happy: 3, thinking: 2, laugh: 1, surprised: 0.6 },
+      moodGestures: { happy: "tipHat", thinking: "adjustHat", laugh: "bellyPat", surprised: "lookAround" },
+      speechGestures: { happy: "hatTouch", celebrate: "flap", thinking: "explain", surprised: "flap", laugh: "bellyPat" },
+    });
   }
 
   hear(text) {

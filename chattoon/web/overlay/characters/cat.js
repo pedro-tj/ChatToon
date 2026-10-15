@@ -682,6 +682,14 @@ export class Cat extends Character {
       explainPaw: { duration: 1.7, weight: 1.6, cooldown: 4, states: ["speaking"] },
       earFlick: { duration: 0.8, weight: 1.2, cooldown: 3, states: ["speaking"] },
     });
+    // aloof: content slow blinks, a smug look, a bored face wash — rarely impressed
+    this.setPersona({
+      idleMoods: { happy: 2, annoyed: 2, thinking: 1, surprised: 0.8, laugh: 0.4 },
+      moodGestures: { happy: "slowBlink", annoyed: "faceWash", thinking: "curiousLook", surprised: "earTwitch",
+                      laugh: "smugLook" },
+      speechGestures: { annoyed: "smugLook", laugh: "smugLook", thinking: "explainPaw", happy: "tailWag",
+                        surprised: "earFlick" },
+    });
   }
 
   setupFace(head, q, fur) {

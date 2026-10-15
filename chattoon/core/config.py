@@ -54,6 +54,7 @@ class CharacterSettings:
     voice_pitch: int = 0
     catchphrases: list[str] = field(default_factory=list)
     color: str = ""  # "" = character default
+    curiosities: list[str] = field(default_factory=list)  # the streamer's own lines for spontaneous talk
 
 
 @dataclass
@@ -87,7 +88,37 @@ class AISettings:
     max_sentences: int = 3
     max_chars: int = 240
     reply_language: str = "pt-BR"
-    memory_size: int = 4  # recent exchanges sent as context (each costs prompt-eval time)
+    memory_size: int = 4  # recent exchanges of other viewers sent as context (each costs prompt-eval time)
+    adaptive: bool = True  # objective questions get little randomness, banter keeps "temperature"
+    math_tool: bool = True  # arithmetic is computed exactly and handed to the model
+    validate: bool = True  # one more try when a reply misses the verified result or copies the prompt
+    reference: bool = True  # objective tech questions get entries of the verified reference sheet
+
+
+@dataclass
+class MemorySettings:
+    """What the avatar remembers about viewers (docs/23-conversation-memory.md)."""
+
+    enabled: bool = True  # follow-ups within the live (RAM only)
+    persist: bool = False  # also remember between lives (local SQLite file, never sent anywhere)
+    retention_days: int = 30  # saved memories older than this are erased (0 = until erased by hand)
+    summaries: bool = True  # while the chat is quiet, the model summarizes long conversations
+
+
+@dataclass
+class SpontaneousSettings:
+    """Lines the avatar says on its own when the chat is quiet (docs/25-spontaneous-interactions.md)."""
+
+    enabled: bool = False
+    min_idle: int = 90  # seconds without chat messages before it may speak
+    min_interval: int = 240  # seconds between two spontaneous lines
+    frequency: str = "normal"  # low | normal | high (scales both times)
+    intensity: str = "normal"  # calm | normal | lively (emotion strength and gestures)
+    categories: list[str] = field(default_factory=lambda: ["invite", "curiosity", "context", "humor", "reflection",
+                                                           "catchphrase"])
+    use_ai: bool = True  # vary invitations and asides with the model (curiosities are always spoken as written)
+    quiet_start: str = ""  # "23:00": no spontaneous lines from this time…
+    quiet_end: str = ""  # …until this one ("" = no quiet hours)
 
 
 @dataclass
@@ -223,6 +254,8 @@ class Settings:
     reading: ReadingSettings = field(default_factory=ReadingSettings)
     animation: AnimationSettings = field(default_factory=AnimationSettings)
     context: ChannelContext = field(default_factory=ChannelContext)
+    memory: MemorySettings = field(default_factory=MemorySettings)
+    spontaneous: SpontaneousSettings = field(default_factory=SpontaneousSettings)
     characters: dict[str, CharacterSettings] = field(default_factory=dict)
 
     def character_settings(self, character_id: str | None = None) -> CharacterSettings:

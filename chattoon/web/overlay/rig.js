@@ -488,6 +488,43 @@ export class Character {
     this.bubbleAnchor = null; // Object3D on the head: the bubble follows the animation
     this.director = new Director();
     this.extent = { width: 1.6, height: 2.2 }; // rough size, for framing and the bubble
+    // Who this character is, physically: which moods it drifts into when nobody talks (with
+    // weights) and which of its own gestures go with a mood or with an emotion while it
+    // speaks. Each species sets its own (see setPersona in characters/*.js).
+    this.persona = { idleMoods: { happy: 2, thinking: 1 }, moodGestures: {}, speechGestures: {} };
+    this.mood = { next: 10 + Math.random() * 8, last: "", active: false };
+  }
+
+  setPersona(persona) { this.persona = { ...this.persona, ...persona }; }
+
+  // Idle life beyond gestures: now and then a light, short mood (a smile, a pensive look, a
+  // little surprise) with a matching gesture — weighted per species, never twice in a row,
+  // subtle and rarer with "reduce motion", and only while really idle.
+  updateMood(t, state) {
+    const d = this.director, m = this.mood;
+    const free = d.cfg.idle && d.state === "idle" && state.app !== "emergency" && state.app !== "paused";
+    if (!free) { m.next = Math.max(m.next, t + 6 * d.pace); m.active = false; return; }
+    if (t < m.next || this.emotion !== "neutral" || this.action) return;
+    const calm = d.cfg.reduceMotion;
+    const options = Object.entries(this.persona.idleMoods || {})
+      .filter(([name, w]) => w > 0 && EMOTIONS.includes(name) && name !== m.last && (!calm || ["happy", "thinking"].includes(name)));
+    const total = options.reduce((sum, [, w]) => sum + w, 0);
+    if (!total) { m.next = t + 20; return; }
+    let r = d.rng() * total, mood = options[0][0];
+    for (const [name, w] of options) { r -= w; if (r <= 0) { mood = name; break; } }
+    const strength = { subtle: 0.75, normal: 1, lively: 1.2 }[d.cfg.intensity] ?? 1;
+    this.setEmotion(mood, (calm ? 0.3 : 0.38 + d.rng() * 0.22) * strength, 1.6 + d.rng() * 1.6);
+    const gesture = (this.persona.moodGestures || {})[mood];
+    if (gesture && !calm && !d.gesture) d.play(gesture, false);
+    m.last = mood;
+    m.active = true;
+    m.next = t + (16 + d.rng() * 20) * d.pace * (calm ? 1.6 : 1);
+  }
+
+  // A gesture of this species that goes with the emotion of a line it starts to say.
+  speechGesture(emotion) {
+    const name = (this.persona.speechGestures || {})[emotion];
+    return name && this.director.gestures[name] ? this.director.play(name, false) : false;
   }
 
   configure(cfg) { this.director.configure(cfg); }
@@ -553,6 +590,7 @@ export class Character {
       if (this.action.t > this.action.duration) this.action = null;
     }
     d.setState(this.resolveState(state));
+    this.updateMood(t, state);
     d.update(dt, t, this.cur.speak);
     this.updateBlink(dt);
     this.gaze.x = d.eyes.x;

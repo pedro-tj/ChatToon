@@ -46,7 +46,14 @@ Page {
                     spacing: 8
                     Text { text: new Date(modelData.time * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat); color: Theme.textFaint; font.family: Theme.mono; font.pixelSize: 11 }
                     Chip { text: modelData.emotion; tone: Theme.accent }
-                    Chip { visible: modelData.source !== "ai"; text: modelData.source === "manual" ? qsTr("typed") : qsTr("safe reply"); tone: Theme.textMuted }
+                    Chip {
+                        visible: modelData.source !== "ai"
+                        text: modelData.source === "manual" ? qsTr("typed") : modelData.source === "tool" ? qsTr("exact result")
+                            : modelData.source === "spontaneous" ? qsTr("spontaneous") + " · " + Status.category(modelData.category || "")
+                            : qsTr("safe reply")
+                        tone: modelData.source === "tool" ? Theme.success : modelData.source === "spontaneous" ? Theme.accent2 : Theme.textMuted
+                    }
+                    Chip { visible: (modelData.memory || 0) > 0; text: qsTr("remembered"); iconName: "users"; tone: Theme.accent2 }
                     Chip { visible: modelData.generation > 0; text: modelData.generation.toFixed(1) + " s"; iconName: "clock" }
                     Chip { visible: !modelData.voice; text: qsTr("no voice"); tone: Theme.warning }
                 }

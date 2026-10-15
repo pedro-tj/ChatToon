@@ -1,4 +1,4 @@
-# ChatToon 2.2.2
+# ChatToon 2.3.0
 
 **Um personagem 3D que participa da sua live — no YouTube, na Twitch, na Kick, no TikTok e em
 outras plataformas ao mesmo tempo:** ele lê os chats — inclusive em voz alta, dizendo quem
@@ -166,8 +166,29 @@ melhorias. É assim que o projeto cresce.
   mensagem do espectador e troca suavemente para a resposta.
 - **Motor de personalidade com IA local**: predefinições (Amigável, Comediante, Zoeiro,
   Geek, Caos controlado, Personalizado), nove ajustes de humor, contexto do canal, noção do
-  horário real, memória de curto prazo, bordões e chamadas para ação ocasionais. As mensagens
-  dos espectadores são tratadas como dados, **nunca como instruções**.
+  horário real, bordões e chamadas para ação ocasionais. As mensagens dos espectadores são
+  tratadas como dados, **nunca como instruções**.
+- **Primeiro a resposta certa, depois a piada**: cada mensagem é classificada localmente
+  (conta, fato, explicação, cumprimento, boa notícia, piada, provocação, ordem ao sistema…).
+  Contas são **calculadas com exatidão** pelo ChatToon (sem `eval`), perguntas objetivas usam
+  pouca aleatoriedade, perguntas de Linux e computação recebem uma **folha de referência
+  conferida**, e cada resposta é verificada antes de ser falada. Nas perguntas verificáveis do conjunto de
+  teste, os acertos subiram de 29 % para 90 % com o `qwen3.5:2b` e de 46 % para 97 % com o
+  `llama3.1:8b`, com a mesma latência (ver [docs/28](docs/28-validation-results.md)).
+- **Memória da conversa**: o personagem lembra o que cada espectador contou ("você estava
+  fazendo um app em Python e QML, já terminou a interface?"), separado por plataforma e conta.
+  Só vira memória o que foi realmente falado; mensagens apagadas por moderadores são esquecidas.
+  Lembrar entre lives é opcional, local e com prazo de retenção. Gerencie em *Chat ao vivo ›
+  Memória*.
+- **Emoções que acompanham a conversa**: surpresa e depois comemoração para boas notícias,
+  nada de risada para quem está triste, humores próprios de cada espécie quando ninguém fala
+  (respeitando *reduzir movimento*).
+- **Falas espontâneas** (opcionais): quando o chat fica quieto, o personagem convida o público,
+  conta curiosidades conferidas da sua espécie ou do Linux e comenta o assunto da live — sempre
+  depois dos espectadores, com intervalo e horário silencioso configuráveis.
+- **Contexto da live com IA**: lê o que as suas plataformas publicam (título, canal, categoria)
+  e sugere descrição, bordões, assuntos e chamadas para ação, com prévia editável — nada muda
+  sem a sua aprovação.
 - **Várias plataformas ao mesmo tempo** (multistream): YouTube, Twitch, Kick, TikTok, Facebook,
   Instagram e X, inclusive **vários canais da mesma plataforma**. Cada fonte tem a sua própria
   conexão, estado, reconexão com espera progressiva e aleatória, e tratamento de erros — **a
@@ -205,7 +226,7 @@ makepkg -si
 ```
 
 Depois abra **ChatToon** pelo menu (ou rode `chattoon`). Para conferir a versão:
-`chattoon --version` → `chattoon 2.2.2`. Para remover: `sudo pacman -R chattoon`.
+`chattoon --version` → `chattoon 2.3.0`. Para remover: `sudo pacman -R chattoon`.
 
 | Tipo | Pacotes |
 |---|---|
@@ -427,6 +448,7 @@ Mais em [docs/09-security.md](docs/09-security.md).
 | chaveiro do sistema (`org.biglinux.ChatToon`) | logins e tokens das plataformas |
 | `~/.local/share/chattoon/credentials.json` | só se não houver chaveiro: logins (permissão 0600) |
 | `~/.local/share/chattoon/extras/` | componentes opcionais (TikTokLive), só se você instalar |
+| `~/.local/share/chattoon/memory.sqlite3` | memórias entre lives (0600), só se *Lembrar entre lives* estiver ligado |
 | `$TMPDIR/chattoon-tts-*/` | últimas 20 respostas geradas (0700), apagadas ao sair |
 
 ### Desempenho medido
@@ -510,10 +532,19 @@ Lista completa em [docs/11-release.md](docs/11-release.md).
 [conectores](docs/16-connectors.md) · [UI/UX](docs/17-multistream-ui-ux.md) ·
 [segurança e login](docs/18-security-authentication.md) · [testes](docs/19-multistream-tests.md) ·
 [lançamento](docs/20-multistream-release.md) ·
-**2.2.1:** [seu próprio domínio para o overlay](docs/21-dominio-proprio.md)
+**2.2.1:** [seu próprio domínio para o overlay](docs/21-dominio-proprio.md) ·
+**Inteligência:** [auditoria](docs/22-intelligence-audit.md) · [memória](docs/23-conversation-memory.md) ·
+[emoções](docs/24-emotion-engine.md) · [falas espontâneas](docs/25-spontaneous-interactions.md) ·
+[contexto com IA](docs/26-stream-context-ai.md) · [desempenho](docs/27-performance-benchmarks.md) ·
+[resultados](docs/28-validation-results.md)
 
 ## Histórico de versões
 
+- **2.3.0** — inteligência: respostas corretas antes do humor (classificação local,
+  calculadora exata, folha de referência e verificação de cada resposta), memória por
+  espectador com persistência opcional, emoções coerentes com transições e humores ociosos por
+  espécie, falas espontâneas, contexto da live preenchido a partir das plataformas, diagnóstico
+  da geração, e correção do modo Assistido que travava a fila depois de recusar uma sugestão.
 - **2.2.2** — correção: o personagem nunca mais fala nem mostra no balão pedaços do JSON da
   resposta (`{"say": ...`). A fala é recuperada mesmo quando o modelo corta, aninha ou cerca o
   JSON de texto; sem fala aproveitável, entra uma resposta reserva do personagem. Falas com

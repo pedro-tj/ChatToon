@@ -7,6 +7,13 @@ import ".."
 Page {
     id: page
     readonly property var cfg: backend.config
+    readonly property var sp: cfg.spontaneous
+    readonly property var categories: ["invite", "curiosity", "context", "humor", "reflection", "catchphrase", "cta"]
+    function toggleCategory(c, on) {
+        const list = (page.sp.categories || []).filter(x => x !== c)
+        if (on) list.push(c)
+        backend.setConfig("spontaneous.categories", list)
+    }
     title: qsTr("Settings")
     subtitle: qsTr("Appearance, language, profiles and diagnostics.")
 
@@ -33,6 +40,95 @@ Page {
                 model: [{ v: "system", t: qsTr("System default") }, { v: "en", t: "English" }, { v: "pt_BR", t: "Português (Brasil)" }]
                 currentIndex: Math.max(0, indexOfValue(cfg.ui_language))
                 onActivated: backend.setConfig("ui_language", currentValue)
+            }
+        }
+    }
+
+    Section {
+        title: qsTr("Spontaneous lines")
+        iconName: "chat"
+        description: qsTr("When the chat is quiet, the avatar speaks up on its own — invitations, curiosities, comments on the topic. Viewers always come first: a message cancels a line still being prepared.")
+        actions: AppButton { compact: true; iconName: "play"; text: qsTr("Try one now"); onClicked: backend.testSpontaneous("") }
+        SettingRow {
+            label: qsTr("Speak on its own")
+            description: qsTr("Only while live and in Automatic or Demo mode — never paused, after an emergency stop or in Assisted mode.")
+            AppSwitch { checked: page.sp.enabled; onToggled: backend.setConfig("spontaneous.enabled", checked); Accessible.name: qsTr("Speak on its own") }
+        }
+        SettingRow {
+            label: qsTr("Frequency")
+            Segmented {
+                enabled: page.sp.enabled
+                model: [{ value: "low", label: qsTr("Rarely") }, { value: "normal", label: qsTr("Normal") }, { value: "high", label: qsTr("Often") }]
+                current: page.sp.frequency
+                onActivated: v => backend.setConfig("spontaneous.frequency", v)
+            }
+        }
+        SettingRow {
+            label: qsTr("Quiet chat for at least")
+            description: qsTr("Seconds without any viewer message before the avatar may speak.")
+            NumberStepper { enabled: page.sp.enabled; value: page.sp.min_idle; from: 15; to: 1800; step: 15; suffix: " s"; onEdited: v => backend.setConfig("spontaneous.min_idle", v) }
+        }
+        SettingRow {
+            label: qsTr("At most one line every")
+            NumberStepper { enabled: page.sp.enabled; value: page.sp.min_interval; from: 30; to: 3600; step: 30; suffix: " s"; onEdited: v => backend.setConfig("spontaneous.min_interval", v) }
+        }
+        SettingRow {
+            label: qsTr("Energy")
+            description: qsTr("How strong the expressions and gestures of these lines are.")
+            Segmented {
+                enabled: page.sp.enabled
+                model: [{ value: "calm", label: qsTr("Calm") }, { value: "normal", label: qsTr("Normal") }, { value: "lively", label: qsTr("Lively") }]
+                current: page.sp.intensity
+                onActivated: v => backend.setConfig("spontaneous.intensity", v)
+            }
+        }
+        Text { text: qsTr("What it may say"); color: Theme.text; font.pixelSize: 13; font.weight: Font.Medium }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 6
+            Repeater {
+                model: page.categories
+                Rectangle {
+                    required property string modelData
+                    width: catRow.implicitWidth + 12; height: 40; radius: Theme.radiusSmall
+                    color: Theme.field; border.width: 1; border.color: Theme.border
+                    Row {
+                        id: catRow
+                        anchors.centerIn: parent
+                        spacing: 2
+                        AppCheck {
+                            text: Status.category(modelData)
+                            checked: (page.sp.categories || []).indexOf(modelData) >= 0
+                            onToggled: page.toggleCategory(modelData, checked)
+                        }
+                        AppButton {
+                            compact: true; variant: "ghost"; iconName: "play"
+                            tip: qsTr("Try this kind of line now"); Accessible.name: tip
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: backend.testSpontaneous(modelData)
+                        }
+                    }
+                }
+            }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: qsTr("Curiosities are checked facts, spoken exactly as written. Calls to action come from Stream context. Catchphrases come from the character and the channel.")
+            color: Theme.textFaint; font.pixelSize: 12; wrapMode: Text.WordWrap
+        }
+        SettingRow {
+            label: qsTr("Let the AI vary invitations and comments")
+            description: qsTr("The AI never writes facts: lines with numbers or “did you know” are replaced by a written one.")
+            AppSwitch { enabled: page.sp.enabled; checked: page.sp.use_ai; onToggled: backend.setConfig("spontaneous.use_ai", checked); Accessible.name: qsTr("Let the AI vary invitations and comments") }
+        }
+        SettingRow {
+            label: qsTr("Quiet hours")
+            description: qsTr("No spontaneous lines between these times (HH:MM). Leave empty to allow them at any time.")
+            Row {
+                spacing: 6
+                AppTextField { width: 86; text: page.sp.quiet_start; placeholderText: "23:00"; onEditingFinished: backend.setConfig("spontaneous.quiet_start", text.trim()); Accessible.name: qsTr("Quiet hours start") }
+                Text { text: "–"; color: Theme.textMuted; anchors.verticalCenter: parent.verticalCenter }
+                AppTextField { width: 86; text: page.sp.quiet_end; placeholderText: "07:00"; onEditingFinished: backend.setConfig("spontaneous.quiet_end", text.trim()); Accessible.name: qsTr("Quiet hours end") }
             }
         }
     }
@@ -72,6 +168,7 @@ Page {
                 qsTr("The overlay server listens only on 127.0.0.1 and requires a secret address."),
                 qsTr("Chat messages are never executed and cannot change the avatar's rules."),
                 qsTr("History stays in memory and is lost when you close the app, unless you export it."),
+                qsTr("Conversation memories stay in RAM during the live. Saving them between lives is optional, stays on this computer and is erased after the period you choose. Messages removed by moderators are forgotten."),
                 qsTr("No telemetry."),
             ]
             RowLayout {
@@ -82,6 +179,29 @@ Page {
                 Text { Layout.fillWidth: true; text: modelData; color: Theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
             }
         }
+    }
+
+    Section {
+        title: qsTr("Memories")
+        iconName: "users"
+        description: qsTr("Everything the avatar remembers about viewers: this live and, if enabled, earlier ones.")
+        RowLayout {
+            spacing: 8
+            AppButton { iconName: "chat"; text: qsTr("See and manage"); onClicked: win.go("livechat") }
+            AppButton { variant: "danger"; iconName: "trash"; text: qsTr("Erase all memories…"); onClicked: eraseDialog.open() }
+        }
+    }
+
+    Dialog {
+        id: eraseDialog
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        modal: true
+        title: qsTr("Erase all memories?")
+        standardButtons: Dialog.Cancel | Dialog.Yes
+        onAccepted: backend.clearMemory()
+        Text { width: 360; text: qsTr("The avatar forgets every viewer, in RAM and on disk. This cannot be undone."); color: Theme.text; wrapMode: Text.WordWrap }
+        background: Rectangle { radius: Theme.radius; color: Theme.surfaceStrong; border.width: 1; border.color: Theme.borderStrong }
     }
 
     Section {

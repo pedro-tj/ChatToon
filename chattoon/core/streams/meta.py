@@ -258,6 +258,25 @@ class FacebookConnector(_GraphConnector):
         self.reconnect_when_ended = not self.video_id  # a Page waits for its next live
         self._video_fields = ""
 
+    async def metadata(self):
+        """Page name, about and the current live's title/description from the Graph API
+        (official), with the token the streamer already gave for reading comments."""
+        from .base import StreamMetadata
+
+        try:
+            page = await self._page()
+            info = await self.graph(page["id"], page["token"], {"fields": "name,about,category,link"})
+            lives = await self.graph(f"{page['id']}/live_videos", page["token"],
+                                     {"broadcast_status": '["LIVE"]', "fields": "id,title,description"})
+        finally:
+            await self.close()
+        live = next((v for v in lives.get("data") or [] if isinstance(v, dict)), {})
+        return StreamMetadata(
+            self.source.id, "facebook", method="Facebook Graph API (official)", live=bool(live),
+            channel=str(info.get("name") or page.get("name") or ""), title=str(live.get("title") or ""),
+            description=str(live.get("description") or info.get("about") or ""),
+            category=str(info.get("category") or ""), url=str(info.get("link") or ""))
+
     async def _page(self) -> dict:
         """{"id", "name", "token"}: the Page to read and the token to read it with."""
         token, kind = await self._credential()

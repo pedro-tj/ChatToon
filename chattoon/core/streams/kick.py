@@ -456,6 +456,25 @@ class KickConnector(Connector):
         self.display = (info.get("user") or {}).get("username") or self.slug
         return info
 
+    async def metadata(self):
+        """Channel, title, category and bio from kick.com's channel endpoint — the same
+        public endpoint this connector already uses to find the chatroom (unofficial)."""
+        from .base import StreamMetadata
+
+        try:
+            info = await self._channel_info()
+        finally:
+            await self.close()
+        live = info.get("livestream") or {}
+        user = info.get("user") or {}
+        categories = live.get("categories") or info.get("recent_categories") or []
+        return StreamMetadata(
+            self.source.id, "kick", method="kick.com channel endpoint (unofficial)", live=bool(live),
+            channel=str(user.get("username") or self.display), title=str(live.get("session_title") or ""),
+            description=str(user.get("bio") or ""),
+            category=str(categories[0].get("name") or "") if categories and isinstance(categories[0], dict) else "",
+            tags=[str(t) for t in live.get("tags") or [] if isinstance(t, str)], url=f"https://kick.com/{self.slug}")
+
     def _manual_chatroom(self) -> str:
         manual = self.source.options.get("chatroom_id", "").strip()
         if manual and not manual.isdigit():
