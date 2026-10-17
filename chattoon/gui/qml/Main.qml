@@ -73,6 +73,7 @@ ApplicationWindow {
 
     Binding { target: Theme; property: "mode"; value: win.cfg.theme }
     Binding { target: Privacy; property: "live"; value: win.cfg.privacy_mode }
+    Binding { target: Theme; property: "reducedMotion"; value: win.cfg.animation.reduce_motion }
 
     // sources that need the streamer (login, error) — shown as a badge on the menu
     readonly property int attention: backend.sources.filter(s => s.enabled && ["auth_required", "error"].indexOf(s.status.state) >= 0).length
@@ -133,7 +134,12 @@ ApplicationWindow {
                     id: nav
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    interactive: false
+                    // short windows (or large fonts): the menu scrolls instead of running under
+                    // the cards below it
+                    clip: true
+                    interactive: contentHeight > height
+                    boundsBehavior: Flickable.StopAtBounds
+                    ScrollIndicator.vertical: ScrollIndicator { active: nav.interactive }
                     spacing: 2
                     keyNavigationEnabled: true
                     activeFocusOnTab: true
@@ -199,7 +205,7 @@ ApplicationWindow {
                                 color: win.running ? Theme.success : win.rt.state === "emergency" ? Theme.danger
                                      : win.paused ? Theme.warning : Theme.textFaint
                                 SequentialAnimation on opacity {
-                                    running: win.running; loops: Animation.Infinite
+                                    running: win.running && !Theme.reducedMotion; loops: Animation.Infinite
                                     NumberAnimation { to: 0.35; duration: 700 }
                                     NumberAnimation { to: 1; duration: 700 }
                                 }

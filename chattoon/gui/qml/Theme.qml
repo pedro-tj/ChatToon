@@ -28,8 +28,10 @@ QtObject {
 
     readonly property int radius: 16
     readonly property int radiusSmall: 10
-    readonly property int animFast: 150
-    readonly property int anim: 220
+    // "Reduce motion" (Characters › Animation) also stills the interface's own transitions
+    property bool reducedMotion: false
+    readonly property int animFast: reducedMotion ? 0 : 150
+    readonly property int anim: reducedMotion ? 0 : 220
     readonly property var curve: [0.4, 0.0, 0.2, 1.0, 1.0, 1.0]
 
     readonly property string sans: pick(["Inter", "Noto Sans", "Cantarell", "DejaVu Sans"])
