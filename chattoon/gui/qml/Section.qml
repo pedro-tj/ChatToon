@@ -31,7 +31,8 @@ GlassCard {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 1
-                Text { text: root.title; color: Theme.text; font.pixelSize: 15; font.weight: Font.DemiBold }
+                // fillWidth: without a description the column would shrink and pull the actions left
+                Text { Layout.fillWidth: true; text: root.title; color: Theme.text; font.pixelSize: 15; font.weight: Font.DemiBold; wrapMode: Text.WordWrap }
                 Text {
                     Layout.fillWidth: true
                     text: root.description

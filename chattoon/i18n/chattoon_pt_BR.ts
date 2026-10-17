@@ -11,68 +11,60 @@
       <translation>O ChatToon pensa com o Ollama, rodando neste computador. Nada é enviado para a nuvem.</translation>
     </message>
     <message>
-      <source>Check again</source>
-      <translation>Verificar de novo</translation>
-    </message>
-    <message>
       <source>Ollama</source>
       <translation>Ollama</translation>
-    </message>
-    <message>
-      <source>Running — version %1</source>
-      <translation>Rodando — versão %1</translation>
-    </message>
-    <message>
-      <source>Not reachable: %1</source>
-      <translation>Inacessível: %1</translation>
-    </message>
-    <message>
-      <source>Checking…</source>
-      <translation>Verificando…</translation>
-    </message>
-    <message>
-      <source>Address</source>
-      <translation>Endereço</translation>
-    </message>
-    <message>
-      <source>Keep the default unless Ollama runs on another computer of your network.</source>
-      <translation>Mantenha o padrão, a menos que o Ollama rode em outro computador da sua rede.</translation>
-    </message>
-    <message>
-      <source>Start it with:  sudo systemctl start ollama   (or install it in BigLinux Settings → AI).</source>
-      <translation>Inicie com:  sudo systemctl start ollama   (ou instale pelo BigLinux Settings → IA).</translation>
-    </message>
-    <message>
-      <source>Model</source>
-      <translation>Modelo</translation>
     </message>
     <message>
       <source>Model in use</source>
       <translation>Modelo em uso</translation>
     </message>
     <message>
-      <source>No model installed</source>
-      <translation>Nenhum modelo instalado</translation>
+      <source>The character's brain. Install, start and stop it here — no terminal needed.</source>
+      <translation>O cérebro do personagem. Instale, inicie e pare aqui — sem terminal.</translation>
     </message>
     <message>
-      <source>Suggested models (good Portuguese, light):</source>
-      <translation>Modelos sugeridos (bom português, leves):</translation>
+      <source>Server address</source>
+      <translation>Endereço do servidor</translation>
     </message>
     <message>
-      <source>Installed</source>
-      <translation>Instalado</translation>
+      <source>Keep the default unless Ollama runs on another computer of your network. A remote Ollama is used, never controlled.</source>
+      <translation>Mantenha o padrão, a menos que o Ollama rode em outro computador da sua rede. Um Ollama remoto é usado, nunca controlado.</translation>
     </message>
     <message>
-      <source>Download with Ollama</source>
-      <translation>Baixar com o Ollama</translation>
+      <source>Every model installed in this Ollama. The green one answers your chat.</source>
+      <translation>Todos os modelos instalados neste Ollama. O verde é o que responde ao seu chat.</translation>
     </message>
     <message>
-      <source>Downloading %1: %2</source>
-      <translation>Baixando %1: %2</translation>
+      <source>Update list</source>
+      <translation>Atualizar lista</translation>
+    </message>
+    <message>
+      <source>Suggested models</source>
+      <translation>Modelos sugeridos</translation>
+    </message>
+    <message>
+      <source>Good Portuguese and light. These still need to be downloaded; you can use any other model too.</source>
+      <translation>Bom português e leves. Estes ainda precisam ser baixados; você também pode usar qualquer outro modelo.</translation>
+    </message>
+    <message>
+      <source>Your computer: %1 · %2 of memory</source>
+      <translation>Seu computador: %1 · %2 de memória</translation>
+    </message>
+    <message>
+      <source>processor</source>
+      <translation>processador</translation>
+    </message>
+    <message>
+      <source>graphics card with %1</source>
+      <translation>placa de vídeo com %1</translation>
     </message>
     <message>
       <source>Generation</source>
       <translation>Geração</translation>
+    </message>
+    <message>
+      <source>Restore defaults</source>
+      <translation>Restaurar padrões</translation>
     </message>
     <message>
       <source>Creativity (temperature)</source>
@@ -250,10 +242,6 @@
       <translation> mensagens</translation>
     </message>
     <message>
-      <source>Smaller models answer faster; bigger ones know more facts. With a dedicated GPU, a 7–8 billion parameter model answers about as fast as a small one.</source>
-      <translation>Modelos menores respondem mais rápido; os maiores sabem mais fatos. Com uma placa de vídeo dedicada, um modelo de 7 a 8 bilhões de parâmetros responde quase tão rápido quanto um pequeno.</translation>
-    </message>
-    <message>
       <source>Timeout</source>
       <translation>Tempo limite</translation>
     </message>
@@ -277,84 +265,16 @@
   <context>
     <name>Backend</name>
     <message>
-      <source>Choose an Ollama model first.</source>
-      <translation>Escolha um modelo do Ollama primeiro.</translation>
-    </message>
-    <message>
-      <source>Kokoro: %1</source>
-      <translation>Kokoro: %1</translation>
-    </message>
-    <message>
-      <source>This TTS BigLinux version cannot use Kokoro voices. Update the tts-biglinux package.</source>
-      <translation>Esta versão do TTS BigLinux não consegue usar vozes Kokoro. Atualize o pacote tts-biglinux.</translation>
-    </message>
-    <message>
-      <source>Kokoro took too long to speak this text. Try a shorter reply or another voice.</source>
-      <translation>O Kokoro demorou demais para falar este texto. Tente uma resposta mais curta ou outra voz.</translation>
-    </message>
-    <message>
-      <source>Kokoro could not speak this text: %1</source>
-      <translation>O Kokoro não conseguiu falar este texto: %1</translation>
-    </message>
-    <message>
-      <source>The voice engine produced no audio.</source>
-      <translation>O mecanismo de voz não gerou áudio.</translation>
-    </message>
-    <message>
-      <source>The voice engine produced an invalid audio file.</source>
-      <translation>O mecanismo de voz gerou um arquivo de áudio inválido.</translation>
-    </message>
-    <message>
-      <source>The voice engine %1 is not supported.</source>
-      <translation>O mecanismo de voz %1 não é suportado.</translation>
-    </message>
-    <message>
-      <source>%1 is not installed.</source>
-      <translation>%1 não está instalado.</translation>
-    </message>
-    <message>
-      <source>%1 took too long to answer.</source>
-      <translation>%1 demorou demais para responder.</translation>
-    </message>
-    <message>
-      <source>The voice engine %1 failed.</source>
-      <translation>O mecanismo de voz %1 falhou.</translation>
-    </message>
-    <message>
-      <source>Ironic, funny and a bit of a provocateur.</source>
-      <translation>Irônica, engraçada e provocadora.</translation>
-    </message>
-    <message>
-      <source>Curious, tech-savvy and unpredictable.</source>
-      <translation>Curioso, tecnológico e imprevisível.</translation>
-    </message>
-    <message>
-      <source>Penguin in a top hat</source>
-      <translation>Pinguim de cartola</translation>
-    </message>
-    <message>
-      <source>Geeky, elegant and a free software champion.</source>
-      <translation>Geek, elegante e defensor do software livre.</translation>
-    </message>
-    <message>
-      <source>Sarcastic, clever and independent.</source>
-      <translation>Sarcástica, inteligente e independente.</translation>
-    </message>
-    <message>
-      <source>Wise, observant and good-humoured.</source>
-      <translation>Sábia, observadora e bem-humorada.</translation>
-    </message>
-    <message>
-      <source>Cartoon earthworm</source>
-      <translation>Minhoca cartunesca</translation>
-    </message>
-    <message>
       <source>Account connected: %1</source>
       <translation>Conta conectada: %1</translation>
     </message>
     <message>
       <source>Saved in the keyring</source>
       <translation>Guardado no chaveiro do sistema</translation>
+    </message>
+    <message>
+      <source>The model %1 is no longer available. Choose another one on the AI page.</source>
+      <translation>O modelo %1 não está mais disponível. Escolha outro na página Inteligência artificial.</translation>
     </message>
     <message>
       <source>Public live chat, no login. Paste a live link or your @channel to follow every new live.</source>
@@ -413,28 +333,100 @@
       <translation>Link do post que anuncia a live</translation>
     </message>
     <message>
+      <source>Choose an Ollama model first.</source>
+      <translation>Escolha um modelo do Ollama primeiro.</translation>
+    </message>
+    <message>
+      <source>Kokoro: %1</source>
+      <translation>Kokoro: %1</translation>
+    </message>
+    <message>
+      <source>This TTS BigLinux version cannot use Kokoro voices. Update the tts-biglinux package.</source>
+      <translation>Esta versão do TTS BigLinux não consegue usar vozes Kokoro. Atualize o pacote tts-biglinux.</translation>
+    </message>
+    <message>
+      <source>Kokoro took too long to speak this text. Try a shorter reply or another voice.</source>
+      <translation>O Kokoro demorou demais para falar este texto. Tente uma resposta mais curta ou outra voz.</translation>
+    </message>
+    <message>
+      <source>Kokoro could not speak this text: %1</source>
+      <translation>O Kokoro não conseguiu falar este texto: %1</translation>
+    </message>
+    <message>
+      <source>The voice engine produced no audio.</source>
+      <translation>O mecanismo de voz não gerou áudio.</translation>
+    </message>
+    <message>
+      <source>The voice engine produced an invalid audio file.</source>
+      <translation>O mecanismo de voz gerou um arquivo de áudio inválido.</translation>
+    </message>
+    <message>
+      <source>The voice engine %1 is not supported.</source>
+      <translation>O mecanismo de voz %1 não é suportado.</translation>
+    </message>
+    <message>
+      <source>%1 is not installed.</source>
+      <translation>%1 não está instalado.</translation>
+    </message>
+    <message>
+      <source>%1 took too long to answer.</source>
+      <translation>%1 demorou demais para responder.</translation>
+    </message>
+    <message>
+      <source>The voice engine %1 failed.</source>
+      <translation>O mecanismo de voz %1 falhou.</translation>
+    </message>
+    <message>
       <source>No spontaneous line is available for this category. Add curiosities or fill in the stream topic.</source>
       <translation>Não há fala espontânea disponível para esta categoria. Adicione curiosidades ou preencha o assunto da live.</translation>
+    </message>
+    <message>
+      <source>Cartoon earthworm</source>
+      <translation>Minhoca cartunesca</translation>
+    </message>
+    <message>
+      <source>Ironic, funny and a bit of a provocateur.</source>
+      <translation>Irônica, engraçada e provocadora.</translation>
     </message>
     <message>
       <source>Alien explorer</source>
       <translation>Explorador alienígena</translation>
     </message>
     <message>
+      <source>Curious, tech-savvy and unpredictable.</source>
+      <translation>Curioso, tecnológico e imprevisível.</translation>
+    </message>
+    <message>
+      <source>Penguin in a top hat</source>
+      <translation>Pinguim de cartola</translation>
+    </message>
+    <message>
+      <source>Geeky, elegant and a free software champion.</source>
+      <translation>Geek, elegante e defensor do software livre.</translation>
+    </message>
+    <message>
       <source>Orange cat</source>
       <translation>Gatinha laranja</translation>
+    </message>
+    <message>
+      <source>Sarcastic, clever and independent.</source>
+      <translation>Sarcástica, inteligente e independente.</translation>
     </message>
     <message>
       <source>Purple owl</source>
       <translation>Coruja roxa</translation>
     </message>
     <message>
-      <source>Cheerful, playful and full of energy.</source>
-      <translation>Alegre, brincalhão e entusiasmado.</translation>
+      <source>Wise, observant and good-humoured.</source>
+      <translation>Sábia, observadora e bem-humorada.</translation>
     </message>
     <message>
       <source>Beagle puppy</source>
       <translation>Filhote beagle</translation>
+    </message>
+    <message>
+      <source>Cheerful, playful and full of energy.</source>
+      <translation>Alegre, brincalhão e entusiasmado.</translation>
     </message>
     <message>
       <source>Look around</source>
@@ -645,6 +637,10 @@
       <translation>Isto não é um link de vídeo ou live do YouTube.</translation>
     </message>
     <message>
+      <source>Defaults restored</source>
+      <translation>Padrões restaurados</translation>
+    </message>
+    <message>
       <source>You</source>
       <translation>Você</translation>
     </message>
@@ -669,6 +665,10 @@
       <translation>Sugestão aplicada</translation>
     </message>
     <message>
+      <source>Copied. It contains a secret code: paste it only in OBS.</source>
+      <translation>Copiado. Contém um código secreto: cole só no OBS.</translation>
+    </message>
+    <message>
       <source>Copied to the clipboard</source>
       <translation>Copiado para a área de transferência</translation>
     </message>
@@ -691,6 +691,203 @@
     <message>
       <source>Profile exported (without secrets)</source>
       <translation>Perfil exportado (sem segredos)</translation>
+    </message>
+  </context>
+  <context>
+    <name>CharacterMenu</name>
+    <message>
+      <source>On your desktop</source>
+      <translation>Na sua área de trabalho</translation>
+    </message>
+    <message>
+      <source>Close</source>
+      <translation>Fechar</translation>
+    </message>
+    <message>
+      <source>Character</source>
+      <translation>Personagem</translation>
+    </message>
+    <message>
+      <source>Size</source>
+      <translation>Tamanho</translation>
+    </message>
+    <message>
+      <source>Small</source>
+      <translation>Pequeno</translation>
+    </message>
+    <message>
+      <source>Normal</source>
+      <translation>Normal</translation>
+    </message>
+    <message>
+      <source>Large</source>
+      <translation>Grande</translation>
+    </message>
+    <message>
+      <source>Above other windows</source>
+      <translation>Acima das janelas</translation>
+    </message>
+    <message>
+      <source>Lock in place</source>
+      <translation>Travar no lugar</translation>
+    </message>
+    <message>
+      <source>Speech bubble</source>
+      <translation>Balão de fala</translation>
+    </message>
+    <message>
+      <source>Clicks pass through</source>
+      <translation>Cliques atravessam</translation>
+    </message>
+    <message>
+      <source>With clicks passing through, turn it off again in ChatToon › Where to show.</source>
+      <translation>Com os cliques atravessando, desligue de novo no ChatToon › Onde mostrar.</translation>
+    </message>
+    <message>
+      <source>Screen</source>
+      <translation>Tela</translation>
+    </message>
+    <message>
+      <source>Open ChatToon</source>
+      <translation>Abrir o ChatToon</translation>
+    </message>
+    <message>
+      <source>Hide the character</source>
+      <translation>Ocultar o personagem</translation>
+    </message>
+    <message>
+      <source>Quit ChatToon</source>
+      <translation>Sair do ChatToon</translation>
+    </message>
+  </context>
+  <context>
+    <name>CharacterWindow</name>
+    <message>
+      <source>%1, your ChatToon character</source>
+      <translation>%1, o seu personagem do ChatToon</translation>
+    </message>
+    <message>
+      <source>Drag to resize · Ctrl + wheel also works</source>
+      <translation>Arraste para redimensionar · Ctrl + rolagem também funciona</translation>
+    </message>
+  </context>
+  <context>
+    <name>CharacterWindowCard</name>
+    <message>
+      <source>Wayland with KDE Plasma</source>
+      <translation>Wayland com KDE Plasma</translation>
+    </message>
+    <message>
+      <source>Wayland</source>
+      <translation>Wayland</translation>
+    </message>
+    <message>
+      <source>X11 with KDE Plasma</source>
+      <translation>X11 com KDE Plasma</translation>
+    </message>
+    <message>
+      <source>X11</source>
+      <translation>X11</translation>
+    </message>
+    <message>
+      <source>On the desktop</source>
+      <translation>Na área de trabalho</translation>
+    </message>
+    <message>
+      <source>Hidden</source>
+      <translation>Oculto</translation>
+    </message>
+    <message>
+      <source>Hide the character</source>
+      <translation>Ocultar o personagem</translation>
+    </message>
+    <message>
+      <source>Show the character</source>
+      <translation>Mostrar o personagem</translation>
+    </message>
+    <message>
+      <source>Drag the character to move it. Right-click opens its menu. Ctrl + mouse wheel changes the size.</source>
+      <translation>Arraste o personagem para movê-lo. O botão direito abre o menu dele. Ctrl + rolagem do mouse muda o tamanho.</translation>
+    </message>
+    <message>
+      <source>Size</source>
+      <translation>Tamanho</translation>
+    </message>
+    <message>
+      <source>Small</source>
+      <translation>Pequeno</translation>
+    </message>
+    <message>
+      <source>Large</source>
+      <translation>Grande</translation>
+    </message>
+    <message>
+      <source>Normal</source>
+      <translation>Normal</translation>
+    </message>
+    <message>
+      <source>Keep above other windows</source>
+      <translation>Manter acima das outras janelas</translation>
+    </message>
+    <message>
+      <source>This desktop does not let apps stay above others. In KDE Plasma it works automatically; elsewhere use your window manager's “always on top”.</source>
+      <translation>Esta área de trabalho não deixa apps ficarem acima dos outros. No KDE Plasma funciona sozinho; em outros, use o “sempre visível” do seu gerenciador de janelas.</translation>
+    </message>
+    <message>
+      <source>Lock position and size</source>
+      <translation>Travar posição e tamanho</translation>
+    </message>
+    <message>
+      <source>Speech bubble</source>
+      <translation>Balão de fala</translation>
+    </message>
+    <message>
+      <source>Let clicks pass through the character</source>
+      <translation>Deixar os cliques atravessarem o personagem</translation>
+    </message>
+    <message>
+      <source>The character becomes untouchable: clicks go to the windows below. Turn it off here to drag it again.</source>
+      <translation>O personagem fica intocável: os cliques vão para as janelas de baixo. Desligue aqui para arrastá-lo de novo.</translation>
+    </message>
+    <message>
+      <source>Hide from the taskbar</source>
+      <translation>Ocultar da barra de tarefas</translation>
+    </message>
+    <message>
+      <source>Off by default, so the character's icon is easy to find.</source>
+      <translation>Desligado por padrão, para o ícone do personagem ser fácil de achar.</translation>
+    </message>
+    <message>
+      <source>Not available on this desktop.</source>
+      <translation>Não disponível nesta área de trabalho.</translation>
+    </message>
+    <message>
+      <source>Screen</source>
+      <translation>Tela</translation>
+    </message>
+    <message>
+      <source>Back to the corner</source>
+      <translation>Voltar ao canto</translation>
+    </message>
+    <message>
+      <source>Session: %1.</source>
+      <translation>Sessão: %1.</translation>
+    </message>
+    <message>
+      <source>The position is remembered.</source>
+      <translation>A posição é lembrada.</translation>
+    </message>
+    <message>
+      <source>This desktop places the window itself; the position is not remembered.</source>
+      <translation>Esta área de trabalho posiciona a janela sozinha; a posição não é lembrada.</translation>
+    </message>
+    <message>
+      <source>The window carries the character's icon; a taskbar that groups ChatToon's windows shows the ChatToon icon instead.</source>
+      <translation>A janela leva o ícone do personagem; uma barra de tarefas que agrupa as janelas do ChatToon mostra o ícone do ChatToon.</translation>
+    </message>
+    <message>
+      <source>The taskbar shows the ChatToon icon.</source>
+      <translation>A barra de tarefas mostra o ícone do ChatToon.</translation>
     </message>
   </context>
   <context>
@@ -945,6 +1142,40 @@
     </message>
   </context>
   <context>
+    <name>ConfirmDialog</name>
+    <message>
+      <source>Continue</source>
+      <translation>Continuar</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>Cancelar</translation>
+    </message>
+  </context>
+  <context>
+    <name>Connectivity</name>
+    <message>
+      <source>Choose an address of this computer on your home network.</source>
+      <translation>Escolha um endereço deste computador na rede de casa.</translation>
+    </message>
+    <message>
+      <source>Firewall rule removed</source>
+      <translation>Regra do firewall removida</translation>
+    </message>
+    <message>
+      <source>Firewall allows your home network</source>
+      <translation>O firewall agora libera a sua rede de casa</translation>
+    </message>
+    <message>
+      <source>The firewall was not changed.</source>
+      <translation>O firewall não foi alterado.</translation>
+    </message>
+    <message>
+      <source>New address created. Paste it again in OBS: the old one no longer works.</source>
+      <translation>Novo endereço criado. Cole de novo no OBS: o antigo não funciona mais.</translation>
+    </message>
+  </context>
+  <context>
     <name>DashboardPage</name>
     <message>
       <source>Dashboard</source>
@@ -1050,6 +1281,18 @@
       <translation>Modo demonstração (sem plataforma)</translation>
     </message>
     <message>
+      <source>System health</source>
+      <translation>Saúde do sistema</translation>
+    </message>
+    <message>
+      <source>Check AI, voice, platforms and display without going live</source>
+      <translation>Verifica IA, voz, plataformas e exibição sem entrar ao vivo</translation>
+    </message>
+    <message>
+      <source>Session report</source>
+      <translation>Relatório da sessão</translation>
+    </message>
+    <message>
       <source>No platform added</source>
       <translation>Nenhuma plataforma adicionada</translation>
     </message>
@@ -1063,6 +1306,34 @@
     <message>
       <source>%1 of %2 connected</source>
       <translation>%1 de %2 conectadas</translation>
+    </message>
+    <message>
+      <source>%1 is missing</source>
+      <translation>%1 não encontrado</translation>
+    </message>
+    <message>
+      <source>Character window</source>
+      <translation>Janela do personagem</translation>
+    </message>
+    <message>
+      <source>OBS and desktop window</source>
+      <translation>OBS e janela na área de trabalho</translation>
+    </message>
+    <message>
+      <source>On the desktop</source>
+      <translation>Na área de trabalho</translation>
+    </message>
+    <message>
+      <source>Hidden</source>
+      <translation>Oculto</translation>
+    </message>
+    <message>
+      <source>window open</source>
+      <translation>janela aberta</translation>
+    </message>
+    <message>
+      <source>window hidden</source>
+      <translation>janela oculta</translation>
     </message>
     <message>
       <source>Platforms</source>
@@ -1250,7 +1521,208 @@
     </message>
   </context>
   <context>
+    <name>DisplayModePicker</name>
+    <message>
+      <source>OBS Studio</source>
+      <translation>OBS Studio</translation>
+    </message>
+    <message>
+      <source>Ideal for live streams. The character appears in your scene with a transparent background.</source>
+      <translation>Ideal para transmissões ao vivo. O personagem aparece na sua cena com fundo transparente.</translation>
+    </message>
+    <message>
+      <source>Window on the computer</source>
+      <translation>Janela no computador</translation>
+    </message>
+    <message>
+      <source>Your character lives on the desktop, above your windows.</source>
+      <translation>O seu personagem fica na área de trabalho, acima das janelas.</translation>
+    </message>
+    <message>
+      <source>Both</source>
+      <translation>Os dois</translation>
+    </message>
+    <message>
+      <source>On the desktop and in OBS at the same time, perfectly in sync.</source>
+      <translation>Na área de trabalho e no OBS ao mesmo tempo, em sincronia.</translation>
+    </message>
+    <message>
+      <source>The voice is heard once: inside OBS (or on this computer while OBS is not connected). The desktop window never plays sound.</source>
+      <translation>A voz é ouvida uma vez só: dentro do OBS (ou neste computador enquanto o OBS não estiver conectado). A janela da área de trabalho nunca toca som.</translation>
+    </message>
+    <message>
+      <source>The voice is heard once, on this computer. The desktop window never plays sound itself.</source>
+      <translation>A voz é ouvida uma vez só, neste computador. A janela da área de trabalho nunca toca som sozinha.</translation>
+    </message>
+  </context>
+  <context>
+    <name>EngineCards</name>
+    <message>
+      <source>Not installed</source>
+      <translation>Não instalado</translation>
+    </message>
+    <message>
+      <source>Needs a voice</source>
+      <translation>Precisa de voz</translation>
+    </message>
+    <message>
+      <source>Ready to use</source>
+      <translation>Pronto para usar</translation>
+    </message>
+    <message>
+      <source>Error</source>
+      <translation>Erro</translation>
+    </message>
+    <message>
+      <source>Needs TTS BigLinux</source>
+      <translation>Precisa do TTS BigLinux</translation>
+    </message>
+    <message>
+      <source>Checking…</source>
+      <translation>Verificando…</translation>
+    </message>
+    <message>
+      <source>Natural neural voices that answer quickly.</source>
+      <translation>Vozes neurais naturais que respondem rápido.</translation>
+    </message>
+    <message>
+      <source>The most natural voices; they take a little longer to create.</source>
+      <translation>As vozes mais naturais; demoram um pouco mais para serem criadas.</translation>
+    </message>
+    <message>
+      <source>Light and clear voices, like Letícia in Portuguese.</source>
+      <translation>Vozes leves e claras, como a Letícia em português.</translation>
+    </message>
+    <message>
+      <source>Robotic but tiny and fast, in many languages.</source>
+      <translation>Robótica, mas minúscula e rápida, em muitos idiomas.</translation>
+    </message>
+    <message>
+      <source>already installed</source>
+      <translation>já instalado</translation>
+    </message>
+    <message>
+      <source>from your repositories</source>
+      <translation>dos seus repositórios</translation>
+    </message>
+    <message>
+      <source>from the AUR (built on this computer)</source>
+      <translation>do AUR (compilado neste computador)</translation>
+    </message>
+    <message>
+      <source>not found</source>
+      <translation>não encontrado</translation>
+    </message>
+    <message>
+      <source>Not available</source>
+      <translation>Indisponível</translation>
+    </message>
+    <message>
+      <source>OK</source>
+      <translation>OK</translation>
+    </message>
+    <message>
+      <source>These packages were not found in your repositories: %1. Update the system and try again.</source>
+      <translation>Estes pacotes não foram encontrados nos seus repositórios: %1. Atualize o sistema e tente de novo.</translation>
+    </message>
+    <message>
+      <source>Install TTS BigLinux?</source>
+      <translation>Instalar o TTS BigLinux?</translation>
+    </message>
+    <message>
+      <source>Install %1?</source>
+      <translation>Instalar %1?</translation>
+    </message>
+    <message>
+      <source>Install</source>
+      <translation>Instalar</translation>
+    </message>
+    <message>
+      <source>These packages will be installed. Your administrator password will be asked.</source>
+      <translation>Estes pacotes serão instalados. A sua senha de administrador será pedida.</translation>
+    </message>
+    <message>
+      <source>The voice comes from TTS BigLinux, which is not installed. Without it the character only writes in the speech bubble.</source>
+      <translation>A voz vem do TTS BigLinux, que não está instalado. Sem ele o personagem só escreve no balão de fala.</translation>
+    </message>
+    <message>
+      <source>Install TTS BigLinux</source>
+      <translation>Instalar o TTS BigLinux</translation>
+    </message>
+    <message>
+      <source>In use</source>
+      <translation>Em uso</translation>
+    </message>
+    <message numerus="yes">
+      <source>%n voice(s)</source>
+      <translation>
+        <numerusform>%n voz</numerusform>
+        <numerusform>%n vozes</numerusform>
+      </translation>
+    </message>
+    <message>
+      <source>%1 in the reply language</source>
+      <translation>%1 no idioma das respostas</translation>
+    </message>
+    <message>
+      <source>Install engine</source>
+      <translation>Instalar mecanismo</translation>
+    </message>
+    <message>
+      <source>Download voice</source>
+      <translation>Baixar voz</translation>
+    </message>
+    <message>
+      <source>Test voice</source>
+      <translation>Testar voz</translation>
+    </message>
+    <message>
+      <source>More voices</source>
+      <translation>Mais vozes</translation>
+    </message>
+    <message>
+      <source>The installation failed.</source>
+      <translation>A instalação falhou.</translation>
+    </message>
+    <message>
+      <source>Every RHVoice and Piper voice, history and shortcuts are in the TTS BigLinux app.</source>
+      <translation>Todas as vozes do RHVoice e do Piper, histórico e atalhos ficam no app TTS BigLinux.</translation>
+    </message>
+    <message>
+      <source>Manage voices in TTS BigLinux</source>
+      <translation>Gerenciar vozes no TTS BigLinux</translation>
+    </message>
+    <message>
+      <source>Kokoro voices</source>
+      <translation>Vozes do Kokoro</translation>
+    </message>
+    <message>
+      <source>Close</source>
+      <translation>Fechar</translation>
+    </message>
+    <message>
+      <source>Each voice is a small download from Hugging Face, made by TTS BigLinux.</source>
+      <translation>Cada voz é um download pequeno do Hugging Face, feito pelo TTS BigLinux.</translation>
+    </message>
+    <message>
+      <source>Installed</source>
+      <translation>Instalado</translation>
+    </message>
+    <message>
+      <source>Download</source>
+      <translation>Baixar</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>Cancelar</translation>
+    </message>
+  </context>
+  <context>
     <name>FirstRunWizard</name>
+    <message>
+      <source>Step %1 of %2</source>
+      <translation>Etapa %1 de %2</translation>
+    </message>
     <message>
       <source>Skip</source>
       <translation>Pular</translation>
@@ -1264,32 +1736,20 @@
       <translation>Um personagem 3D que lê o chat da sua live — YouTube, Twitch, Kick, TikTok e outras ao mesmo tempo —, responde com humor próprio e fala com voz de verdade, tudo rodando no seu computador. Vamos conferir algumas coisas e em um minuto está pronto.</translation>
     </message>
     <message>
-      <source>Checking your computer</source>
-      <translation>Verificando o seu computador</translation>
+      <source>Choose your character</source>
+      <translation>Escolha o seu personagem</translation>
     </message>
     <message>
-      <source>Ollama (the brain)</source>
-      <translation>Ollama (o cérebro)</translation>
+      <source>Give it a brain (AI)</source>
+      <translation>Dê um cérebro a ele (IA)</translation>
     </message>
     <message>
-      <source>Not running — start Ollama and check again</source>
-      <translation>Parado — inicie o Ollama e verifique de novo</translation>
+      <source>Give it a voice</source>
+      <translation>Dê uma voz a ele</translation>
     </message>
     <message>
-      <source>Ready — model %1</source>
-      <translation>Pronto — modelo %1</translation>
-    </message>
-    <message>
-      <source>Running, but no model installed</source>
-      <translation>Rodando, mas sem modelo instalado</translation>
-    </message>
-    <message>
-      <source>Download the recommended model (gemma3:4b, 3.3 GB)</source>
-      <translation>Baixar o modelo recomendado (gemma3:4b, 3,3 GB)</translation>
-    </message>
-    <message>
-      <source>TTS BigLinux (the voice)</source>
-      <translation>TTS BigLinux (a voz)</translation>
+      <source>Decide where it appears</source>
+      <translation>Decida onde ele aparece</translation>
     </message>
     <message numerus="yes">
       <source>Ready — %n voice(s)</source>
@@ -1299,32 +1759,108 @@
       </translation>
     </message>
     <message>
-      <source>Missing — install the tts-biglinux package</source>
-      <translation>Ausente — instale o pacote tts-biglinux</translation>
-    </message>
-    <message>
-      <source>Checking…</source>
-      <translation>Verificando…</translation>
-    </message>
-    <message>
-      <source>Check again</source>
-      <translation>Verificar de novo</translation>
-    </message>
-    <message>
       <source>Who joins your stream?</source>
       <translation>Quem vai participar da sua live?</translation>
+    </message>
+    <message>
+      <source>The brain: Ollama</source>
+      <translation>O cérebro: Ollama</translation>
+    </message>
+    <message>
+      <source>Ready — %1</source>
+      <translation>Pronto — %1</translation>
+    </message>
+    <message>
+      <source>Not ready yet</source>
+      <translation>Ainda não está pronto</translation>
+    </message>
+    <message>
+      <source>Ollama runs the AI on this computer. Install it, start it and download one model — all from here.</source>
+      <translation>O Ollama roda a IA neste computador. Instale, inicie e baixe um modelo — tudo por aqui.</translation>
+    </message>
+    <message>
+      <source>Or download another:</source>
+      <translation>Ou baixe outro:</translation>
+    </message>
+    <message>
+      <source>Download a model to start:</source>
+      <translation>Baixe um modelo para começar:</translation>
+    </message>
+    <message>
+      <source>The voice: TTS BigLinux</source>
+      <translation>A voz: TTS BigLinux</translation>
+    </message>
+    <message>
+      <source>Pick an engine that is ready, or install one. Without a voice the character still answers in its speech bubble.</source>
+      <translation>Escolha um mecanismo pronto, ou instale um. Sem voz o personagem ainda responde no balão de fala.</translation>
+    </message>
+    <message>
+      <source>%1 will speak with: %2</source>
+      <translation>%1 vai falar com: %2</translation>
+    </message>
+    <message>
+      <source>Hear it</source>
+      <translation>Ouvir</translation>
+    </message>
+    <message>
+      <source>Where should your character appear?</source>
+      <translation>Onde mostrar o seu personagem?</translation>
+    </message>
+    <message>
+      <source>The character is on your desktop now: drag it wherever you like.</source>
+      <translation>O personagem já está na sua área de trabalho: arraste para onde quiser.</translation>
+    </message>
+    <message>
+      <source>Later, the “Where to show” page gives you the address to paste in OBS — on this computer or another one.</source>
+      <translation>Depois, a página “Onde mostrar” dá o endereço para colar no OBS — neste computador ou em outro.</translation>
     </message>
     <message>
       <source>All set!</source>
       <translation>Tudo pronto!</translation>
     </message>
     <message>
-      <source>Try it now in Demo mode: type a message on the Dashboard as if you were a viewer. When you go live, add your platforms on the Streaming platforms page, add the overlay to OBS and switch to Assisted or Automatic.</source>
-      <translation>Experimente agora no modo Demonstração: digite uma mensagem no Painel como se fosse um espectador. Na hora da live, adicione suas plataformas na página Plataformas de streaming, coloque o overlay no OBS e mude para Assistido ou Automático.</translation>
+      <source>AI</source>
+      <translation>IA</translation>
+    </message>
+    <message>
+      <source>Voice</source>
+      <translation>Voz</translation>
+    </message>
+    <message>
+      <source>OBS</source>
+      <translation>OBS</translation>
+    </message>
+    <message>
+      <source>Desktop</source>
+      <translation>Área de trabalho</translation>
+    </message>
+    <message>
+      <source>OBS + desktop</source>
+      <translation>OBS + área de trabalho</translation>
+    </message>
+    <message>
+      <source>Try it now in Demo mode: type a message on the Dashboard as if you were a viewer. When you go live, add your platforms on the Streaming platforms page and press Start — ChatToon checks everything and tells you what is ready.</source>
+      <translation>Experimente agora no modo Demonstração: escreva uma mensagem no Painel como se fosse um espectador. Na hora da live, adicione as suas plataformas na página Plataformas de streaming e clique em Iniciar — o ChatToon confere tudo e mostra o que está pronto.</translation>
+    </message>
+    <message>
+      <source>Test the character now</source>
+      <translation>Testar o personagem agora</translation>
+    </message>
+    <message>
+      <source>Hi! Are you ready for the live?</source>
+      <translation>Oi! Pronto para a live?</translation>
+    </message>
+    <message>
+      <source>Test</source>
+      <translation>Testar</translation>
     </message>
     <message>
       <source>Back</source>
       <translation>Voltar</translation>
+    </message>
+    <message>
+      <source>You can finish this later</source>
+      <translation>Você pode terminar isto depois</translation>
     </message>
     <message>
       <source>Continue</source>
@@ -1722,6 +2258,10 @@
       <translation>Plataformas de streaming</translation>
     </message>
     <message>
+      <source>Where to show</source>
+      <translation>Onde mostrar</translation>
+    </message>
+    <message>
       <source>Live chat</source>
       <translation>Chat ao vivo</translation>
     </message>
@@ -1734,16 +2274,40 @@
       <translation>Contexto da live</translation>
     </message>
     <message>
-      <source>OBS Studio</source>
-      <translation>OBS Studio</translation>
-    </message>
-    <message>
       <source>History</source>
       <translation>Histórico</translation>
     </message>
     <message>
       <source>Settings</source>
       <translation>Configurações</translation>
+    </message>
+    <message>
+      <source>Show this information?</source>
+      <translation>Mostrar esta informação?</translation>
+    </message>
+    <message>
+      <source>Show for 15 seconds</source>
+      <translation>Mostrar por 15 segundos</translation>
+    </message>
+    <message>
+      <source>It stays visible for 15 seconds. If you are streaming or sharing your screen, viewers will see it too.</source>
+      <translation>Ela fica visível por 15 segundos. Se você estiver transmitindo ou compartilhando a tela, quem assiste também verá.</translation>
+    </message>
+    <message>
+      <source>Live privacy mode</source>
+      <translation>Modo Privacidade para Lives</translation>
+    </message>
+    <message>
+      <source>Live privacy: on</source>
+      <translation>Privacidade: ligada</translation>
+    </message>
+    <message>
+      <source>Live privacy: off</source>
+      <translation>Privacidade: desligada</translation>
+    </message>
+    <message>
+      <source>Hides addresses, IPs and account names on every page — safe to show on stream.</source>
+      <translation>Esconde endereços, IPs e nomes de contas em todas as páginas — seguro para aparecer na live.</translation>
     </message>
     <message>
       <source>Demo</source>
@@ -1779,37 +2343,232 @@
     </message>
   </context>
   <context>
-    <name>ObsPage</name>
+    <name>ModelCatalog</name>
     <message>
-      <source>OBS Studio</source>
-      <translation>OBS Studio</translation>
+      <source>Embedding model: turns text into numbers for search. It cannot hold a conversation.</source>
+      <translation>Modelo de embedding: transforma texto em números para buscas. Não consegue conversar.</translation>
     </message>
     <message>
-      <source>Add the avatar to your scene as a Browser Source. The address only works on this computer.</source>
-      <translation>Adicione o avatar à sua cena como fonte de Navegador. O endereço só funciona neste computador.</translation>
+      <source>This model does not generate text, so it cannot answer the chat.</source>
+      <translation>Este modelo não gera texto, então não consegue responder ao chat.</translation>
     </message>
     <message>
-      <source>Overlay address</source>
-      <translation>Endereço do overlay</translation>
-    </message>
-    <message numerus="yes">
-      <source>%n OBS source(s) connected right now</source>
-      <translation>
-        <numerusform>%n fonte do OBS conectada agora</numerusform>
-        <numerusform>%n fontes do OBS conectadas agora</numerusform>
-      </translation>
+      <source>Ollama could not read this model: %1</source>
+      <translation>O Ollama não conseguiu ler este modelo: %1</translation>
     </message>
     <message>
-      <source>Not connected to OBS yet</source>
-      <translation>Ainda não conectado ao OBS</translation>
+      <source>%1k context</source>
+      <translation>contexto de %1k</translation>
     </message>
     <message>
-      <source>Copy</source>
-      <translation>Copiar</translation>
+      <source>The model in use, %1, is not installed in this Ollama. Choose another one below or download it again.</source>
+      <translation>O modelo em uso, %1, não está instalado neste Ollama. Escolha outro abaixo ou baixe-o de novo.</translation>
     </message>
     <message>
-      <source>Open in the browser</source>
-      <translation>Abrir no navegador</translation>
+      <source>No model installed yet. Download one of the suggestions below.</source>
+      <translation>Nenhum modelo instalado ainda. Baixe uma das sugestões abaixo.</translation>
+    </message>
+    <message>
+      <source>Start Ollama to see the installed models.</source>
+      <translation>Inicie o Ollama para ver os modelos instalados.</translation>
+    </message>
+    <message>
+      <source>In use</source>
+      <translation>Em uso</translation>
+    </message>
+    <message>
+      <source>Installed</source>
+      <translation>Instalado</translation>
+    </message>
+    <message>
+      <source>loaded in memory</source>
+      <translation>carregado na memória</translation>
+    </message>
+    <message>
+      <source>cloud (not local)</source>
+      <translation>na nuvem (não local)</translation>
+    </message>
+    <message>
+      <source>capabilities estimated</source>
+      <translation>capacidades estimadas</translation>
+    </message>
+    <message>
+      <source>This Ollama version does not report what the model can do.</source>
+      <translation>Esta versão do Ollama não informa o que o modelo sabe fazer.</translation>
+    </message>
+    <message>
+      <source>Use this model</source>
+      <translation>Usar este modelo</translation>
+    </message>
+    <message>
+      <source>Installed, but cannot answer the chat (%1)</source>
+      <translation>Instalados, mas não respondem ao chat (%1)</translation>
+    </message>
+  </context>
+  <context>
+    <name>ModelSuggestions</name>
+    <message>
+      <source>Fits your graphics card</source>
+      <translation>Cabe na sua placa de vídeo</translation>
+    </message>
+    <message>
+      <source>Runs on the processor (slower)</source>
+      <translation>Roda no processador (mais lento)</translation>
+    </message>
+    <message>
+      <source>Heavy for this computer</source>
+      <translation>Pesado para este computador</translation>
+    </message>
+    <message>
+      <source>Very light</source>
+      <translation>Bem leve</translation>
+    </message>
+    <message>
+      <source>Light</source>
+      <translation>Claro</translation>
+    </message>
+    <message>
+      <source>Balanced</source>
+      <translation>Equilibrado</translation>
+    </message>
+    <message>
+      <source>More knowledge</source>
+      <translation>Mais conhecimento</translation>
+    </message>
+    <message>
+      <source>Download %1?</source>
+      <translation>Baixar %1?</translation>
+    </message>
+    <message>
+      <source>Download and install</source>
+      <translation>Baixar e instalar</translation>
+    </message>
+    <message>
+      <source>Download size: %1.</source>
+      <translation>Tamanho do download: %1.</translation>
+    </message>
+    <message>
+      <source>Ollama downloads it from its official library (registry.ollama.ai). You can keep using ChatToon meanwhile.</source>
+      <translation>O Ollama baixa da biblioteca oficial dele (registry.ollama.ai). Você pode continuar usando o ChatToon enquanto isso.</translation>
+    </message>
+    <message>
+      <source>Start Ollama to download models.</source>
+      <translation>Inicie o Ollama para baixar modelos.</translation>
+    </message>
+    <message>
+      <source>≈ %1 download</source>
+      <translation>≈ %1 de download</translation>
+    </message>
+    <message>
+      <source>%1 parameters</source>
+      <translation>%1 de parâmetros</translation>
+    </message>
+    <message>
+      <source>An estimate from your memory and graphics card. You can use any model.</source>
+      <translation>Uma estimativa pela sua memória e placa de vídeo. Você pode usar qualquer modelo.</translation>
+    </message>
+    <message>
+      <source>%1 of %2</source>
+      <translation>%1 de %2</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>Cancelar</translation>
+    </message>
+    <message>
+      <source>The download failed: %1</source>
+      <translation>O download falhou: %1</translation>
+    </message>
+    <message>
+      <source>Installed — Use this model</source>
+      <translation>Instalado — Usar este modelo</translation>
+    </message>
+    <message>
+      <source>In use</source>
+      <translation>Em uso</translation>
+    </message>
+    <message>
+      <source>Another model from ollama.com/library, e.g. mistral:7b</source>
+      <translation>Outro modelo de ollama.com/library, ex.: mistral:7b</translation>
+    </message>
+    <message>
+      <source>Model name</source>
+      <translation>Nome do modelo</translation>
+    </message>
+    <message>
+      <source>Download</source>
+      <translation>Baixar</translation>
+    </message>
+    <message>
+      <source>Downloading %1</source>
+      <translation>Baixando %1</translation>
+    </message>
+  </context>
+  <context>
+    <name>ObsAccess</name>
+    <message>
+      <source>Cable</source>
+      <translation>Cabo</translation>
+    </message>
+    <message>
+      <source>Wi-Fi</source>
+      <translation>Wi-Fi</translation>
+    </message>
+    <message>
+      <source>VPN</source>
+      <translation>VPN</translation>
+    </message>
+    <message>
+      <source>Virtual (Docker, VMs)</source>
+      <translation>Virtual (Docker, VMs)</translation>
+    </message>
+    <message>
+      <source>Network</source>
+      <translation>Rede</translation>
+    </message>
+    <message>
+      <source>This address is not on this computer anymore (another Wi-Fi or cable?). Choose the current one.</source>
+      <translation>Este endereço não está mais neste computador (outro Wi-Fi ou cabo?). Escolha o atual.</translation>
+    </message>
+    <message>
+      <source>Another program uses this port on the network address.</source>
+      <translation>Outro programa usa esta porta no endereço de rede.</translation>
+    </message>
+    <message>
+      <source>Only an address of your home network can be used.</source>
+      <translation>Só um endereço da sua rede de casa pode ser usado.</translation>
+    </message>
+    <message>
+      <source>The network address could not be opened.</source>
+      <translation>O endereço de rede não pôde ser aberto.</translation>
+    </message>
+    <message>
+      <source>On this computer</source>
+      <translation>Neste computador</translation>
+    </message>
+    <message>
+      <source>Just copy and paste the address.</source>
+      <translation>Basta copiar e colar o endereço.</translation>
+    </message>
+    <message>
+      <source>Another computer on the same network</source>
+      <translation>Outro computador na mesma rede</translation>
+    </message>
+    <message>
+      <source>Allow access from your home network.</source>
+      <translation>Permite o acesso pela sua rede de casa.</translation>
+    </message>
+    <message>
+      <source>Another computer over the internet</source>
+      <translation>Outro computador pela internet</translation>
+    </message>
+    <message>
+      <source>Needs a domain and HTTPS. A guide helps you.</source>
+      <translation>Precisa de um domínio e HTTPS. Um guia ajuda você.</translation>
+    </message>
+    <message>
+      <source>Overlay address on this computer</source>
+      <translation>Endereço do overlay neste computador</translation>
     </message>
     <message>
       <source>In OBS, click + under Sources and choose Browser.</source>
@@ -1836,32 +2595,162 @@
       <translation>O fundo é transparente. Redimensione e posicione a fonte na cena como quiser.</translation>
     </message>
     <message>
-      <source>Access from another computer</source>
-      <translation>Acesso de outro computador</translation>
+      <source>For an OBS on another computer of your home network (same router). Only computers of this network are answered, and the address still carries its secret code. Nothing is opened to the internet.</source>
+      <translation>Para um OBS em outro computador da sua rede de casa (mesmo roteador). Só computadores desta rede são atendidos, e o endereço continua com o código secreto. Nada é aberto para a internet.</translation>
     </message>
     <message>
-      <source>Optional. Run an HTTPS reverse proxy on this computer (Caddy, nginx…) that forwards to %1, then type its public address here.</source>
-      <translation>Opcional. Rode neste computador um proxy reverso HTTPS (Caddy, nginx…) que encaminhe para %1 e digite aqui o endereço público dele.</translation>
+      <source>Network address of this computer</source>
+      <translation>Endereço de rede deste computador</translation>
     </message>
     <message>
-      <source>Public address</source>
-      <translation>Endereço público</translation>
+      <source>Look again (new Wi-Fi or cable)</source>
+      <translation>Procurar de novo (novo Wi-Fi ou cabo)</translation>
     </message>
     <message>
-      <source>Use an https:// address, like https://example.org:8443.</source>
-      <translation>Use um endereço https://, como https://example.org:8443.</translation>
+      <source>This computer is not connected to a home network (cable or Wi-Fi).</source>
+      <translation>Este computador não está conectado a uma rede de casa (cabo ou Wi-Fi).</translation>
     </message>
     <message>
-      <source>Public overlay address</source>
-      <translation>Endereço público do overlay</translation>
+      <source>Allow on my home network</source>
+      <translation>Permitir na minha rede de casa</translation>
     </message>
     <message>
-      <source>Anyone with this link sees the avatar and hears its voice. Keep it private.</source>
-      <translation>Quem tiver este link vê o avatar e ouve a voz dele. Não compartilhe.</translation>
+      <source>Allow the overlay on your home network?</source>
+      <translation>Permitir o overlay na sua rede de casa?</translation>
     </message>
     <message>
-      <source>Appearance</source>
-      <translation>Aparência</translation>
+      <source>Allow</source>
+      <translation>Permitir</translation>
+    </message>
+    <message>
+      <source>Computers connected to the same router will be able to open the overlay if they have its secret address. Other ChatToon functions are never exposed. You can turn it off at any time.</source>
+      <translation>Computadores ligados ao mesmo roteador poderão abrir o overlay se tiverem o endereço secreto. As outras funções do ChatToon nunca ficam expostas. Você pode desligar quando quiser.</translation>
+    </message>
+    <message>
+      <source>Turn off network access</source>
+      <translation>Desligar o acesso pela rede</translation>
+    </message>
+    <message>
+      <source>Overlay address on the local network</source>
+      <translation>Endereço do overlay na rede local</translation>
+    </message>
+    <message>
+      <source>The firewall (%1) is on: it blocks the other computer until you allow your home network on port %2.</source>
+      <translation>O firewall (%1) está ligado: ele bloqueia o outro computador até você liberar a sua rede de casa na porta %2.</translation>
+    </message>
+    <message>
+      <source>Allow only my home network</source>
+      <translation>Liberar só a minha rede de casa</translation>
+    </message>
+    <message>
+      <source>Change the firewall?</source>
+      <translation>Alterar o firewall?</translation>
+    </message>
+    <message>
+      <source>This rule lets only your home network reach the overlay port. Your administrator password will be asked.</source>
+      <translation>Esta regra deixa só a sua rede de casa alcançar a porta do overlay. A sua senha de administrador será pedida.</translation>
+    </message>
+    <message>
+      <source>Copy the command</source>
+      <translation>Copiar o comando</translation>
+    </message>
+    <message>
+      <source>Test from this computer</source>
+      <translation>Testar deste computador</translation>
+    </message>
+    <message>
+      <source>Testing…</source>
+      <translation>Testando…</translation>
+    </message>
+    <message>
+      <source>ChatToon answers on the network</source>
+      <translation>O ChatToon responde na rede</translation>
+    </message>
+    <message>
+      <source>No answer (%1)</source>
+      <translation>Sem resposta (%1)</translation>
+    </message>
+    <message>
+      <source>On the other computer, open OBS and add a Browser source.</source>
+      <translation>No outro computador, abra o OBS e adicione uma fonte Navegador.</translation>
+    </message>
+    <message>
+      <source>Paste the network address above. Width 1920, height 1080.</source>
+      <translation>Cole o endereço de rede acima. Largura 1920, altura 1080.</translation>
+    </message>
+    <message>
+      <source>If it does not load, check the firewall above and that both computers use the same router.</source>
+      <translation>Se não carregar, confira o firewall acima e se os dois computadores usam o mesmo roteador.</translation>
+    </message>
+    <message>
+      <source>For the voice to come out of that OBS, choose Voice › Audio output › Inside OBS here.</source>
+      <translation>Para a voz sair por aquele OBS, escolha aqui Voz › Saída de áudio › Dentro do OBS.</translation>
+    </message>
+    <message>
+      <source>Someone saw the secret address? Create a new one: every old link stops working.</source>
+      <translation>Alguém viu o endereço secreto? Crie um novo: todos os links antigos param de funcionar.</translation>
+    </message>
+    <message>
+      <source>New secret address</source>
+      <translation>Novo endereço secreto</translation>
+    </message>
+    <message>
+      <source>Create a new secret address?</source>
+      <translation>Criar um novo endereço secreto?</translation>
+    </message>
+    <message>
+      <source>Create</source>
+      <translation>Criar</translation>
+    </message>
+    <message>
+      <source>OBS, browsers and proxies using the current address stop showing the character until you paste the new one.</source>
+      <translation>OBS, navegadores e proxies que usam o endereço atual deixam de mostrar o personagem até você colar o novo.</translation>
+    </message>
+  </context>
+  <context>
+    <name>ObsPage</name>
+    <message numerus="yes">
+      <source>%n OBS source(s) connected right now</source>
+      <translation>
+        <numerusform>%n fonte do OBS conectada agora</numerusform>
+        <numerusform>%n fontes do OBS conectadas agora</numerusform>
+      </translation>
+    </message>
+    <message>
+      <source>Not connected to OBS yet</source>
+      <translation>Ainda não conectado ao OBS</translation>
+    </message>
+    <message>
+      <source>Where to show</source>
+      <translation>Onde mostrar</translation>
+    </message>
+    <message>
+      <source>Choose where your character appears: in OBS Studio for live streams, in a window on your desktop, or both.</source>
+      <translation>Escolha onde o seu personagem aparece: no OBS Studio para as lives, numa janela na área de trabalho, ou nos dois.</translation>
+    </message>
+    <message>
+      <source>Where should your character appear?</source>
+      <translation>Onde mostrar o seu personagem?</translation>
+    </message>
+    <message>
+      <source>Window on the computer</source>
+      <translation>Janela no computador</translation>
+    </message>
+    <message>
+      <source>Only the character and its speech bubble, with a transparent background.</source>
+      <translation>Só o personagem e o balão de fala, com fundo transparente.</translation>
+    </message>
+    <message>
+      <source>Restore defaults</source>
+      <translation>Restaurar padrões</translation>
+    </message>
+    <message>
+      <source>Where is your OBS Studio?</source>
+      <translation>Onde está o seu OBS Studio?</translation>
+    </message>
+    <message>
+      <source>Appearance in OBS</source>
+      <translation>Aparência no OBS</translation>
     </message>
     <message>
       <source>Size</source>
@@ -1942,6 +2831,291 @@
     <message>
       <source>Frame rate limit</source>
       <translation>Limite de quadros por segundo</translation>
+    </message>
+  </context>
+  <context>
+    <name>OllamaCenter</name>
+    <message>
+      <source>Ollama installed</source>
+      <translation>Ollama instalado</translation>
+    </message>
+    <message>
+      <source>The administrator password was not confirmed.</source>
+      <translation>A senha de administrador não foi confirmada.</translation>
+    </message>
+    <message>
+      <source>No password dialog is available in this session (polkit agent).</source>
+      <translation>Não há janela de senha disponível nesta sessão (agente do polkit).</translation>
+    </message>
+    <message>
+      <source>Ollama started but did not answer in 40 seconds. Try again or restart it.</source>
+      <translation>O Ollama iniciou, mas não respondeu em 40 segundos. Tente de novo ou reinicie.</translation>
+    </message>
+    <message>
+      <source>This Ollama was opened by another program (Alpaca, a terminal…). Close it there.</source>
+      <translation>Este Ollama foi aberto por outro programa (Alpaca, um terminal…). Feche-o por lá.</translation>
+    </message>
+    <message>
+      <source>Ollama runs on another computer: control it there.</source>
+      <translation>O Ollama roda em outro computador: controle-o por lá.</translation>
+    </message>
+    <message>
+      <source>Ollama is not installed.</source>
+      <translation>O Ollama não está instalado.</translation>
+    </message>
+    <message>
+      <source>This Ollama has no system service to start with the computer.</source>
+      <translation>Este Ollama não tem um serviço do sistema para iniciar com o computador.</translation>
+    </message>
+    <message>
+      <source>Wait for the current action to finish.</source>
+      <translation>Espere a ação atual terminar.</translation>
+    </message>
+    <message>
+      <source>ChatToon only starts Ollama for this computer (127.0.0.1). Use the address http://127.0.0.1:11434.</source>
+      <translation>O ChatToon só inicia o Ollama para este computador (127.0.0.1). Use o endereço http://127.0.0.1:11434.</translation>
+    </message>
+    <message>
+      <source>The action failed.</source>
+      <translation>A ação falhou.</translation>
+    </message>
+    <message>
+      <source>Ollama is running</source>
+      <translation>O Ollama está rodando</translation>
+    </message>
+    <message>
+      <source>Ollama stopped</source>
+      <translation>O Ollama foi parado</translation>
+    </message>
+    <message>
+      <source>Ollama restarted</source>
+      <translation>O Ollama foi reiniciado</translation>
+    </message>
+    <message>
+      <source>Ollama starts with the computer</source>
+      <translation>O Ollama agora inicia com o computador</translation>
+    </message>
+    <message>
+      <source>Ollama no longer starts by itself</source>
+      <translation>O Ollama não inicia mais sozinho</translation>
+    </message>
+    <message>
+      <source>This model cannot answer the chat.</source>
+      <translation>Este modelo não consegue responder ao chat.</translation>
+    </message>
+    <message>
+      <source>%1 is now in use</source>
+      <translation>%1 agora está em uso</translation>
+    </message>
+    <message>
+      <source>This is not a valid model name.</source>
+      <translation>Este não é um nome de modelo válido.</translation>
+    </message>
+    <message>
+      <source>%1 downloaded and installed</source>
+      <translation>%1 baixado e instalado</translation>
+    </message>
+    <message>
+      <source>The download failed: %1</source>
+      <translation>O download falhou: %1</translation>
+    </message>
+  </context>
+  <context>
+    <name>OllamaPanel</name>
+    <message>
+      <source>Not installed</source>
+      <translation>Não instalado</translation>
+    </message>
+    <message>
+      <source>Installed and stopped</source>
+      <translation>Instalado e parado</translation>
+    </message>
+    <message>
+      <source>Starting…</source>
+      <translation>Iniciando…</translation>
+    </message>
+    <message>
+      <source>Running — version %1</source>
+      <translation>Em execução — versão %1</translation>
+    </message>
+    <message>
+      <source>Error — the service failed</source>
+      <translation>Erro — o serviço falhou</translation>
+    </message>
+    <message>
+      <source>Remote server — connected (version %1)</source>
+      <translation>Servidor remoto — conectado (versão %1)</translation>
+    </message>
+    <message>
+      <source>Remote server — not reachable</source>
+      <translation>Servidor remoto — inacessível</translation>
+    </message>
+    <message>
+      <source>Checking…</source>
+      <translation>Verificando…</translation>
+    </message>
+    <message>
+      <source>System service (ollama.service) — models in /var/lib/ollama</source>
+      <translation>Serviço do sistema (ollama.service) — modelos em /var/lib/ollama</translation>
+    </message>
+    <message>
+      <source>Your user's service — models in your home folder</source>
+      <translation>Serviço do seu usuário — modelos na sua pasta pessoal</translation>
+    </message>
+    <message>
+      <source>Started by ChatToon — it stops when ChatToon closes</source>
+      <translation>Iniciado pelo ChatToon — para quando o ChatToon fecha</translation>
+    </message>
+    <message>
+      <source>Opened by another program (Alpaca, a terminal, Docker…)</source>
+      <translation>Aberto por outro programa (Alpaca, um terminal, Docker…)</translation>
+    </message>
+    <message>
+      <source>On another computer: ChatToon only uses its API</source>
+      <translation>Em outro computador: o ChatToon só usa a API dele</translation>
+    </message>
+    <message>
+      <source>The installation was cancelled: the administrator password was not confirmed.</source>
+      <translation>A instalação foi cancelada: a senha de administrador não foi confirmada.</translation>
+    </message>
+    <message>
+      <source>The package is not in your repositories. Update the system and try again.</source>
+      <translation>O pacote não está nos seus repositórios. Atualize o sistema e tente de novo.</translation>
+    </message>
+    <message>
+      <source>Another program is installing or updating packages. Wait for it to finish and try again.</source>
+      <translation>Outro programa está instalando ou atualizando pacotes. Espere terminar e tente de novo.</translation>
+    </message>
+    <message>
+      <source>The packages could not be downloaded. Check your internet connection.</source>
+      <translation>Os pacotes não puderam ser baixados. Confira a sua conexão com a internet.</translation>
+    </message>
+    <message>
+      <source>The package conflicts with something already installed. See the details.</source>
+      <translation>O pacote conflita com algo já instalado. Veja os detalhes.</translation>
+    </message>
+    <message>
+      <source>Not enough free disk space.</source>
+      <translation>Não há espaço livre suficiente no disco.</translation>
+    </message>
+    <message>
+      <source>The password dialog (polkit) is not available.</source>
+      <translation>A janela de senha (polkit) não está disponível.</translation>
+    </message>
+    <message>
+      <source>The installation took too long and was stopped.</source>
+      <translation>A instalação demorou demais e foi interrompida.</translation>
+    </message>
+    <message>
+      <source>The installation failed. See the details.</source>
+      <translation>A instalação falhou. Veja os detalhes.</translation>
+    </message>
+    <message>
+      <source>Check again</source>
+      <translation>Verificar de novo</translation>
+    </message>
+    <message>
+      <source>Install Ollama</source>
+      <translation>Instalar Ollama</translation>
+    </message>
+    <message>
+      <source>Start Ollama</source>
+      <translation>Iniciar Ollama</translation>
+    </message>
+    <message>
+      <source>Stop</source>
+      <translation>Parar</translation>
+    </message>
+    <message>
+      <source>Stop Ollama now?</source>
+      <translation>Parar o Ollama agora?</translation>
+    </message>
+    <message>
+      <source>The character is answering right now. Stopping Ollama interrupts this reply.</source>
+      <translation>O personagem está respondendo agora. Parar o Ollama interrompe esta resposta.</translation>
+    </message>
+    <message>
+      <source>Restart</source>
+      <translation>Reiniciar</translation>
+    </message>
+    <message>
+      <source>Open in the software centre</source>
+      <translation>Abrir na central de programas</translation>
+    </message>
+    <message>
+      <source>Start Ollama with the computer</source>
+      <translation>Iniciar o Ollama com o computador</translation>
+    </message>
+    <message numerus="yes">
+      <source>Another Ollama is running on this computer (%1) with %n model(s). Models installed there do not appear here.</source>
+      <translation>
+        <numerusform>Outro Ollama está rodando neste computador (%1) com %n modelo. Os modelos instalados nele não aparecem aqui.</numerusform>
+        <numerusform>Outro Ollama está rodando neste computador (%1) com %n modelos. Os modelos instalados nele não aparecem aqui.</numerusform>
+      </translation>
+    </message>
+    <message>
+      <source>Use this one</source>
+      <translation>Usar este</translation>
+    </message>
+    <message>
+      <source>Installing %1…</source>
+      <translation>Instalando %1…</translation>
+    </message>
+    <message>
+      <source>Waiting for the administrator password…</source>
+      <translation>Aguardando a senha de administrador…</translation>
+    </message>
+    <message>
+      <source>Once the password is confirmed, the installation finishes on its own (it cannot be cancelled halfway).</source>
+      <translation>Depois de confirmar a senha, a instalação termina sozinha (não dá para cancelar no meio).</translation>
+    </message>
+    <message>
+      <source>Tip: after installing, Ollama only runs when started. Turn on “Start Ollama with the computer” to never think about it again.</source>
+      <translation>Dica: depois de instalado, o Ollama só roda quando é iniciado. Ligue “Iniciar o Ollama com o computador” e esqueça disso.</translation>
+    </message>
+    <message>
+      <source>Automatic installation works on BigLinux, Manjaro and Arch. On %1, install Ollama from your software centre or from ollama.com, then press “Check again”.</source>
+      <translation>A instalação automática funciona no BigLinux, Manjaro e Arch. No %1, instale o Ollama pela central de programas ou pelo ollama.com e depois clique em “Verificar de novo”.</translation>
+    </message>
+    <message>
+      <source>this system</source>
+      <translation>este sistema</translation>
+    </message>
+    <message>
+      <source>From your system's official repositories (%1). Your administrator password will be asked.</source>
+      <translation>Dos repositórios oficiais do seu sistema (%1). A sua senha de administrador será pedida.</translation>
+    </message>
+    <message>
+      <source>Graphics card acceleration (optional)</source>
+      <translation>Aceleração pela placa de vídeo (opcional)</translation>
+    </message>
+    <message>
+      <source>Processor only (works everywhere, slower)</source>
+      <translation>Só o processador (funciona em todo lugar, mais lento)</translation>
+    </message>
+    <message>
+      <source>Vulkan — AMD, Intel and NVIDIA cards (small download)</source>
+      <translation>Vulkan — placas AMD, Intel e NVIDIA (download pequeno)</translation>
+    </message>
+    <message>
+      <source>CUDA — NVIDIA cards</source>
+      <translation>CUDA — placas NVIDIA</translation>
+    </message>
+    <message>
+      <source>ROCm — AMD cards (large download)</source>
+      <translation>ROCm — placas AMD (download grande)</translation>
+    </message>
+    <message>
+      <source>recommended for your card</source>
+      <translation>recomendado para a sua placa</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>Cancelar</translation>
+    </message>
+    <message>
+      <source>Install</source>
+      <translation>Instalar</translation>
     </message>
   </context>
   <context>
@@ -2506,6 +3680,340 @@
     </message>
   </context>
   <context>
+    <name>RemoteWizard</name>
+    <message>
+      <source>Check your connection</source>
+      <translation>Verificar a conexão</translation>
+    </message>
+    <message>
+      <source>Your domain</source>
+      <translation>Seu domínio</translation>
+    </message>
+    <message>
+      <source>Reach this computer safely</source>
+      <translation>Chegar a este computador com segurança</translation>
+    </message>
+    <message>
+      <source>HTTPS</source>
+      <translation>HTTPS</translation>
+    </message>
+    <message>
+      <source>Test the connection</source>
+      <translation>Testar a conexão</translation>
+    </message>
+    <message>
+      <source>Type an https address with a domain name, like https://mychannel.example.org:8443.</source>
+      <translation>Digite um endereço https com um nome de domínio, como https://meucanal.exemplo.org:8443.</translation>
+    </message>
+    <message>
+      <source>This name does not exist yet (DNS). Check the domain and its A record at your provider.</source>
+      <translation>Este nome ainda não existe (DNS). Confira o domínio e o registro A no seu provedor.</translation>
+    </message>
+    <message>
+      <source>The name points to an address inside a home network: nobody outside can reach it. Point it to your public IP.</source>
+      <translation>O nome aponta para um endereço dentro de uma rede de casa: ninguém de fora consegue chegar. Aponte para o seu IP público.</translation>
+    </message>
+    <message>
+      <source>The name points to another public IP. Did your IP change? Update the record or use dynamic DNS.</source>
+      <translation>O nome aponta para outro IP público. O seu IP mudou? Atualize o registro ou use DNS dinâmico.</translation>
+    </message>
+    <message>
+      <source>The name points to a carrier-grade NAT address (CGNAT).</source>
+      <translation>O nome aponta para um endereço de NAT da operadora (CGNAT).</translation>
+    </message>
+    <message>
+      <source>The port did not answer. Check the port forwarding on the router and the firewall. Under CGNAT, use a tunnel.</source>
+      <translation>A porta não respondeu. Confira o encaminhamento de portas no roteador e o firewall. Com CGNAT, use um túnel.</translation>
+    </message>
+    <message>
+      <source>A computer answered, but nothing listens on that port. Is Caddy (or nginx) running?</source>
+      <translation>Um computador respondeu, mas nada escuta nessa porta. O Caddy (ou nginx) está rodando?</translation>
+    </message>
+    <message>
+      <source>The address cannot be reached from this network.</source>
+      <translation>O endereço não pode ser alcançado a partir desta rede.</translation>
+    </message>
+    <message>
+      <source>Invalid certificate: HTTPS was not issued yet, or it belongs to another name (%1).</source>
+      <translation>Certificado inválido: o HTTPS ainda não foi emitido, ou é de outro nome (%1).</translation>
+    </message>
+    <message>
+      <source>That port does not speak HTTPS. Check the proxy configuration.</source>
+      <translation>Essa porta não fala HTTPS. Confira a configuração do proxy.</translation>
+    </message>
+    <message>
+      <source>ChatToon refused the name: the address in step 2 must be exactly the proxy's (name and port).</source>
+      <translation>O ChatToon recusou o nome: o endereço da etapa 2 precisa ser exatamente o do proxy (nome e porta).</translation>
+    </message>
+    <message>
+      <source>The secret address was not accepted (an old address, or another program on that port).</source>
+      <translation>O endereço secreto não foi aceito (um endereço antigo, ou outro programa nessa porta).</translation>
+    </message>
+    <message>
+      <source>The proxy answered but cannot reach ChatToon. Check that it forwards to 127.0.0.1:%1.</source>
+      <translation>O proxy respondeu, mas não alcança o ChatToon. Confira se ele encaminha para 127.0.0.1:%1.</translation>
+    </message>
+    <message>
+      <source>Unexpected answer from the server (HTTP %1).</source>
+      <translation>Resposta inesperada do servidor (HTTP %1).</translation>
+    </message>
+    <message>
+      <source>The HTTPS request failed.</source>
+      <translation>A requisição HTTPS falhou.</translation>
+    </message>
+    <message>
+      <source>HTTPS works but the live connection (WebSocket) did not pass the proxy. Enable WebSocket/Upgrade forwarding.</source>
+      <translation>O HTTPS funciona, mas a conexão ao vivo (WebSocket) não passou pelo proxy. Ative o repasse de WebSocket/Upgrade.</translation>
+    </message>
+    <message>
+      <source>Address</source>
+      <translation>Endereço</translation>
+    </message>
+    <message>
+      <source>Name (DNS)</source>
+      <translation>Nome (DNS)</translation>
+    </message>
+    <message>
+      <source>Port</source>
+      <translation>Porta</translation>
+    </message>
+    <message>
+      <source>Certificate (HTTPS)</source>
+      <translation>Certificado (HTTPS)</translation>
+    </message>
+    <message>
+      <source>Proxy and ChatToon</source>
+      <translation>Proxy e ChatToon</translation>
+    </message>
+    <message>
+      <source>Live connection (WebSocket)</source>
+      <translation>Conexão ao vivo (WebSocket)</translation>
+    </message>
+    <message>
+      <source>Your computer has a private IP inside your home (given by the router) and your connection has one public IP on the internet. An OBS elsewhere reaches the public IP, and the router passes it to this computer — unless your provider uses CGNAT (one public IP shared by many customers), when only a tunnel works.</source>
+      <translation>O seu computador tem um IP privado dentro de casa (dado pelo roteador) e a sua conexão tem um IP público na internet. Um OBS em outro lugar chega ao IP público, e o roteador repassa para este computador — a não ser que a operadora use CGNAT (um IP público dividido entre muitos clientes); aí só um túnel funciona.</translation>
+    </message>
+    <message>
+      <source>Private IP of this computer:</source>
+      <translation>IP privado deste computador:</translation>
+    </message>
+    <message>
+      <source>Public IP:</source>
+      <translation>IP público:</translation>
+    </message>
+    <message>
+      <source>Public IP, hidden for privacy</source>
+      <translation>IP público, oculto por privacidade</translation>
+    </message>
+    <message>
+      <source>Show for 15 seconds</source>
+      <translation>Mostrar por 15 segundos</translation>
+    </message>
+    <message>
+      <source>Asking…</source>
+      <translation>Perguntando…</translation>
+    </message>
+    <message>
+      <source>Find my public IP</source>
+      <translation>Descobrir meu IP público</translation>
+    </message>
+    <message>
+      <source>Look up your public IP?</source>
+      <translation>Descobrir o seu IP público?</translation>
+    </message>
+    <message>
+      <source>Look it up</source>
+      <translation>Descobrir</translation>
+    </message>
+    <message>
+      <source>ChatToon will ask api.ipify.org, which sees your connection's address when answering. The result stays only in memory and is shown hidden.</source>
+      <translation>O ChatToon vai perguntar ao api.ipify.org, que vê o endereço da sua conexão ao responder. O resultado fica só na memória e aparece oculto.</translation>
+    </message>
+    <message>
+      <source>Forget</source>
+      <translation>Esquecer</translation>
+    </message>
+    <message>
+      <source>The public IP could not be found (no internet?).</source>
+      <translation>Não foi possível descobrir o IP público (sem internet?).</translation>
+    </message>
+    <message>
+      <source>Your public IP is a CGNAT address: port forwarding will not work. Use a tunnel in step 3.</source>
+      <translation>O seu IP público é de CGNAT: encaminhar portas não vai funcionar. Use um túnel na etapa 3.</translation>
+    </message>
+    <message>
+      <source>To be sure there is no CGNAT, compare it with the “WAN IP” on your router's status page: they must be equal.</source>
+      <translation>Para ter certeza de que não há CGNAT, compare com o “IP WAN” na página de status do roteador: devem ser iguais.</translation>
+    </message>
+    <message>
+      <source>This computer also has a public IPv6 address. It may work without port forwarding, but only for viewers with IPv6.</source>
+      <translation>Este computador também tem um endereço IPv6 público. Pode funcionar sem encaminhar portas, mas só para quem tem IPv6.</translation>
+    </message>
+    <message>
+      <source>A certificate needs a name. Use your own domain or a free dynamic DNS name (DuckDNS, No-IP, DigitalPlat FreeDomain, Cloudflare…). Point it to your public IP, or to your tunnel.</source>
+      <translation>Um certificado precisa de um nome. Use o seu domínio ou um nome grátis de DNS dinâmico (DuckDNS, No-IP, DigitalPlat FreeDomain, Cloudflare…). Aponte para o seu IP público, ou para o seu túnel.</translation>
+    </message>
+    <message>
+      <source>Public address</source>
+      <translation>Endereço público</translation>
+    </message>
+    <message>
+      <source>Valid address</source>
+      <translation>Endereço válido</translation>
+    </message>
+    <message>
+      <source>Use https:// and a domain name</source>
+      <translation>Use https:// e um nome de domínio</translation>
+    </message>
+    <message>
+      <source>Public overlay address</source>
+      <translation>Endereço público do overlay</translation>
+    </message>
+    <message>
+      <source>Anyone with this link sees the avatar and hears its voice. Keep it private.</source>
+      <translation>Quem tiver este link vê o avatar e ouve a voz dele. Não compartilhe.</translation>
+    </message>
+    <message>
+      <source>Open ports on the router</source>
+      <translation>Abrir portas no roteador</translation>
+    </message>
+    <message>
+      <source>Needs a real public IP (no CGNAT) and access to the router.</source>
+      <translation>Precisa de um IP público de verdade (sem CGNAT) e acesso ao roteador.</translation>
+    </message>
+    <message>
+      <source>Secure tunnel</source>
+      <translation>Túnel seguro</translation>
+    </message>
+    <message>
+      <source>No router changes; works with CGNAT. Cloudflare Tunnel or Tailscale Funnel.</source>
+      <translation>Sem mexer no roteador; funciona com CGNAT. Cloudflare Tunnel ou Tailscale Funnel.</translation>
+    </message>
+    <message>
+      <source>On the router, reserve the address %1 for this computer (DHCP reservation).</source>
+      <translation>No roteador, reserve o endereço %1 para este computador (reserva de DHCP).</translation>
+    </message>
+    <message>
+      <source>Forward TCP 8443 (HTTPS) and TCP 80 (certificate) to this computer. These reach only Caddy, never ChatToon directly.</source>
+      <translation>Encaminhe TCP 8443 (HTTPS) e TCP 80 (certificado) para este computador. Elas chegam só ao Caddy, nunca direto ao ChatToon.</translation>
+    </message>
+    <message>
+      <source>Never forward port %1 (ChatToon) or 11434 (Ollama): they must stay inside this computer.</source>
+      <translation>Nunca encaminhe a porta %1 (ChatToon) nem a 11434 (Ollama): elas devem ficar só dentro deste computador.</translation>
+    </message>
+    <message>
+      <source>If there are two routers (provider + Wi-Fi), forward on both or put the provider's in bridge mode.</source>
+      <translation>Se houver dois roteadores (operadora + Wi-Fi), encaminhe nos dois ou coloque o da operadora em modo bridge.</translation>
+    </message>
+    <message>
+      <source>A tunnel connects this computer to the provider from the inside; nothing is opened on the router. Use the tunnel's https name in step 2.</source>
+      <translation>Um túnel liga este computador ao provedor por dentro; nada é aberto no roteador. Use o nome https do túnel na etapa 2.</translation>
+    </message>
+    <message>
+      <source>Cloudflare quick tunnel command</source>
+      <translation>Comando do túnel rápido da Cloudflare</translation>
+    </message>
+    <message>
+      <source>Tailscale Funnel command</source>
+      <translation>Comando do Tailscale Funnel</translation>
+    </message>
+    <message>
+      <source>Tunnels already provide HTTPS: skip step 4. A quick tunnel gets a new name every time it starts.</source>
+      <translation>Túneis já fornecem HTTPS: pule a etapa 4. Um túnel rápido ganha um nome novo cada vez que inicia.</translation>
+    </message>
+    <message>
+      <source>Caddy running</source>
+      <translation>Caddy rodando</translation>
+    </message>
+    <message>
+      <source>Caddy installed, stopped</source>
+      <translation>Caddy instalado, parado</translation>
+    </message>
+    <message>
+      <source>Caddy not installed</source>
+      <translation>Caddy não instalado</translation>
+    </message>
+    <message>
+      <source>nginx running</source>
+      <translation>nginx rodando</translation>
+    </message>
+    <message>
+      <source>nginx installed</source>
+      <translation>nginx instalado</translation>
+    </message>
+    <message>
+      <source>Check again</source>
+      <translation>Verificar de novo</translation>
+    </message>
+    <message>
+      <source>Caddy gets the certificate by itself and forwards to ChatToon, which keeps listening only on this computer. Save this as /etc/caddy/conf.d/chattoon.caddy and reload Caddy:</source>
+      <translation>O Caddy obtém o certificado sozinho e repassa para o ChatToon, que continua escutando só neste computador. Salve isto como /etc/caddy/conf.d/chattoon.caddy e recarregue o Caddy:</translation>
+    </message>
+    <message>
+      <source>Copy Caddy configuration</source>
+      <translation>Copiar configuração do Caddy</translation>
+    </message>
+    <message>
+      <source>Copy nginx configuration</source>
+      <translation>Copiar configuração do nginx</translation>
+    </message>
+    <message>
+      <source>Copy install command</source>
+      <translation>Copiar comando de instalação</translation>
+    </message>
+    <message>
+      <source>Testing…</source>
+      <translation>Testando…</translation>
+    </message>
+    <message>
+      <source>Everything works!</source>
+      <translation>Tudo funcionando!</translation>
+    </message>
+    <message>
+      <source>Something is missing</source>
+      <translation>Falta alguma coisa</translation>
+    </message>
+    <message>
+      <source>Fill in your domain in step 2 first.</source>
+      <translation>Preencha antes o seu domínio na etapa 2.</translation>
+    </message>
+    <message>
+      <source>Testing from inside your home may fail even when everything is right (many routers do not support NAT loopback). Confirm from a phone on mobile data.</source>
+      <translation>Testar de dentro de casa pode falhar mesmo com tudo certo (muitos roteadores não suportam NAT loopback). Confirme por um celular nos dados móveis.</translation>
+    </message>
+    <message>
+      <source>Back</source>
+      <translation>Voltar</translation>
+    </message>
+    <message>
+      <source>Next</source>
+      <translation>Próximo</translation>
+    </message>
+  </context>
+  <context>
+    <name>SecretField</name>
+    <message>
+      <source>Hidden for privacy</source>
+      <translation>Oculto por privacidade</translation>
+    </message>
+    <message>
+      <source>Hide</source>
+      <translation>Ocultar</translation>
+    </message>
+    <message>
+      <source>Show for 15 seconds</source>
+      <translation>Mostrar por 15 segundos</translation>
+    </message>
+    <message>
+      <source>Copy</source>
+      <translation>Copiar</translation>
+    </message>
+    <message>
+      <source>Open in the browser</source>
+      <translation>Abrir no navegador</translation>
+    </message>
+  </context>
+  <context>
     <name>SettingsPage</name>
     <message>
       <source>Settings</source>
@@ -2518,6 +4026,26 @@
     <message>
       <source>ChatToon profile (*.json)</source>
       <translation>Perfil do ChatToon (*.json)</translation>
+    </message>
+    <message>
+      <source>How ChatToon looks to you</source>
+      <translation>Como o ChatToon aparece para você</translation>
+    </message>
+    <message>
+      <source>Advanced mode</source>
+      <translation>Modo avançado</translation>
+    </message>
+    <message>
+      <source>Shows the technical settings: network, inference parameters, diagnostics, personality fine-tuning, stream context and history. Simple mode keeps only the essentials.</source>
+      <translation>Mostra as configurações técnicas: rede, parâmetros de inferência, diagnóstico, ajuste fino da personalidade, contexto da live e histórico. O modo simples mantém só o essencial.</translation>
+    </message>
+    <message>
+      <source>Live privacy mode</source>
+      <translation>Modo Privacidade para Lives</translation>
+    </message>
+    <message>
+      <source>Hides addresses, IPs, domains and account names on every page, so the app can appear on stream. Secret codes and the public IP are always hidden.</source>
+      <translation>Esconde endereços, IPs, domínios e nomes de contas em todas as páginas, para o app poder aparecer na live. Códigos secretos e o IP público ficam sempre ocultos.</translation>
     </message>
     <message>
       <source>Appearance</source>
@@ -2692,6 +4220,14 @@
       <translation>Os logins das plataformas usam a entrada oficial ou tokens que você cola — nunca senhas — e ficam no chaveiro do sistema. Os perfis nunca os incluem.</translation>
     </message>
     <message>
+      <source>The overlay listens only on this computer and requires a secret address. Your home network is reached only if you allow it (Where to show); Ollama and the app's controls are never exposed.</source>
+      <translation>O overlay escuta só neste computador e exige um endereço secreto. A rede de casa só tem acesso se você permitir (Onde mostrar); o Ollama e os controles do app nunca ficam expostos.</translation>
+    </message>
+    <message>
+      <source>Your public IP is looked up only when you ask, and secret addresses, IPs and logins stay hidden on screen in live privacy mode.</source>
+      <translation>O seu IP público só é consultado quando você pede, e endereços secretos, IPs e logins ficam ocultos na tela no modo privacidade.</translation>
+    </message>
+    <message>
       <source>Conversation memories stay in RAM during the live. Saving them between lives is optional, stays on this computer and is erased after the period you choose. Messages removed by moderators are forgotten.</source>
       <translation>As memórias das conversas ficam na RAM durante a live. Salvar entre lives é opcional, fica neste computador e é apagado depois do período que você escolher. Mensagens removidas por moderadores são esquecidas.</translation>
     </message>
@@ -2720,6 +4256,50 @@
       <translation>O avatar esquece todos os espectadores, da RAM e do disco. Não dá para desfazer.</translation>
     </message>
     <message>
+      <source>Restore defaults</source>
+      <translation>Restaurar padrões</translation>
+    </message>
+    <message>
+      <source>Puts one part back as it came, without touching the others, your platforms or your logins.</source>
+      <translation>Volta uma parte ao jeito original, sem mexer nas outras, nas suas plataformas nem nos seus logins.</translation>
+    </message>
+    <message>
+      <source>AI generation</source>
+      <translation>Geração da IA</translation>
+    </message>
+    <message>
+      <source>Voice</source>
+      <translation>Voz</translation>
+    </message>
+    <message>
+      <source>Message reading</source>
+      <translation>Leitura das mensagens</translation>
+    </message>
+    <message>
+      <source>Animations</source>
+      <translation>Animações</translation>
+    </message>
+    <message>
+      <source>Appearance in OBS</source>
+      <translation>Aparência no OBS</translation>
+    </message>
+    <message>
+      <source>Desktop window</source>
+      <translation>Janela na área de trabalho</translation>
+    </message>
+    <message>
+      <source>Restore “%1”?</source>
+      <translation>Restaurar “%1”?</translation>
+    </message>
+    <message>
+      <source>Restore</source>
+      <translation>Restaurar</translation>
+    </message>
+    <message>
+      <source>Only this part goes back to the default values.</source>
+      <translation>Só esta parte volta aos valores padrão.</translation>
+    </message>
+    <message>
       <source>Login storage</source>
       <translation>Onde ficam os logins</translation>
     </message>
@@ -2742,10 +4322,6 @@
     <message>
       <source>optional — chattoon extras install tiktok</source>
       <translation>opcional — chattoon extras install tiktok</translation>
-    </message>
-    <message>
-      <source>The overlay server listens only on 127.0.0.1 and requires a secret address.</source>
-      <translation>O servidor do overlay escuta só em 127.0.0.1 e exige um endereço secreto.</translation>
     </message>
     <message>
       <source>Chat messages are never executed and cannot change the avatar's rules.</source>
@@ -2904,6 +4480,288 @@
     <message>
       <source>Add</source>
       <translation>Adicionar</translation>
+    </message>
+  </context>
+  <context>
+    <name>StartReport</name>
+    <message>
+      <source>Checking everything…</source>
+      <translation>Conferindo tudo…</translation>
+    </message>
+    <message>
+      <source>%1 is live!</source>
+      <translation>%1 está ao vivo!</translation>
+    </message>
+    <message>
+      <source>%1 is ready</source>
+      <translation>%1 está pronto</translation>
+    </message>
+    <message>
+      <source>Almost there!</source>
+      <translation>Falta pouco!</translation>
+    </message>
+    <message>
+      <source>%1 answered in %2 s</source>
+      <translation>%1 respondeu em %2 s</translation>
+    </message>
+    <message>
+      <source>%1 — checking that it answers…</source>
+      <translation>%1 — conferindo se responde…</translation>
+    </message>
+    <message>
+      <source>Ollama is not installed.</source>
+      <translation>O Ollama não está instalado.</translation>
+    </message>
+    <message>
+      <source>Ollama is installed but stopped.</source>
+      <translation>O Ollama está instalado, mas parado.</translation>
+    </message>
+    <message>
+      <source>The Ollama server on the other computer does not answer.</source>
+      <translation>O servidor Ollama do outro computador não responde.</translation>
+    </message>
+    <message>
+      <source>Ollama does not answer.</source>
+      <translation>O Ollama não responde.</translation>
+    </message>
+    <message>
+      <source>Choose or install an AI model.</source>
+      <translation>Escolha ou instale um modelo de IA.</translation>
+    </message>
+    <message>
+      <source>The model %1 is no longer installed.</source>
+      <translation>O modelo %1 não está mais instalado.</translation>
+    </message>
+    <message>
+      <source>The model %1 cannot answer the chat.</source>
+      <translation>O modelo %1 não consegue responder ao chat.</translation>
+    </message>
+    <message>
+      <source>The model %1 did not load.</source>
+      <translation>O modelo %1 não carregou.</translation>
+    </message>
+    <message>
+      <source>ready to speak</source>
+      <translation>pronta para falar</translation>
+    </message>
+    <message>
+      <source>testing…</source>
+      <translation>testando…</translation>
+    </message>
+    <message>
+      <source>Voice off — replies only in the speech bubble.</source>
+      <translation>Voz desligada — respostas só no balão de fala.</translation>
+    </message>
+    <message>
+      <source>The voice is not ready yet.</source>
+      <translation>A voz ainda não está pronta.</translation>
+    </message>
+    <message>
+      <source>There is no voice in the reply language yet.</source>
+      <translation>Ainda não há voz no idioma das respostas.</translation>
+    </message>
+    <message>
+      <source>The voice failed the test.</source>
+      <translation>A voz falhou no teste.</translation>
+    </message>
+    <message>
+      <source>Demo mode — type to the character on the Dashboard.</source>
+      <translation>Modo demonstração — escreva para o personagem no Painel.</translation>
+    </message>
+    <message>
+      <source>Connect a platform to receive messages.</source>
+      <translation>Conecte uma plataforma para receber mensagens.</translation>
+    </message>
+    <message>
+      <source>Demo</source>
+      <translation>Demonstração</translation>
+    </message>
+    <message>
+      <source>Assisted — you approve each reply</source>
+      <translation>Assistido — você aprova cada resposta</translation>
+    </message>
+    <message>
+      <source>Automatic</source>
+      <translation>Automático</translation>
+    </message>
+    <message numerus="yes">
+      <source>OBS: %n source(s) connected</source>
+      <translation>
+        <numerusform>OBS: %n fonte conectada</numerusform>
+        <numerusform>OBS: %n fontes conectadas</numerusform>
+      </translation>
+    </message>
+    <message>
+      <source>OBS has not opened the overlay yet</source>
+      <translation>O OBS ainda não abriu o overlay</translation>
+    </message>
+    <message>
+      <source>window on the desktop</source>
+      <translation>janela na área de trabalho</translation>
+    </message>
+    <message>
+      <source>the desktop window is closed</source>
+      <translation>a janela da área de trabalho está fechada</translation>
+    </message>
+    <message>
+      <source>local network on</source>
+      <translation>rede local ligada</translation>
+    </message>
+    <message>
+      <source>internet address set</source>
+      <translation>endereço da internet configurado</translation>
+    </message>
+    <message>
+      <source>Answer the chat</source>
+      <translation>Responder ao chat</translation>
+    </message>
+    <message>
+      <source>Read who sent the message</source>
+      <translation>Ler quem enviou a mensagem</translation>
+    </message>
+    <message>
+      <source>Read the message aloud</source>
+      <translation>Ler a mensagem em voz alta</translation>
+    </message>
+    <message>
+      <source>React with emotions</source>
+      <translation>Reagir com emoções</translation>
+    </message>
+    <message>
+      <source>Idle animations</source>
+      <translation>Animações em repouso</translation>
+    </message>
+    <message>
+      <source>Speak on its own</source>
+      <translation>Falar por conta própria</translation>
+    </message>
+    <message>
+      <source>Tell curiosities</source>
+      <translation>Contar curiosidades</translation>
+    </message>
+    <message>
+      <source>Remember the conversation</source>
+      <translation>Lembrar da conversa</translation>
+    </message>
+    <message>
+      <source>Talk with the connected platforms</source>
+      <translation>Conversar com as plataformas conectadas</translation>
+    </message>
+    <message>
+      <source>Use the stream context</source>
+      <translation>Usar o contexto da live</translation>
+    </message>
+    <message>
+      <source>Speak with a voice</source>
+      <translation>Falar com voz</translation>
+    </message>
+    <message>
+      <source>Checking…</source>
+      <translation>Verificando…</translation>
+    </message>
+    <message>
+      <source>Live</source>
+      <translation>Ao vivo</translation>
+    </message>
+    <message>
+      <source>Ready</source>
+      <translation>Pronto</translation>
+    </message>
+    <message>
+      <source>Could not start</source>
+      <translation>Não foi possível iniciar</translation>
+    </message>
+    <message>
+      <source>Personality: %1</source>
+      <translation>Personalidade: %1</translation>
+    </message>
+    <message>
+      <source>Fix what is red below and try again. Yellow items are optional.</source>
+      <translation>Resolva o que está em vermelho abaixo e tente de novo. Os itens em amarelo são opcionais.</translation>
+    </message>
+    <message>
+      <source>Artificial intelligence</source>
+      <translation>Inteligência artificial</translation>
+    </message>
+    <message>
+      <source>Set up AI</source>
+      <translation>Configurar IA</translation>
+    </message>
+    <message>
+      <source>Voice</source>
+      <translation>Voz</translation>
+    </message>
+    <message>
+      <source>Set up voice</source>
+      <translation>Configurar voz</translation>
+    </message>
+    <message>
+      <source>Platforms</source>
+      <translation>Plataformas</translation>
+    </message>
+    <message>
+      <source>Set up platform</source>
+      <translation>Configurar plataforma</translation>
+    </message>
+    <message>
+      <source>Where it appears</source>
+      <translation>Onde aparece</translation>
+    </message>
+    <message>
+      <source>Where to show</source>
+      <translation>Onde mostrar</translation>
+    </message>
+    <message>
+      <source>OK</source>
+      <translation>OK</translation>
+    </message>
+    <message>
+      <source>Required</source>
+      <translation>Obrigatório</translation>
+    </message>
+    <message>
+      <source>Off</source>
+      <translation>Desativado</translation>
+    </message>
+    <message>
+      <source>Optional</source>
+      <translation>Opcional</translation>
+    </message>
+    <message>
+      <source>What %1 will do</source>
+      <translation>O que %1 vai fazer</translation>
+    </message>
+    <message>
+      <source>(also between lives)</source>
+      <translation>(também entre lives)</translation>
+    </message>
+    <message>
+      <source>on</source>
+      <translation>ligado</translation>
+    </message>
+    <message>
+      <source>off</source>
+      <translation>desligado</translation>
+    </message>
+    <message>
+      <source>Test the character</source>
+      <translation>Testar o personagem</translation>
+    </message>
+    <message>
+      <source>Hi! Are you ready for the live?</source>
+      <translation>Oi! Pronto para a live?</translation>
+    </message>
+    <message>
+      <source>Test</source>
+      <translation>Testar</translation>
+    </message>
+    <message>
+      <source>Close</source>
+      <translation>Fechar</translation>
+    </message>
+    <message>
+      <source>Try again</source>
+      <translation>Tentar de novo</translation>
     </message>
   </context>
   <context>
@@ -3248,6 +5106,70 @@
       <source>Ready — the chat can be read.</source>
       <translation>Pronto — o chat pode ser lido.</translation>
     </message>
+    <message>
+      <source>Preparing</source>
+      <translation>Preparando</translation>
+    </message>
+    <message>
+      <source>Downloading</source>
+      <translation>Baixando</translation>
+    </message>
+    <message>
+      <source>Checking the files</source>
+      <translation>Conferindo os arquivos</translation>
+    </message>
+    <message>
+      <source>Finishing</source>
+      <translation>Finalizando</translation>
+    </message>
+    <message>
+      <source>Done</source>
+      <translation>Pronto</translation>
+    </message>
+    <message>
+      <source>Vision</source>
+      <translation>Visão</translation>
+    </message>
+    <message>
+      <source>Tools</source>
+      <translation>Ferramentas</translation>
+    </message>
+    <message>
+      <source>Reasoning</source>
+      <translation>Raciocínio</translation>
+    </message>
+    <message>
+      <source>Embedding</source>
+      <translation>Embedding</translation>
+    </message>
+    <message>
+      <source>Code fill</source>
+      <translation>Completar código</translation>
+    </message>
+    <message>
+      <source>Friendly</source>
+      <translation>Amigável</translation>
+    </message>
+    <message>
+      <source>Comedian</source>
+      <translation>Comediante</translation>
+    </message>
+    <message>
+      <source>Teaser</source>
+      <translation>Zoeiro</translation>
+    </message>
+    <message>
+      <source>Geek</source>
+      <translation>Geek</translation>
+    </message>
+    <message>
+      <source>Controlled chaos</source>
+      <translation>Caos controlado</translation>
+    </message>
+    <message>
+      <source>Custom</source>
+      <translation>Personalizado</translation>
+    </message>
   </context>
   <context>
     <name>StreamPage</name>
@@ -3525,6 +5447,21 @@
     </message>
   </context>
   <context>
+    <name>VoiceCenter</name>
+    <message>
+      <source>%1 is installed</source>
+      <translation>%1 está instalado</translation>
+    </message>
+    <message>
+      <source>Voice installed</source>
+      <translation>Voz instalada</translation>
+    </message>
+    <message>
+      <source>Voice settings restored</source>
+      <translation>Configurações de voz restauradas</translation>
+    </message>
+  </context>
+  <context>
     <name>VoicePage</name>
     <message>
       <source>Automatic (best match for the character)</source>
@@ -3543,12 +5480,24 @@
       <translation>A fala vem do TTS BigLinux (RHVoice, Piper, espeak-ng e Kokoro). Cada personagem pode ter a sua voz.</translation>
     </message>
     <message>
-      <source>Check again</source>
-      <translation>Verificar de novo</translation>
+      <source>Muted — replies only in the bubble</source>
+      <translation>Sem som — respostas só no balão</translation>
     </message>
     <message>
-      <source>TTS BigLinux</source>
-      <translation>TTS BigLinux</translation>
+      <source>The voice is not ready yet</source>
+      <translation>A voz ainda não está pronta</translation>
+    </message>
+    <message>
+      <source>Ready to speak</source>
+      <translation>Pronta para falar</translation>
+    </message>
+    <message>
+      <source>No voice in this language yet</source>
+      <translation>Ainda sem voz neste idioma</translation>
+    </message>
+    <message>
+      <source>Check again</source>
+      <translation>Verificar de novo</translation>
     </message>
     <message numerus="yes">
       <source>%n voice(s) available</source>
@@ -3570,24 +5519,24 @@
       <translation>Desligado, as respostas aparecem só no balão.</translation>
     </message>
     <message>
-      <source>Engines:</source>
-      <translation>Mecanismos:</translation>
-    </message>
-    <message>
-      <source>Ready</source>
-      <translation>Pronto</translation>
-    </message>
-    <message>
-      <source>Not installed or without voices</source>
-      <translation>Não instalado ou sem vozes</translation>
-    </message>
-    <message>
-      <source>Install it with:  sudo pacman -S tts-biglinux</source>
-      <translation>Instale com:  sudo pacman -S tts-biglinux</translation>
-    </message>
-    <message>
       <source>Voice of %1</source>
       <translation>Voz de %1</translation>
+    </message>
+    <message>
+      <source>Restore defaults</source>
+      <translation>Restaurar padrões</translation>
+    </message>
+    <message>
+      <source>No voice selected</source>
+      <translation>Nenhuma voz selecionada</translation>
+    </message>
+    <message>
+      <source>The voice chosen for %1 is no longer installed, so the automatic voice is used.</source>
+      <translation>A voz escolhida para %1 não está mais instalada, então a voz automática é usada.</translation>
+    </message>
+    <message>
+      <source>Hear a sample</source>
+      <translation>Ouvir demonstração</translation>
     </message>
     <message>
       <source>Preview</source>
@@ -3612,6 +5561,14 @@
     <message>
       <source>This voice has no pitch control.</source>
       <translation>Esta voz não tem controle de tom.</translation>
+    </message>
+    <message>
+      <source>Engines</source>
+      <translation>Mecanismos</translation>
+    </message>
+    <message>
+      <source>Speech comes from TTS BigLinux.</source>
+      <translation>A fala vem do TTS BigLinux.</translation>
     </message>
     <message>
       <source>Message reading</source>

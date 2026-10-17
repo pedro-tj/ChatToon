@@ -110,4 +110,41 @@ QtObject {
         return text ? text + (detail && code !== "network" && code !== "live" && code !== "ready" ? " (" + detail + ")" : "")
                     : (detail || code || "")
     }
+
+    // sizes and speeds in the interface language ("3,4 GB", "12 MB/s")
+    function size(bytes) {
+        const n = Number(bytes) || 0
+        if (n <= 0) return ""
+        if (n >= 1e9) return Number(n / 1e9).toLocaleString(Qt.locale(), "f", 1) + " GB"
+        if (n >= 1e6) return Number(n / 1e6).toLocaleString(Qt.locale(), "f", 0) + " MB"
+        return Number(n / 1e3).toLocaleString(Qt.locale(), "f", 0) + " KB"
+    }
+    // memory as the system reports it (binary units: a "16 GB" card shows 16, not 17.2)
+    function memory(bytes) {
+        const n = Number(bytes) || 0
+        return n > 0 ? Number(n / 1073741824).toLocaleString(Qt.locale(), "f", n >= 10 * 1073741824 ? 0 : 1) + " GB" : ""
+    }
+    function speed(bytesPerSecond) { const s = size(bytesPerSecond); return s ? s + "/s" : "" }
+
+    // what Ollama says while downloading a model
+    function pullStatus(status) {
+        if (!status) return ""
+        if (status.indexOf("manifest") >= 0 && status.indexOf("writing") < 0) return qsTr("Preparing")
+        if (status.startsWith("pulling")) return qsTr("Downloading")
+        if (status.startsWith("verifying")) return qsTr("Checking the files")
+        if (status.startsWith("writing") || status.startsWith("removing")) return qsTr("Finishing")
+        if (status === "success") return qsTr("Done")
+        return status
+    }
+
+    // capabilities reported by Ollama (/api/show)
+    function capability(c) {
+        return ({ completion: qsTr("Chat"), vision: qsTr("Vision"), tools: qsTr("Tools"), thinking: qsTr("Reasoning"),
+                  embedding: qsTr("Embedding"), insert: qsTr("Code fill") })[c] || c
+    }
+
+    function preset(p) {
+        return ({ friendly: qsTr("Friendly"), comedian: qsTr("Comedian"), troll: qsTr("Teaser"), geek: qsTr("Geek"),
+                  chaotic: qsTr("Controlled chaos"), custom: qsTr("Custom") })[p] || p || ""
+    }
 }

@@ -16,26 +16,49 @@ from PySide6.QtGui import QDesktopServices, QGuiApplication
 
 from ..core import extras, knowledge
 from ..core.brain import apply_preset
+from ..core.config import AISettings, AnimationSettings, DisplaySettings, OverlaySettings, ReadingSettings, VoiceSettings
+from ..core.credentials import REDACTOR
+from ..core.privacy import scrub
 from ..core.characters import CHARACTERS, GESTURES, get_character
 from ..core.config import PLATFORMS as PLATFORM_IDS
 from ..core.config import Settings, SourceConfig, profiles_dir
 from ..core.credentials import open_store
 from ..core.engine import ChatToonEngine
 from ..core.events import EventBus
-from ..core.ollama import RECOMMENDED_MODELS, OllamaClient
+from ..core.ollama import RECOMMENDED_MODELS
 from ..core.runtime import Runtime
 from ..core.streams import PLATFORMS
 from ..core.streams.base import ConnectorError
 from ..core.streams.twitch import TwitchAuth, client_id
 from ..core.streams.urls import UrlError, detect, source_key
 from ..core.youtube_chat import extract_video_id
+from .ai_center import OllamaCenter
+from .character_window import CharacterWindow
+from .connectivity import Connectivity
 from .feed import ChatFeedFilter, ChatFeedModel, row_from_message
+from .session_report import SessionReport
+from .voice_center import VoiceCenter
 
 log = logging.getLogger(__name__)
 
 # settings that require the engine to rebuild its selector/overlay state
 _ENGINE_SECTIONS = {"chat", "overlay", "ai", "mode", "character", "animation", "reading", "streams", "memory",
                     "spontaneous"}
+
+# sections that "Restore defaults" may reset — never secrets, the model, the host or the token
+_RESETTABLE = {
+    "ai.generation": ("ai", AISettings, ("temperature", "max_tokens", "context_window", "timeout", "keep_alive",
+                                         "max_sentences", "max_chars", "memory_size", "adaptive", "math_tool",
+                                         "validate", "reference")),
+    "overlay.appearance": ("overlay", OverlaySettings, ("show_bubble", "show_author", "show_platform", "scale",
+                                                        "position_x", "position_y", "rotation", "camera_zoom", "light",
+                                                        "shadows", "quality", "fps", "bubble_seconds", "background")),
+    "display": ("display", DisplaySettings, ("size", "width", "height", "x", "y", "screen", "keep_above",
+                                             "click_through", "locked", "skip_taskbar", "show_bubble")),
+    "reading": ("reading", ReadingSettings, ("mode", "platform", "max_chars", "pause", "voice_id")),
+    "animation": ("animation", AnimationSettings, ("idle", "intensity", "frequency", "reduce_motion")),
+    "voice": ("voice", VoiceSettings, ("enabled", "volume", "audio_output")),
+}
 
 # secrets the interface may store: credential key -> allowed fields (nothing else is accepted)
 _SECRETS = {"kick/app": ("client_secret",), "meta/token": ("access_token",), "x/bearer": ("bearer_token",),
@@ -73,8 +96,8 @@ class Backend(QObject):
         self.runtime = Runtime()
         self._services: dict = {"ollama": {"ok": None, "models": []}, "tts": {"ok": None, "voices": []}}
         self._state = {"state": "stopped", "phase": "idle", "chat": "stopped", "chatDetail": "",
-                       "overlayUrl": "", "publicOverlayUrl": "", "obs": 0, "preview": 0,
-                       "lastError": "", "lastErrorSource": ""}
+                       "overlayUrl": "", "publicOverlayUrl": "", "lanOverlayUrl": "", "lanError": "", "port": 0,
+                       "obs": 0, "preview": 0, "desktop": 0, "browser": 0, "lastError": "", "lastErrorSource": ""}
         self._stats: dict = {}
         self._queue: dict = {"pending": [], "suggestions": []}
         self._history: list[dict] = []
@@ -91,6 +114,7 @@ class Backend(QObject):
         self._metadata: dict = {"sources": [], "time": 0, "loading": False}
         self._suggestion: dict = {"field": "", "loading": False}
         self._closing = False
+        self._missing_model = ""
         self._memory_timer = QTimer(self, singleShot=True, interval=1200)  # a burst of replies → one refresh
         self._memory_timer.timeout.connect(self.refreshMemory)
         self._feed = ChatFeedModel(self)
@@ -98,6 +122,13 @@ class Backend(QObject):
         self._feed_pending: list[dict] = []
         self._feed_timer = QTimer(self, singleShot=True, interval=80)  # batch bursts of messages
         self._feed_timer.timeout.connect(self._flush_feed)
+        self._secrets: set[str] = set()
+        self.remember_secret(self.settings.overlay.token)
+        self.ai = OllamaCenter(self)
+        self.voices = VoiceCenter(self)
+        self.net = Connectivity(self)
+        self.session = SessionReport(self)
+        self.window = CharacterWindow(self)
         self._event.connect(self._on_event)
         self.bus.subscribe(lambda kind, data: self._event.emit(kind, data))
         self.runtime.start()
@@ -115,13 +146,34 @@ class Backend(QObject):
         except OSError as e:
             self.bus.emit("error", {"source": "overlay", "message": str(e)})
         await self.engine.check_services()
+        if not self._closing:
+            self.ai._set("_status", await self.ai.service.status(self.settings.ai.host), self.ai.serviceChanged)
 
     def shutdown(self) -> None:
         self._closing = True
         self._memory_timer.stop()
+        self.window.shutdown()
         self.settings.save()
         self._boot_future.cancel()  # closing during start-up must not leave a dangling task
-        self.runtime.stop(self.engine.shutdown())
+        self.runtime.stop(self._shutdown())
+
+    async def _shutdown(self) -> None:
+        await self.engine.shutdown()
+        await self.ai.shutdown()  # an `ollama serve` started by ChatToon ends with it
+
+    # -- privacy ---------------------------------------------------------------------------
+
+    def remember_secret(self, value: str) -> None:
+        """Never show or log this value (overlay token, public IP…)."""
+        if value:
+            self._secrets.add(value)
+            REDACTOR.add(value)
+
+    def notify(self, message: str, kind: str = "info") -> None:
+        """Every toast goes through here: tokens, the public IP and (in live privacy mode)
+        every address are masked before anything reaches the screen."""
+        if message:
+            self.toast.emit(scrub(message, tuple(self._secrets), self.settings.privacy_mode), kind)
 
     # -- events from the engine (GUI thread) -------------------------------
 
@@ -142,14 +194,20 @@ class Backend(QObject):
             self._state["chatDetail"] = data.get("detail", "")
             self.runtimeChanged.emit()
             if data.get("state") == "error":
-                self.toast.emit(data.get("detail", ""), "error")
+                self.notify(data.get("detail", ""), "error")
         elif kind == "overlay":
             self._state["overlayUrl"] = data.get("url", "")
             self._state["publicOverlayUrl"] = data.get("publicUrl", "")
+            self._state["lanOverlayUrl"] = data.get("lanUrl", "")
+            self._state["lanError"] = data.get("lanError", "")
+            self._state["port"] = data.get("port", 0)
             self.runtimeChanged.emit()
+            self.window.changed.emit()  # the window follows a new address (new token)
         elif kind == "overlay_clients":
             self._state["obs"] = data.get("obs", 0)
             self._state["preview"] = data.get("preview", 0)
+            self._state["desktop"] = data.get("desktop", 0)
+            self._state["browser"] = data.get("browser", 0)
             self.runtimeChanged.emit()
         elif kind == "stats":
             self._stats = data
@@ -201,11 +259,11 @@ class Backend(QObject):
             self._suggestion = dict(data, loading=False)
             self.suggestionChanged.emit()
         elif kind == "error":
-            message = self._error_text(data)
+            message = scrub(self._error_text(data), tuple(self._secrets), self.settings.privacy_mode)
             self._state["lastError"] = message
             self._state["lastErrorSource"] = data.get("source", "")
             self.runtimeChanged.emit()
-            self.toast.emit(message, "error")
+            self.notify(message, "error")
         elif kind == "pull":
             self._pull = data
             self.pullChanged.emit()
@@ -233,13 +291,20 @@ class Backend(QObject):
         self._feed.update(uid, **changes)
 
     def _autoselect(self) -> None:
-        """Pick a sensible model the first time (never a model that is not installed)."""
-        models = self._services.get("ollama", {}).get("models", [])
-        if models and self.settings.ai.model not in models:
+        """Pick a sensible model the first time only. A model the person chose is never
+        replaced silently: if it disappears, the AI page and the start report say so."""
+        ollama = self._services.get("ollama", {})
+        models = ollama.get("models", [])
+        if models and not self.settings.ai.model:
             preferred = next((m for m in RECOMMENDED_MODELS if m in models), models[0])
             self.settings.ai.model = preferred
             self.settings.save()
             self.configChanged.emit()
+        missing = bool(ollama.get("ok") and self.settings.ai.model and self.settings.ai.model not in models)
+        if missing and self._missing_model != self.settings.ai.model:
+            self.notify(self.tr("The model %1 is no longer available. Choose another one on the AI page.")
+                        .replace("%1", self.settings.ai.model), "error")
+        self._missing_model = self.settings.ai.model if missing else ""
 
     # -- properties --------------------------------------------------------
 
@@ -266,6 +331,11 @@ class Backend(QObject):
     metadata = Property("QVariantMap", lambda self: self._metadata, notify=metadataChanged)
     suggestion = Property("QVariantMap", lambda self: self._suggestion, notify=suggestionChanged)
     feed = Property(QObject, lambda self: self._feed_filter, constant=True)
+    aiCenter = Property(QObject, lambda self: self.ai, constant=True)  # noqa: N815
+    voiceCenter = Property(QObject, lambda self: self.voices, constant=True)  # noqa: N815
+    connectivity = Property(QObject, lambda self: self.net, constant=True)
+    sessionReport = Property(QObject, lambda self: self.session, constant=True)  # noqa: N815
+    characterWindow = Property(QObject, lambda self: self.window, constant=True)  # noqa: N815
     feedModel = Property(QObject, lambda self: self._feed, constant=True)  # noqa: N815
 
     def _platforms(self) -> list[dict]:
@@ -646,7 +716,44 @@ class Backend(QObject):
 
     @Slot()
     def start(self) -> None:
-        self.runtime.submit(self.engine.start())
+        """Start through the report: essentials are checked first (docs/35-startup-report.md)."""
+        self.session.startLive()
+
+    @Slot()
+    def startQuietly(self) -> None:  # noqa: N802
+        """Same checks, without opening the report (typing to the avatar in Demo mode)."""
+        self.session.startLive(False)
+
+    @Slot(str)
+    def setDisplayMode(self, mode: str) -> None:  # noqa: N802
+        """Where the character appears: OBS, a window on the desktop, or both."""
+        if mode not in ("obs", "window", "both"):
+            return
+        self.settings.display.mode = mode
+        self.settings.save()
+        self.configChanged.emit()
+        if mode == "obs":
+            self.window.hide()
+        else:
+            self.window.show()
+
+    @Slot(str)
+    def resetSection(self, name: str) -> None:  # noqa: N802
+        """Restore the defaults of one section only (other settings and credentials stay)."""
+        found = _RESETTABLE.get(name)
+        if found is None:
+            return
+        attr, cls, fields = found
+        target, fresh = getattr(self.settings, attr), cls()
+        for f in fields:
+            setattr(target, f, getattr(fresh, f))
+        if name == "voice":
+            cs = self.settings.character_settings()
+            cs.voice_id, cs.voice_rate, cs.voice_pitch = "", 0, 0
+        self.settings.save()
+        self.configChanged.emit()
+        self.runtime.submit(self._apply())
+        self.notify(self.tr("Defaults restored"), "success")
 
     @Slot()
     def pause(self) -> None:
@@ -732,25 +839,7 @@ class Backend(QObject):
 
     @Slot(str)
     def pullModel(self, model: str) -> None:  # noqa: N802
-        model = model.strip()
-        downloading = bool(self._pull.get("model")) and 0 <= self._pull.get("progress", -1) < 1
-        if not model or downloading:
-            return
-
-        async def run() -> None:
-            def progress(status: str, done: int, total: int) -> None:
-                self.bus.emit("pull", {"model": model, "status": status,
-                                       "progress": done / total if total else -1.0})
-            try:
-                async with OllamaClient(self.settings.ai.host, 30) as client:
-                    await client.pull(model, progress)
-                self.bus.emit("pull", {"model": model, "status": "success", "progress": 1.0})
-                await self.engine.check_services()
-            except Exception as e:  # noqa: BLE001 - shown to the user
-                self.bus.emit("pull", {"model": model, "status": "error", "progress": -1.0})
-                self.bus.emit("error", {"source": "ai", "message": str(e)})
-
-        self.runtime.submit(run())
+        self.ai.pullModel(model)
 
     # -- memory (Live chat › Memory) -------------------------------------------
     # Runs on the engine's loop (never a worker thread): the memory is only touched there.
@@ -849,7 +938,9 @@ class Backend(QObject):
     @Slot(str)
     def copyText(self, text: str) -> None:  # noqa: N802
         QGuiApplication.clipboard().setText(text)
-        self.toast.emit(self.tr("Copied to the clipboard"), "success")
+        secret = any(x in text for x in self._secrets)
+        self.toast.emit(self.tr("Copied. It contains a secret code: paste it only in OBS.") if secret
+                        else self.tr("Copied to the clipboard"), "success")
 
     @Slot(str)
     def openUrl(self, url: str) -> None:  # noqa: N802

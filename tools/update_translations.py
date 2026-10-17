@@ -23,7 +23,9 @@ def tool(name: str) -> str:
 
 
 def main() -> int:
-    subprocess.run([tool("lupdate"), "chattoon/gui/qml", "chattoon/gui/backend.py", "-extensions", "qml,py",
+    # lupdate skips .py files when scanning a folder: the Python sources are listed one by one
+    sources = ["chattoon/gui/qml", *sorted(str(p.relative_to(ROOT)) for p in (ROOT / "chattoon" / "gui").glob("*.py"))]
+    subprocess.run([tool("lupdate"), *sources, "-extensions", "qml,py",
                     "-ts", str(TS), "-target-language", "pt_BR", "-locations", "none", "-no-obsolete"],
                    cwd=ROOT, check=True, capture_output=True)
     tree = ET.parse(TS)

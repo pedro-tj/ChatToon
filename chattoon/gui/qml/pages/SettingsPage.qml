@@ -21,6 +21,21 @@ Page {
     FileDialog { id: importDialog; nameFilters: [qsTr("ChatToon profile (*.json)")]; onAccepted: backend.loadProfile(selectedFile.toString()) }
 
     Section {
+        title: qsTr("How ChatToon looks to you")
+        iconName: "wand"
+        SettingRow {
+            label: qsTr("Advanced mode")
+            description: qsTr("Shows the technical settings: network, inference parameters, diagnostics, personality fine-tuning, stream context and history. Simple mode keeps only the essentials.")
+            AppSwitch { checked: cfg.advanced; onToggled: backend.setConfig("advanced", checked); Accessible.name: qsTr("Advanced mode") }
+        }
+        SettingRow {
+            label: qsTr("Live privacy mode")
+            description: qsTr("Hides addresses, IPs, domains and account names on every page, so the app can appear on stream. Secret codes and the public IP are always hidden.")
+            AppSwitch { checked: cfg.privacy_mode; onToggled: backend.setConfig("privacy_mode", checked); Accessible.name: qsTr("Live privacy mode") }
+        }
+    }
+
+    Section {
         title: qsTr("Appearance")
         iconName: "palette"
         SettingRow {
@@ -165,7 +180,8 @@ Page {
             model: [
                 qsTr("AI and voice run on this computer (Ollama and TTS BigLinux). Only the chats of your streaming platforms are read from the internet."),
                 qsTr("Platform logins use official sign-in or tokens you paste — never passwords — and stay in the system keyring. Profiles never include them."),
-                qsTr("The overlay server listens only on 127.0.0.1 and requires a secret address."),
+                qsTr("The overlay listens only on this computer and requires a secret address. Your home network is reached only if you allow it (Where to show); Ollama and the app's controls are never exposed."),
+                qsTr("Your public IP is looked up only when you ask, and secret addresses, IPs and logins stay hidden on screen in live privacy mode."),
                 qsTr("Chat messages are never executed and cannot change the avatar's rules."),
                 qsTr("History stays in memory and is lost when you close the app, unless you export it."),
                 qsTr("Conversation memories stay in RAM during the live. Saving them between lives is optional, stays on this computer and is erased after the period you choose. Messages removed by moderators are forgotten."),
@@ -205,13 +221,35 @@ Page {
     }
 
     Section {
+        title: qsTr("Restore defaults")
+        iconName: "undo"
+        description: qsTr("Puts one part back as it came, without touching the others, your platforms or your logins.")
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            Repeater {
+                model: [{ id: "ai.generation", label: qsTr("AI generation") }, { id: "voice", label: qsTr("Voice") },
+                        { id: "reading", label: qsTr("Message reading") }, { id: "animation", label: qsTr("Animations") },
+                        { id: "overlay.appearance", label: qsTr("Appearance in OBS") }, { id: "display", label: qsTr("Desktop window") }]
+                AppButton {
+                    required property var modelData
+                    compact: true; iconName: "undo"; text: modelData.label
+                    onClicked: win.ask({ title: qsTr("Restore “%1”?").arg(modelData.label), icon: "undo", confirm: qsTr("Restore"),
+                                         message: qsTr("Only this part goes back to the default values.") },
+                                       () => backend.resetSection(modelData.id))
+                }
+            }
+        }
+    }
+
+    Section {
         title: qsTr("Diagnostics")
         iconName: "info"
         actions: AppButton { compact: true; iconName: "refresh"; text: qsTr("Run checks"); onClicked: backend.refreshServices() }
         Repeater {
             model: [
-                { label: qsTr("Ollama"), ok: backend.services.ollama.ok, text: backend.services.ollama.ok ? backend.services.ollama.version : (backend.services.ollama.error || "") },
-                { label: qsTr("TTS BigLinux"), ok: backend.services.tts.ok, text: backend.services.tts.ok ? qsTr("%n voice(s)", "", (backend.services.tts.voices || []).length) : (backend.services.tts.error || "") },
+                { label: qsTr("Ollama"), ok: backend.services.ollama.ok, text: backend.services.ollama.ok ? backend.services.ollama.version : Privacy.text(backend.services.ollama.error || "") },
+                { label: qsTr("TTS BigLinux"), ok: backend.services.tts.ok, text: backend.services.tts.ok ? qsTr("%n voice(s)", "", (backend.services.tts.voices || []).length) : Privacy.text(backend.services.tts.error || "") },
                 { label: qsTr("Audio player"), ok: backend.services.player, text: backend.services.player ? qsTr("found") : qsTr("missing") },
                 { label: qsTr("3D preview (QtWebEngine)"), ok: webEngineAvailable, text: webEngineAvailable ? qsTr("available") : qsTr("missing") },
                 { label: qsTr("Login storage"), ok: backend.accounts.store ? backend.accounts.encrypted : undefined,

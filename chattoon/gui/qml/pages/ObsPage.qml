@@ -9,83 +9,38 @@ Page {
     readonly property var o: cfg.overlay
     readonly property var rt: backend.runtimeState
 
-    title: qsTr("OBS Studio")
-    subtitle: qsTr("Add the avatar to your scene as a Browser Source. The address only works on this computer.")
+    readonly property string mode: cfg.display.mode
+
+    title: qsTr("Where to show")
+    subtitle: qsTr("Choose where your character appears: in OBS Studio for live streams, in a window on your desktop, or both.")
 
     Section {
-        title: qsTr("Overlay address")
-        iconName: "broadcast"
-        description: rt.obs > 0 ? qsTr("%n OBS source(s) connected right now", "", rt.obs) : qsTr("Not connected to OBS yet")
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            AppTextField { Layout.fillWidth: true; readOnly: true; text: rt.overlayUrl; font.family: Theme.mono; Accessible.name: qsTr("Overlay address") }
-            AppButton { variant: "primary"; iconName: "copy"; text: qsTr("Copy"); enabled: rt.overlayUrl !== ""; onClicked: backend.copyText(rt.overlayUrl) }
-            AppButton { iconName: "external"; tip: qsTr("Open in the browser"); enabled: rt.overlayUrl !== ""; onClicked: backend.openUrl(rt.overlayUrl) }
-        }
-        Repeater {
-            model: [
-                qsTr("In OBS, click + under Sources and choose Browser."),
-                qsTr("Paste the address above in URL. Width 1920, height 1080."),
-                qsTr("Leave “Shutdown source when not visible” off so the avatar keeps its state."),
-                cfg.voice.audio_output === "overlay" ? qsTr("Enable “Control audio via OBS” — the voice will come from this source.")
-                                                     : qsTr("The voice plays on this computer: capture it with Desktop Audio."),
-                qsTr("The background is transparent. Resize and position the source in your scene as you like."),
-            ]
-            RowLayout {
-                required property string modelData
-                required property int index
-                Layout.fillWidth: true
-                spacing: 10
-                Rectangle {
-                    width: 24; height: 24; radius: 12
-                    color: Theme.tint(Theme.accent, 0.18)
-                    Text { anchors.centerIn: parent; text: index + 1; color: Theme.accent; font.pixelSize: 12; font.weight: Font.Bold }
-                }
-                Text { Layout.fillWidth: true; text: modelData; color: Theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
-            }
-        }
+        title: qsTr("Where should your character appear?")
+        iconName: "monitor"
+        DisplayModePicker {}
     }
 
     Section {
-        title: qsTr("Access from another computer")
-        iconName: "globe"
-        description: qsTr("Optional. Run an HTTPS reverse proxy on this computer (Caddy, nginx…) that forwards to %1, then type its public address here.")
-                     .arg(rt.overlayUrl.split("/o/")[0])
-        AppTextField {
-            Layout.fillWidth: true
-            iconName: "link"
-            font.family: Theme.mono
-            placeholderText: "https://example.org:8443"
-            text: o.public_address
-            onEditingFinished: backend.setConfig("overlay.public_address", text.trim())
-            Accessible.name: qsTr("Public address")
-        }
-        Text {
-            Layout.fillWidth: true
-            visible: o.public_address !== "" && rt.publicOverlayUrl === ""
-            text: qsTr("Use an https:// address, like https://example.org:8443.")
-            color: Theme.danger; font.pixelSize: 12; wrapMode: Text.WordWrap
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            visible: rt.publicOverlayUrl !== ""
-            spacing: 8
-            AppTextField { Layout.fillWidth: true; readOnly: true; text: rt.publicOverlayUrl; font.family: Theme.mono; Accessible.name: qsTr("Public overlay address") }
-            AppButton { iconName: "copy"; text: qsTr("Copy"); onClicked: backend.copyText(rt.publicOverlayUrl) }
-            AppButton { iconName: "external"; tip: qsTr("Open in the browser"); onClicked: backend.openUrl(rt.publicOverlayUrl) }
-        }
-        Text {
-            Layout.fillWidth: true
-            visible: rt.publicOverlayUrl !== ""
-            text: qsTr("Anyone with this link sees the avatar and hears its voice. Keep it private.")
-            color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.WordWrap
-        }
+        visible: page.mode !== "obs"
+        title: qsTr("Window on the computer")
+        iconName: "appWindow"
+        description: qsTr("Only the character and its speech bubble, with a transparent background.")
+        actions: AppButton { visible: cfg.advanced; compact: true; variant: "ghost"; iconName: "undo"; text: qsTr("Restore defaults"); onClicked: backend.resetSection("display") }
+        CharacterWindowCard {}
+    }
+
+    Section {
+        visible: page.mode !== "window"
+        title: qsTr("Where is your OBS Studio?")
+        iconName: "broadcast"
+        description: rt.obs > 0 ? qsTr("%n OBS source(s) connected right now", "", rt.obs) : qsTr("Not connected to OBS yet")
+        ObsAccess {}
     }
 
     RowLayout {
         Layout.fillWidth: true
         spacing: 16
+        visible: page.mode !== "window"
         Preview {
             Layout.fillWidth: true
             Layout.preferredWidth: 1
@@ -96,14 +51,15 @@ Page {
         Section {
             Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
-            title: qsTr("Appearance")
+            title: qsTr("Appearance in OBS")
             iconName: "palette"
+            actions: AppButton { compact: true; variant: "ghost"; iconName: "undo"; text: qsTr("Restore defaults"); onClicked: backend.resetSection("overlay.appearance") }
             LabeledSlider { label: qsTr("Size"); from: 0.3; to: 2.5; stepSize: 0.05; decimals: 2; value: o.scale; onMoved: v => backend.setConfig("overlay.scale", v) }
             LabeledSlider { label: qsTr("Horizontal position"); from: -1; to: 1; stepSize: 0.02; decimals: 2; value: o.position_x; onMoved: v => backend.setConfig("overlay.position_x", v) }
             LabeledSlider { label: qsTr("Vertical position"); from: -1; to: 1; stepSize: 0.02; decimals: 2; value: o.position_y; onMoved: v => backend.setConfig("overlay.position_y", v) }
-            LabeledSlider { label: qsTr("Rotation"); from: -60; to: 60; value: o.rotation; suffix: "°"; onMoved: v => backend.setConfig("overlay.rotation", v) }
-            LabeledSlider { label: qsTr("Camera zoom"); from: 0.5; to: 2.5; stepSize: 0.05; decimals: 2; value: o.camera_zoom; onMoved: v => backend.setConfig("overlay.camera_zoom", v) }
-            LabeledSlider { label: qsTr("Lighting"); from: 0.3; to: 2; stepSize: 0.05; decimals: 2; value: o.light; onMoved: v => backend.setConfig("overlay.light", v) }
+            LabeledSlider { visible: cfg.advanced; label: qsTr("Rotation"); from: -60; to: 60; value: o.rotation; suffix: "°"; onMoved: v => backend.setConfig("overlay.rotation", v) }
+            LabeledSlider { visible: cfg.advanced; label: qsTr("Camera zoom"); from: 0.5; to: 2.5; stepSize: 0.05; decimals: 2; value: o.camera_zoom; onMoved: v => backend.setConfig("overlay.camera_zoom", v) }
+            LabeledSlider { visible: cfg.advanced; label: qsTr("Lighting"); from: 0.3; to: 2; stepSize: 0.05; decimals: 2; value: o.light; onMoved: v => backend.setConfig("overlay.light", v) }
             SettingRow { label: qsTr("Speech bubble"); AppSwitch { checked: o.show_bubble; onToggled: backend.setConfig("overlay.show_bubble", checked) } }
             SettingRow { label: qsTr("Show the viewer's name"); AppSwitch { checked: o.show_author; onToggled: backend.setConfig("overlay.show_author", checked) } }
             SettingRow {
@@ -111,7 +67,7 @@ Page {
                 description: qsTr("A small “Twitch • Ana” tag on the viewer's message.")
                 AppSwitch { checked: o.show_platform; onToggled: backend.setConfig("overlay.show_platform", checked); Accessible.name: qsTr("Show the platform of the message") }
             }
-            SettingRow { label: qsTr("Soft shadow"); AppSwitch { checked: o.shadows; onToggled: backend.setConfig("overlay.shadows", checked) } }
+            SettingRow { visible: cfg.advanced; label: qsTr("Soft shadow"); AppSwitch { checked: o.shadows; onToggled: backend.setConfig("overlay.shadows", checked) } }
             SettingRow {
                 label: qsTr("Background")
                 Segmented {
@@ -121,6 +77,7 @@ Page {
                 }
             }
             SettingRow {
+                visible: cfg.advanced
                 label: qsTr("Quality")
                 description: qsTr("Lower it on modest GPUs.")
                 Segmented {
@@ -130,6 +87,7 @@ Page {
                 }
             }
             SettingRow {
+                visible: cfg.advanced
                 label: qsTr("Frame rate limit")
                 Segmented {
                     model: [{ value: 30, label: "30" }, { value: 60, label: "60" }]

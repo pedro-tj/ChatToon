@@ -28,45 +28,56 @@ Page {
 
     title: qsTr("Voice")
     subtitle: qsTr("Speech comes from TTS BigLinux (RHVoice, Piper, espeak-ng and Kokoro). Each character can have its own voice.")
-    header: AppButton { iconName: "refresh"; text: qsTr("Check again"); onClicked: backend.refreshServices() }
+
+    // what the character will really sound like, at a glance
+    readonly property bool chosenMissing: cfg.current.voice_id !== "" && !voices.find(v => v.id === cfg.current.voice_id)
+    readonly property string readyTone: !cfg.voice.enabled ? "idle" : tts.ok !== true ? "warn" : activeVoice ? "ok" : "warn"
+    readonly property string readyText: !cfg.voice.enabled ? qsTr("Muted — replies only in the bubble")
+                                      : tts.ok === false ? qsTr("The voice is not ready yet")
+                                      : tts.ok !== true ? qsTr("Checking…")
+                                      : activeVoice ? qsTr("Ready to speak") : qsTr("No voice in this language yet")
 
     Section {
-        title: qsTr("TTS BigLinux")
-        iconName: "volume"
-        description: tts.ok === true ? qsTr("%n voice(s) available", "", (tts.voices || []).length)
-                   : tts.ok === false ? (tts.error || "") : qsTr("Checking…")
+        title: qsTr("Voice of %1").arg(page.current.name || "")
+        iconName: "mic"
+        actions: AppButton { compact: true; variant: "ghost"; iconName: "undo"; text: qsTr("Restore defaults"); onClicked: backend.voiceCenter.resetVoice() }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 14
+            Image {
+                Layout.preferredWidth: 64; Layout.preferredHeight: 72
+                source: "../assets/characters/" + cfg.character + ".png"
+                sourceSize: Qt.size(128, 144)
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+                Text {
+                    text: page.activeVoice ? (page.engineNames[page.activeVoice.backend] || page.activeVoice.backend) + " — " + page.activeVoice.name
+                                           : qsTr("No voice selected")
+                    color: Theme.text; font.pixelSize: 16; font.weight: Font.DemiBold
+                }
+                StateChip { text: page.readyText; tone: page.readyTone }
+                Text {
+                    Layout.fillWidth: true
+                    visible: page.chosenMissing
+                    text: qsTr("The voice chosen for %1 is no longer installed, so the automatic voice is used.").arg(page.current.name || "")
+                    color: Theme.warning; font.pixelSize: 12; wrapMode: Text.WordWrap
+                }
+            }
+            AppButton {
+                variant: "primary"; iconName: "play"; text: qsTr("Hear a sample")
+                enabled: tts.ok === true && page.activeVoice !== null
+                onClicked: backend.previewVoice(page.activeVoice ? page.activeVoice.id : "")
+            }
+        }
         SettingRow {
             label: qsTr("Speak the replies")
             description: qsTr("When off, replies appear only in the speech bubble.")
             AppSwitch { checked: cfg.voice.enabled; onToggled: backend.setConfig("voice.enabled", checked); Accessible.name: qsTr("Speak the replies") }
         }
-        RowLayout {
-            visible: tts.ok === true
-            spacing: 6
-            Text { text: qsTr("Engines:"); color: Theme.textMuted; font.pixelSize: 12 }
-            Repeater {
-                model: ["rhvoice", "espeak-ng", "piper", "kokoro"]
-                Chip {
-                    required property string modelData
-                    readonly property bool ready: (tts.engines || []).indexOf(modelData) >= 0
-                    text: page.engineNames[modelData]
-                    iconName: ready ? "check" : "minus"
-                    tone: ready ? Theme.success : Theme.textMuted
-                    tip: ready ? qsTr("Ready") : qsTr("Not installed or without voices")
-                }
-            }
-        }
-        Text {
-            visible: tts.ok === false
-            Layout.fillWidth: true
-            text: qsTr("Install it with:  sudo pacman -S tts-biglinux")
-            color: Theme.warning; font.family: Theme.mono; font.pixelSize: 12
-        }
-    }
-
-    Section {
-        title: qsTr("Voice of %1").arg(page.current.name || "")
-        iconName: "mic"
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
@@ -103,6 +114,15 @@ Page {
                 onMoved: v => backend.setConfig("current.voice_pitch", Math.round(v))
             }
         }
+    }
+
+    Section {
+        title: qsTr("Engines")
+        iconName: "volume"
+        description: tts.ok === true ? qsTr("%n voice(s) available", "", (tts.voices || []).length) + " · " + qsTr("Speech comes from TTS BigLinux.")
+                   : tts.ok === false ? (tts.error || "") : qsTr("Checking…")
+        actions: AppButton { compact: true; variant: "ghost"; iconName: "refresh"; text: qsTr("Check again"); onClicked: backend.refreshServices() }
+        EngineCards { activeBackend: page.activeVoice ? page.activeVoice.backend : "" }
     }
 
     Section {

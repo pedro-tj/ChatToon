@@ -13,6 +13,11 @@ Page {
 
     title: qsTr("Dashboard")
     subtitle: qsTr("Everything that matters during the live stream, in one place.")
+    header: [
+        AppButton { iconName: "activity"; text: qsTr("System health"); tip: qsTr("Check AI, voice, platforms and display without going live")
+                    onClicked: { backend.sessionReport.check(); startReport.open() } },
+        AppButton { iconName: "file"; text: qsTr("Session report"); visible: backend.sessionReport.report.state !== "none"; onClicked: startReport.open() }
+    ]
 
     readonly property var enabledSources: backend.sources.filter(s => s.enabled)
     readonly property int connectedSources: enabledSources.filter(s => s.status.state === "connected").length
@@ -61,8 +66,10 @@ Page {
             StatusCard {
                 iconName: "bot"
                 title: qsTr("Ollama (AI)")
-                status: svc.ollama.ok === true ? (cfg.ai.model ? "ok" : "warn") : svc.ollama.ok === false ? "error" : "busy"
-                value: svc.ollama.ok === false ? qsTr("Not running") : cfg.ai.model || qsTr("Choose a model")
+                status: svc.ollama.ok === true ? (cfg.ai.model && (svc.ollama.models || []).indexOf(cfg.ai.model) >= 0 ? "ok" : "warn")
+                      : svc.ollama.ok === false ? "error" : "busy"
+                value: svc.ollama.ok === false ? qsTr("Not running") : !cfg.ai.model ? qsTr("Choose a model")
+                     : (svc.ollama.models || []).indexOf(cfg.ai.model) < 0 && svc.ollama.ok === true ? qsTr("%1 is missing").arg(cfg.ai.model) : cfg.ai.model
                 detail: svc.ollama.ok === false ? svc.ollama.error || "" : qsTr("Version %1").arg(svc.ollama.version || "?")
                 onClicked: win.go("ai")
             }
@@ -88,11 +95,13 @@ Page {
                 onClicked: win.go("platforms")
             }
             StatusCard {
-                iconName: "broadcast"
-                title: qsTr("OBS overlay")
-                status: rt.obs > 0 ? "ok" : "idle"
-                value: rt.obs > 0 ? qsTr("%n source(s) connected", "", rt.obs) : qsTr("Not added to OBS yet")
-                onClicked: win.go("obs")
+                iconName: cfg.display.mode === "window" ? "appWindow" : "broadcast"
+                title: cfg.display.mode === "window" ? qsTr("Character window") : cfg.display.mode === "both" ? qsTr("OBS and desktop window") : qsTr("OBS overlay")
+                status: (cfg.display.mode === "window" ? backend.characterWindow.isOpen : rt.obs > 0) ? "ok" : "idle"
+                value: cfg.display.mode === "window" ? (backend.characterWindow.isOpen ? qsTr("On the desktop") : qsTr("Hidden"))
+                     : (rt.obs > 0 ? qsTr("%n source(s) connected", "", rt.obs) : qsTr("Not added to OBS yet"))
+                       + (cfg.display.mode === "both" ? " · " + (backend.characterWindow.isOpen ? qsTr("window open") : qsTr("window hidden")) : "")
+                onClicked: win.go("display")
             }
             GridLayout {
                 Layout.fillWidth: true
@@ -230,7 +239,7 @@ Page {
                     tip: qsTr("Send as a chat message")
                     Accessible.name: qsTr("Send")
                     onClicked: {
-                        if (!win.running && cfg.mode === "demo") backend.start()
+                        if (!win.running && cfg.mode === "demo") backend.startQuietly()
                         if (cfg.mode === "demo") backend.submitMessage(message.text, author.text)
                         else backend.testReply(message.text, author.text)
                         message.text = ""

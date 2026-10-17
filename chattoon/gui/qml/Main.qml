@@ -10,7 +10,7 @@ ApplicationWindow {
     readonly property var rt: backend.runtimeState
     readonly property bool running: rt.state === "running"
     readonly property bool paused: rt.state === "paused"
-    property alias currentPage: nav.currentIndex
+    property int currentPage: 0  // index in the page stack (see pageIndex)
     // platform id -> { label, color, glyph, support, … } (PlatformBadge, pages)
     readonly property var platformInfo: {
         const map = {}
@@ -18,8 +18,29 @@ ApplicationWindow {
         return map
     }
     readonly property var pageIndex: ({ dashboard: 0, characters: 1, personality: 2, ai: 3, platforms: 4, livechat: 5,
-                                        voice: 6, context: 7, obs: 8, history: 9, settings: 10 })
-    function go(name) { nav.currentIndex = pageIndex[name] }
+                                        voice: 6, context: 7, obs: 8, display: 8, history: 9, settings: 10 })
+    function go(name) { currentPage = pageIndex[name] }
+    // menu: the simple mode shows the essentials; the advanced mode adds the technical pages
+    readonly property var pages: [
+        { id: "dashboard", icon: "dashboard", label: qsTr("Dashboard") },
+        { id: "characters", icon: "smile", label: qsTr("Characters") },
+        { id: "personality", icon: "sparkles", label: qsTr("Personality"), advanced: true },
+        { id: "ai", icon: "bot", label: qsTr("Artificial intelligence") },
+        { id: "voice", icon: "volume", label: qsTr("Voice") },
+        { id: "platforms", icon: "layers", label: qsTr("Streaming platforms") },
+        { id: "display", icon: "monitor", label: qsTr("Where to show") },
+        { id: "livechat", icon: "chat", label: qsTr("Live chat") },
+        { id: "context", icon: "book", label: qsTr("Stream context"), advanced: true },
+        { id: "history", icon: "history", label: qsTr("History"), advanced: true },
+        { id: "settings", icon: "settings", label: qsTr("Settings") },
+    ]
+    readonly property var visiblePages: pages.filter(p => !p.advanced || cfg.advanced || pageIndex[p.id] === currentPage)
+    function ask(options, callback) { confirm.ask(options, callback) }
+    function askReveal(key) {
+        confirm.ask({ title: qsTr("Show this information?"), icon: "eye", danger: true, confirm: qsTr("Show for 15 seconds"),
+                      message: qsTr("It stays visible for 15 seconds. If you are streaming or sharing your screen, viewers will see it too.") },
+                    () => Privacy.reveal(key))
+    }
 
     width: 1360
     height: 880
@@ -43,6 +64,7 @@ ApplicationWindow {
     palette.placeholderText: Theme.textFaint
 
     Binding { target: Theme; property: "mode"; value: win.cfg.theme }
+    Binding { target: Privacy; property: "live"; value: win.cfg.privacy_mode }
 
     // sources that need the streamer (login, error) — shown as a badge on the menu
     readonly property int attention: backend.sources.filter(s => s.enabled && ["auth_required", "error"].indexOf(s.status.state) >= 0).length
@@ -64,7 +86,7 @@ ApplicationWindow {
         model: 9
         Item {
             required property int index
-            Shortcut { sequence: "Ctrl+" + (index + 1); onActivated: nav.currentIndex = index }
+            Shortcut { sequence: "Ctrl+" + (index + 1); onActivated: if (index < win.visiblePages.length) win.go(win.visiblePages[index].id) }
         }
     }
 
@@ -107,30 +129,51 @@ ApplicationWindow {
                     spacing: 2
                     keyNavigationEnabled: true
                     activeFocusOnTab: true
-                    model: [
-                        { icon: "dashboard", label: qsTr("Dashboard") },
-                        { icon: "smile", label: qsTr("Characters") },
-                        { icon: "sparkles", label: qsTr("Personality") },
-                        { icon: "bot", label: qsTr("Artificial intelligence") },
-                        { icon: "layers", label: qsTr("Streaming platforms") },
-                        { icon: "chat", label: qsTr("Live chat") },
-                        { icon: "volume", label: qsTr("Voice") },
-                        { icon: "book", label: qsTr("Stream context") },
-                        { icon: "broadcast", label: qsTr("OBS Studio") },
-                        { icon: "history", label: qsTr("History") },
-                        { icon: "settings", label: qsTr("Settings") },
-                    ]
+                    model: win.visiblePages
+                    currentIndex: win.visiblePages.findIndex(p => win.pageIndex[p.id] === win.currentPage)
+                    // arrow keys on the menu open the page (the binding above follows clicks and shortcuts)
+                    onCurrentIndexChanged: if (activeFocus && currentIndex >= 0 && win.pageIndex[win.visiblePages[currentIndex].id] !== win.currentPage)
+                                               win.go(win.visiblePages[currentIndex].id)
                     delegate: NavButton {
                         required property var modelData
                         required property int index
                         width: ListView.view.width
                         text: modelData.label
                         iconName: modelData.icon
-                        current: nav.currentIndex === index
-                        badge: index === 0 && (backend.queue.suggestions || []).length > 0 ? String(backend.queue.suggestions.length)
-                             : index === 4 && win.attention > 0 ? "!" : ""
-                        onClicked: nav.currentIndex = index
+                        current: win.pageIndex[modelData.id] === win.currentPage
+                        badge: modelData.id === "dashboard" && (backend.queue.suggestions || []).length > 0 ? String(backend.queue.suggestions.length)
+                             : modelData.id === "platforms" && win.attention > 0 ? "!" : ""
+                        onClicked: win.go(modelData.id)
                     }
+                }
+
+                // live privacy: always visible, one click away
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 34
+                    radius: Theme.radiusSmall
+                    color: win.cfg.privacy_mode ? Theme.tint(Theme.success, 0.12) : Theme.tint(Theme.warning, 0.12)
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.CheckBox
+                    Accessible.name: qsTr("Live privacy mode")
+                    Accessible.checked: win.cfg.privacy_mode
+                    Keys.onSpacePressed: backend.setConfig("privacy_mode", !win.cfg.privacy_mode)
+                    RowLayout {
+                        anchors { fill: parent; leftMargin: 10; rightMargin: 10 }
+                        spacing: 8
+                        Icon { name: win.cfg.privacy_mode ? "shield" : "eye"; size: 15; color: win.cfg.privacy_mode ? Theme.success : Theme.warning }
+                        Text {
+                            Layout.fillWidth: true
+                            text: win.cfg.privacy_mode ? qsTr("Live privacy: on") : qsTr("Live privacy: off")
+                            color: win.cfg.privacy_mode ? Theme.success : Theme.warning; font.pixelSize: 12; font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+                    }
+                    HoverHandler { id: privHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: backend.setConfig("privacy_mode", !win.cfg.privacy_mode) }
+                    ToolTip.visible: privHover.hovered
+                    ToolTip.text: qsTr("Hides addresses, IPs and account names on every page — safe to show on stream.")
+                    ToolTip.delay: 400
                 }
 
                 // live state + main control, always reachable
@@ -190,7 +233,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.margins: 22
-            currentIndex: nav.currentIndex
+            currentIndex: win.currentPage
 
             DashboardPage {}
             Loader { active: stack.currentIndex === 1; sourceComponent: CharactersPage {} }
@@ -223,6 +266,8 @@ ApplicationWindow {
     }
 
     Toast { id: toast }
+    ConfirmDialog { id: confirm }
+    StartReport { id: startReport }
 
     FirstRunWizard {
         id: wizard

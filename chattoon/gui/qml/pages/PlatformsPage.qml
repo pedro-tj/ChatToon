@@ -307,7 +307,7 @@ Page {
         // Twitch
         AccountBlock {
             platform: "twitch"
-            status: acc.twitch && acc.twitch.connected ? qsTr("Connected as %1").arg(acc.twitch.login) : qsTr("Not connected — guest mode is used")
+            status: acc.twitch && acc.twitch.connected ? qsTr("Connected as %1").arg(Privacy.name(acc.twitch.login, "twitch-login")) : qsTr("Not connected — guest mode is used")
             ok: !!(acc.twitch && acc.twitch.connected)
             ColumnLayout {
                 Layout.fillWidth: true
