@@ -6,6 +6,14 @@ import "pages"
 
 ApplicationWindow {
     id: win
+
+    component LazyPage: Loader {
+        required property int index
+        readonly property bool current: stack.currentIndex === index
+        active: false  // switched on once, on the first visit (never bound: no binding loop)
+        onCurrentChanged: if (current) active = true
+        Component.onCompleted: if (current) active = true
+    }
     readonly property var cfg: backend.config
     readonly property var rt: backend.runtimeState
     readonly property bool running: rt.state === "running"
@@ -235,17 +243,19 @@ ApplicationWindow {
             Layout.margins: 22
             currentIndex: win.currentPage
 
+            // Pages are built on their first visit and then kept (faster start-up). The two
+            // pages with a 3D preview are unloaded when left, so only one renderer runs.
             DashboardPage {}
             Loader { active: stack.currentIndex === 1; sourceComponent: CharactersPage {} }
-            PersonalityPage {}
-            AiPage {}
-            PlatformsPage {}
-            LiveChatPage {}
-            VoicePage {}
-            StreamPage {}
+            LazyPage { index: 2; sourceComponent: PersonalityPage {} }
+            LazyPage { index: 3; sourceComponent: AiPage {} }
+            LazyPage { index: 4; sourceComponent: PlatformsPage {} }
+            LazyPage { index: 5; sourceComponent: LiveChatPage {} }
+            LazyPage { index: 6; sourceComponent: VoicePage {} }
+            LazyPage { index: 7; sourceComponent: StreamPage {} }
             Loader { active: stack.currentIndex === 8; sourceComponent: ObsPage {} }
-            HistoryPage {}
-            SettingsPage {}
+            LazyPage { index: 9; sourceComponent: HistoryPage {} }
+            LazyPage { index: 10; sourceComponent: SettingsPage {} }
         }
     }
 
@@ -267,11 +277,21 @@ ApplicationWindow {
 
     Toast { id: toast }
     ConfirmDialog { id: confirm }
-    StartReport { id: startReport }
-
-    FirstRunWizard {
-        id: wizard
-        anchors.centerIn: parent
+    // the start report and the first-run wizard exist only when needed
+    function openReport() {
+        reportLoader.active = true
+        reportLoader.item.open()
     }
-    Component.onCompleted: if (!cfg.first_run_done) wizard.open()
+    Loader { id: reportLoader; active: false; sourceComponent: StartReport {} }
+    Connections {
+        target: backend.sessionReport
+        function onOpenRequested() { win.openReport() }
+    }
+
+    Loader {
+        id: wizardLoader
+        active: !win.cfg.first_run_done
+        sourceComponent: FirstRunWizard {}
+        onLoaded: item.open()
+    }
 }

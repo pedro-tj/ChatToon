@@ -15,8 +15,8 @@ Page {
     subtitle: qsTr("Everything that matters during the live stream, in one place.")
     header: [
         AppButton { iconName: "activity"; text: qsTr("System health"); tip: qsTr("Check AI, voice, platforms and display without going live")
-                    onClicked: { backend.sessionReport.check(); startReport.open() } },
-        AppButton { iconName: "file"; text: qsTr("Session report"); visible: backend.sessionReport.report.state !== "none"; onClicked: startReport.open() }
+                    onClicked: { backend.sessionReport.check(); win.openReport() } },
+        AppButton { iconName: "file"; text: qsTr("Session report"); visible: backend.sessionReport.report.state !== "none"; onClicked: win.openReport() }
     ]
 
     readonly property var enabledSources: backend.sources.filter(s => s.enabled)

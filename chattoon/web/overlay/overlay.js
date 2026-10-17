@@ -424,7 +424,9 @@ let lastFrame = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   if (document.hidden) return; // OBS hides inactive sources: no work at all
-  const minDelta = 1000 / Math.max(10, config.fps) - 1;
+  // the app's own preview is a small view: 30 fps look the same there and cost half
+  const fps = role === "preview" ? Math.min(30, config.fps) : config.fps;
+  const minDelta = 1000 / Math.max(10, fps) - 1;
   if (!capture && now - lastFrame < minDelta) return;
   lastFrame = now;
   timer.update(now);

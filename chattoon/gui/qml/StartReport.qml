@@ -25,11 +25,6 @@ Popup {
     Overlay.modal: Rectangle { color: Qt.rgba(0, 0, 0, 0.5) }
     background: Rectangle { radius: Theme.radius + 4; color: Theme.surfaceStrong; border.color: Theme.border }
 
-    Connections {
-        target: backend.sessionReport
-        function onOpenRequested() { root.open() }
-    }
-
     function fix(page) { root.close(); win.go(page) }
     function tone(status) { return status === "ok" ? "ok" : status === "error" ? "error" : status === "warn" ? "warn" : status === "off" ? "idle" : "busy" }
     function headline() {

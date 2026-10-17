@@ -15,6 +15,8 @@ Popup {
     readonly property bool aiReady: svc.ollama.ok === true && (svc.ollama.models || []).indexOf(cfg.ai.model) >= 0
     readonly property bool voiceReady: svc.tts.ok === true && (svc.tts.voices || []).length > 0
 
+    parent: Overlay.overlay
+    anchors.centerIn: parent
     modal: true
     focus: true
     closePolicy: Popup.NoAutoClose
