@@ -110,7 +110,13 @@ def test_settings_and_profiles_of_chattoon_2_3_still_load(tmp_path):
            "reading": {"mode": "name"}}
     path = tmp_path / "settings.json"
     path.write_text(json.dumps(old))
+    original = path.read_bytes()
     s = Settings.load(path)
+    backup = tmp_path / "settings.json.v2.bak"
+    assert backup.read_bytes() == original and (backup.stat().st_mode & 0o777) == 0o600  # kept as it was
+    assert s.config_version == 3
+    s.save(path)
+    assert Settings.load(path).config_version == 3 and backup.read_bytes() == original  # backed up once only
     assert (s.character, s.ai.model, s.overlay.token, s.overlay.public_address) == ("owl", "qwen3.5:2b", "keep-this-token",
                                                                                      "https://x.example.org:8443")
     assert s.display.mode == "obs" and not s.overlay.lan_enabled  # new features start off

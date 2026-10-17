@@ -6,12 +6,16 @@ import json
 import os
 import re
 import secrets
+import shutil
 import types
 import typing
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
 from pathlib import Path
 
 APP_ID = "chattoon"
+# Version of the settings file format. Older files are migrated by Settings.load(); the
+# original is copied to settings.json.v<old>.bak once before anything is overwritten.
+CONFIG_VERSION = 3
 
 
 def _xdg(var: str, fallback: str) -> Path:
@@ -265,6 +269,7 @@ class DisplaySettings:
 
 @dataclass
 class Settings:
+    config_version: int = CONFIG_VERSION
     character: str = "worm"  # worm | alien | tux | cat | owl | dog
     mode: str = "demo"  # demo | assisted | auto
     ui_language: str = "system"  # system | en | pt_BR
@@ -317,6 +322,16 @@ class Settings:
         except (OSError, ValueError):
             return cls()
         settings = from_dict(cls, data)
+        old = data.get("config_version", 2) if isinstance(data, dict) else CONFIG_VERSION
+        if isinstance(old, int) and old < CONFIG_VERSION:
+            backup = path.with_name(f"{path.name}.v{old}.bak")
+            if not backup.exists():  # keep the 2.x file as it was, once
+                try:
+                    shutil.copy2(path, backup)
+                    os.chmod(backup, 0o600)
+                except OSError:
+                    pass
+            settings.config_version = CONFIG_VERSION
         if isinstance(data, dict) and "reading" not in data:
             # Saved before message reading existed: keep answering directly, as the
             # streamer is used to. New installations read "name + message" by default.
@@ -343,6 +358,7 @@ class Settings:
         for local in ("lan_enabled", "lan_address"):  # this computer's network, not the stream's
             data["overlay"].pop(local, None)
         data.pop("first_run_done", None)
+        data.pop("config_version", None)
         for source in data["streams"]["sources"]:  # belt and braces: options never hold secrets
             source["options"] = {k: v for k, v in source["options"].items() if not SECRET_KEY.search(k)}
         return {"chattoon_profile": 1, "settings": data}

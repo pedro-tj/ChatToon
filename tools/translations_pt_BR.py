@@ -1417,7 +1417,7 @@ PT_BR.update({
     "Try again": "Tentar de novo",
 })
 
-# character window menu (2.4.1)
+# character window menu
 PT_BR.update({
     "On your desktop": "Na sua área de trabalho",
     "Above other windows": "Acima das janelas",
