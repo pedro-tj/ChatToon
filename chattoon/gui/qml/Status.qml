@@ -12,6 +12,8 @@ QtObject {
             stopped: qsTr("Disconnected"), disabled: qsTr("Disabled")
         })[state] || state
     }
+    // for small tiles: the long "Ready — connects on Start" becomes "Ready"
+    function shortLabel(state) { return state === "idle" ? qsTr("Ready") : label(state) }
     function icon(state) {
         return ({
             idle: "power", connecting: "refresh", connected: "check", reconnecting: "refresh", waiting: "hourglass",

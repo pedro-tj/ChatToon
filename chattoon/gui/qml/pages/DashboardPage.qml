@@ -171,7 +171,12 @@ Page {
                         }
                         RowLayout {
                             spacing: 8
-                            StatePill { value: tile.modelData.status.state; implicitHeight: 20; Layout.maximumWidth: 150; clip: true }
+                            StatePill {
+                                value: tile.modelData.status.state; text: Status.shortLabel(value)
+                                implicitHeight: 20; Layout.maximumWidth: 150; clip: true
+                                ToolTip.visible: pillHover.hovered; ToolTip.text: Status.label(value); ToolTip.delay: 400
+                                HoverHandler { id: pillHover }
+                            }
                             Item { Layout.fillWidth: true }
                             Text { text: qsTr("%1/min").arg(tile.modelData.rate); color: Theme.textMuted; font.family: Theme.mono; font.pixelSize: 11 }
                             Text { text: "✓ " + tile.modelData.answered; color: Theme.success; font.family: Theme.mono; font.pixelSize: 11

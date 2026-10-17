@@ -4863,6 +4863,10 @@
       <translation>Desativada</translation>
     </message>
     <message>
+      <source>Ready</source>
+      <translation>Pronto</translation>
+    </message>
+    <message>
       <source>Math</source>
       <translation>Conta</translation>
     </message>
