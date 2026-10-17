@@ -1442,6 +1442,7 @@ PT_BR.update({
     "No free port for the overlay. Close the program that uses it and restart ChatToon.": "Não há porta livre para o overlay. Feche o programa que a usa e reinicie o ChatToon.",
     "The system keyring refused the operation: %1": "O chaveiro do sistema recusou a operação: %1",
     "Could not save the file: %1": "Não foi possível salvar o arquivo: %1",
+    "Kick changed its public chat socket, so the unofficial reader stopped working. Use the official webhook mode with your own Kick app (Accounts below), or update ChatToon.": "O Kick mudou o socket público do chat, então o leitor não oficial parou de funcionar. Use o modo oficial com webhooks e o seu próprio app do Kick (Contas, abaixo), ou atualize o ChatToon.",
 })
 
 

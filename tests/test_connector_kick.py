@@ -333,8 +333,10 @@ def test_pusher_answers_server_ping_and_errors():
 
     busy = asyncio.run(go(4100))
     assert isinstance(busy, TransientError) and busy.retry and "4100" in str(busy)
-    refused = asyncio.run(go(4001))
+    refused = asyncio.run(go(4009))
     assert isinstance(refused, FatalError) and refused.code == "pusher-refused" and not refused.retry
+    outdated = asyncio.run(go(4001))  # what the real server answers since kick.com retired its app key
+    assert isinstance(outdated, FatalError) and outdated.code == "pusher-outdated" and not outdated.retry
     assert isinstance(asyncio.run(go(4201)), TransientError)
 
 

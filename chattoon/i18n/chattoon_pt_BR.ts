@@ -5127,6 +5127,10 @@
       <translation>O servidor de chat da Kick recusou a conexão.</translation>
     </message>
     <message>
+      <source>Kick changed its public chat socket, so the unofficial reader stopped working. Use the official webhook mode with your own Kick app (Accounts below), or update ChatToon.</source>
+      <translation>O Kick mudou o socket público do chat, então o leitor não oficial parou de funcionar. Use o modo oficial com webhooks e o seu próprio app do Kick (Contas, abaixo), ou atualize o ChatToon.</translation>
+    </message>
+    <message>
       <source>This Kick channel has no chatroom.</source>
       <translation>Este canal da Kick não tem sala de chat.</translation>
     </message>

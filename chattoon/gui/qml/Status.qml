@@ -98,6 +98,7 @@ QtObject {
             "timeout": qsTr("No answer from the platform in time."),
             "sign-server": qsTr("The TikTok signing service (Euler Stream) failed — trying again."),
             "pusher-refused": qsTr("Kick's chat server refused the connection."),
+            "pusher-outdated": qsTr("Kick changed its public chat socket, so the unofficial reader stopped working. Use the official webhook mode with your own Kick app (Accounts below), or update ChatToon."),
             "no-chatroom": qsTr("This Kick channel has no chatroom."),
             "duplicate": qsTr("Another source already reads this chat."),
             "graph-error": qsTr("Meta refused the request."),

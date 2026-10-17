@@ -591,6 +591,11 @@ class KickConnector(Connector):
         except (TypeError, ValueError):
             code = 0
         text = str(data.get("message") or "")[:120]
+        if code == 4001:
+            # the public app key kick.com used was retired (seen 2026-10): this unofficial path is
+            # gone until ChatToon is updated; the official webhook mode keeps working
+            return FatalError(f"Kick no longer accepts ChatToon's unofficial chat socket ({code} {text}).",
+                              "pusher-outdated")
         if 4000 <= code < 4100:
             return FatalError(f"Kick's chat server refused the connection ({code} {text}).", "pusher-refused")
         if 4100 <= code < 4200:
