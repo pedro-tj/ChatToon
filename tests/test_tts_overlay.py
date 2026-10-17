@@ -222,7 +222,7 @@ def test_overlay_audio_goes_to_one_sink_and_ws_is_read_only(tmp_path):
         return counts, received, audio_status, ignored, snapshot
 
     counts, received, audio_status, ignored, snapshot = asyncio.run(go())
-    assert counts == {"obs": 2, "preview": 1, "browser": 1}
+    assert counts == {"obs": 2, "preview": 1, "browser": 1, "desktop": 0}
     assert received == {"preview": None, "obs1": None, "obs2": "audio/u1.wav", "browser": None}  # one player
     assert audio_status == 200 and ignored is False
     assert snapshot == {"type": "config", "character": "tux"}  # late clients get current config

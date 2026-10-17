@@ -32,9 +32,11 @@ def test_compiled_catalogue_is_up_to_date():
 
 
 def test_translator_loads(qapp=None):
-    from PySide6.QtCore import QCoreApplication, QTranslator
+    from PySide6.QtCore import QTranslator
+    from PySide6.QtWidgets import QApplication
 
-    app = QCoreApplication.instance() or QCoreApplication([])
+    # a QApplication (not a bare QCoreApplication): GUI tests running after this one reuse it
+    app = QApplication.instance() or QApplication([])
     assert app is not None  # a Qt application must exist for QTranslator
     t = QTranslator()
     assert t.load(str(TS.with_suffix(".qm")))

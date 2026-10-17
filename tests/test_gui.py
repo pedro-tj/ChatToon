@@ -101,7 +101,8 @@ def test_demo_flow_through_backend(backend):
     assert pump(8, lambda: len(backend.history) == 1)
     assert backend.history[0]["reply"] == "Resposta para oi minhoca!" and backend.history[0]["read"]
     # new installations read "name + message" first: two utterances, one after the other
-    assert backend.engine.tts.texts == ["Ana disse: oi minhoca.", "Resposta para oi minhoca!"]
+    # (the start report also renders a silent "Oi!" to prove the voice works; it is never played)
+    assert [t for t in backend.engine.tts.texts if t != "Oi!"] == ["Ana disse: oi minhoca.", "Resposta para oi minhoca!"]
     assert backend.stats["spoken"] == 1 and backend.stats["read"] == 1
     assert len(backend.engine.player.played) == 2 and backend.engine.player.max_active == 1
     backend.emergencyStop()
