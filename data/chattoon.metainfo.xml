@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.ruscher.ChatToon</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>ChatToon</name>
+  <summary>3D co-host for live streams, with local AI and voice</summary>
+  <summary xml:lang="pt-BR">Coapresentador 3D para lives, com IA local e voz</summary>
+  <description>
+    <p>
+      ChatToon is an animated 3D character that reads your live chat on YouTube, Twitch, Kick,
+      TikTok and more at the same time, answers with its own sense of humour and talks with a
+      real voice. The AI runs on your computer with Ollama and the voice comes from TTS BigLinux:
+      nothing is sent to the cloud.
+    </p>
+    <p xml:lang="pt-BR">
+      O ChatToon é um personagem 3D animado que lê o chat da sua live no YouTube, Twitch, Kick,
+      TikTok e outras ao mesmo tempo, responde com humor próprio e fala com voz de verdade. A IA
+      roda no seu computador com o Ollama e a voz vem do TTS BigLinux: nada vai para a nuvem.
+    </p>
+    <ul>
+      <li>Six characters with expressions, gestures and lip sync</li>
+      <li>In OBS Studio with a transparent background, or in a window on the desktop</li>
+      <li>Install and control Ollama and the voice engines from the app</li>
+      <li>Live privacy mode that hides addresses and secret codes on screen</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">chattoon.desktop</launchable>
+  <url type="homepage">https://github.com/ruscher/ChatToon</url>
+  <url type="bugtracker">https://github.com/ruscher/ChatToon/issues</url>
+  <developer id="io.github.ruscher">
+    <name>Pedro Bezerra (InfoRecarga) and Rafael Ruscher</name>
+  </developer>
+  <screenshots>
+    <screenshot type="default">
+      <caption>The character answering a viewer</caption>
+      <image>https://raw.githubusercontent.com/ruscher/ChatToon/main/docs/screenshots/dashboard-speaking.webp</image>
+    </screenshot>
+    <screenshot>
+      <caption>The six characters</caption>
+      <image>https://raw.githubusercontent.com/ruscher/ChatToon/main/docs/screenshots/characters.webp</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1"/>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Video</category>
+  </categories>
+  <keywords>
+    <keyword>stream</keyword>
+    <keyword>obs</keyword>
+    <keyword>avatar</keyword>
+    <keyword>ollama</keyword>
+    <keyword>tts</keyword>
+  </keywords>
+  <releases>
+    <release version="3.0.0" date="2026-10-17"/>
+    <release version="2.3.0" date="2026-10-15"/>
+  </releases>
+</component>
