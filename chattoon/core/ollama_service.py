@@ -1,5 +1,5 @@
 """Ollama on this computer: is it installed, which service runs it, is it answering?
-(docs/31-ollama-management.md)
+(docs/ARCHITECTURE.md)
 
 A failed connection does not mean "not installed": the package, the systemd units (system
 and user), an ``ollama serve`` started by ChatToon and the API are checked separately. A
@@ -184,7 +184,7 @@ class OllamaService:
                 how = "user"
             else:
                 if host_parts(host)[0] not in _LOOPBACK and not host_parts(host)[0].startswith("127."):
-                    # ChatToon never starts an Ollama that listens on the network (docs/37)
+                    # ChatToon never starts an Ollama that listens on the network (docs/SECURITY.md)
                     return {"ok": False, "code": "not-loopback"}
                 await self._spawn(host, facts["binary"])
                 how = "chattoon"

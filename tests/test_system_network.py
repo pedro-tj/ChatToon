@@ -1,5 +1,5 @@
 """Operating system helpers: packages, services, distribution, hardware and the local network
-(docs/31, docs/33). Commands are faked: nothing is installed, started or queried for real."""
+(docs/ARCHITECTURE.md, docs/ARCHITECTURE.md). Commands are faked: nothing is installed, started or queried for real."""
 
 import asyncio
 import json

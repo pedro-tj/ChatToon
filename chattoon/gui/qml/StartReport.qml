@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import "."
 
 // What the character really does in this session — shown when Start is pressed, and from
-// the Dashboard (docs/35-startup-report.md). Red items stop the start; yellow ones are optional.
+// the Dashboard (docs/ARCHITECTURE.md). Red items stop the start; yellow ones are optional.
 Popup {
     id: root
     readonly property var r: backend.sessionReport.report

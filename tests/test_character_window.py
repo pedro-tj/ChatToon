@@ -1,6 +1,6 @@
 """The character window on the desktop, display modes, section resets and compatibility with
-ChatToon 2.3 settings (docs/30, docs/36). Offscreen: the compositor parts (KWin, Wayland)
-are checked live by hand, see docs/38-testing-validation.md."""
+ChatToon 2.3 settings (docs/ARCHITECTURE.md, docs/ARCHITECTURE.md). Offscreen: the compositor parts (KWin, Wayland)
+are checked live by hand, see docs/DEVELOPMENT.md."""
 
 import json
 

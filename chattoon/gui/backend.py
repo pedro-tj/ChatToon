@@ -706,7 +706,7 @@ class Backend(QObject):
 
     @Slot()
     def start(self) -> None:
-        """Start through the report: essentials are checked first (docs/35-startup-report.md)."""
+        """Start through the report: essentials are checked first (docs/ARCHITECTURE.md)."""
         self.session.startLive()
 
     @Slot()

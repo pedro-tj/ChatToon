@@ -1,5 +1,5 @@
 """Overlay addresses: this computer, the local network (opt-in, same network only), roles,
-a new secret address, and a busy default port (docs/33-obs-network-access.md).
+a new secret address, and a busy default port (docs/ARCHITECTURE.md).
 
 127.0.0.2 stands in for the LAN address: Linux answers the whole 127.0.0.0/8 on loopback."""
 

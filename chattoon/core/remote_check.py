@@ -1,4 +1,4 @@
-"""Is the overlay really reachable through the person's own domain? (docs/34-remote-access-privacy.md)
+"""Is the overlay really reachable through the person's own domain? (docs/SECURITY.md)
 
 Checks one thing at a time and stops at the first failure, so the interface can say what
 is wrong in plain words: the name (DNS), the port (router, CGNAT, firewall), the certificate,

@@ -1,4 +1,4 @@
-"""Internet access check, privacy masking and the start report (docs/34, docs/35).
+"""Internet access check, privacy masking and the start report (docs/SECURITY.md, docs/ARCHITECTURE.md).
 
 The remote check runs against a real HTTPS server on this computer, with a certificate from a
 throw-away authority; the "public" address is faked so nothing leaves the machine."""

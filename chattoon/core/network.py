@@ -1,4 +1,4 @@
-"""This computer's network, seen from the inside (docs/33-obs-network-access.md).
+"""This computer's network, seen from the inside (docs/ARCHITECTURE.md).
 
 Nothing here contacts the internet: addresses come from ``ip -j addr`` and the kernel's
 /sys tree; ``ip route get`` only asks the local routing table which interface would be used.

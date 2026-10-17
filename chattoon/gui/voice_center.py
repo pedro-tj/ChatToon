@@ -1,4 +1,4 @@
-"""Voice page: engines of TTS BigLinux, their installation and Kokoro voices (docs/32-tts-engine-management.md)."""
+"""Voice page: engines of TTS BigLinux, their installation and Kokoro voices (docs/INTELLIGENCE.md)."""
 
 from __future__ import annotations
 

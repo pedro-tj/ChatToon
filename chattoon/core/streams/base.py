@@ -39,7 +39,7 @@ STATES = ("idle", "connecting", "connected", "reconnecting", "waiting", "ended",
           "unsupported", "stopped", "disabled")
 WAIT_POLL = 60.0  # seconds between "is it live now?" checks
 
-# support levels shown to the streamer, decided from evidence (docs/14-platform-api-research.md)
+# support levels shown to the streamer, decided from evidence (docs/PLATFORMS.md)
 SUPPORT = ("functional", "limited", "experimental", "unavailable")
 
 

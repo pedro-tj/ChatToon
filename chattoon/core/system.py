@@ -1,6 +1,6 @@
 """The operating system, safely: commands, distribution, packages and services.
 
-Rules (docs/37-security-performance.md):
+Rules (docs/SECURITY.md):
 * argv lists only — never a shell, never text from the chat or the network in a command;
 * package and unit names are checked against strict patterns before they reach a command;
 * read-only queries run as the user (``pacman -Q/-Si``, ``systemctl show``);

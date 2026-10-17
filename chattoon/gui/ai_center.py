@@ -1,4 +1,4 @@
-"""The AI page as a small control centre: Ollama's service and the models (docs/31-ollama-management.md)."""
+"""The AI page as a small control centre: Ollama's service and the models (docs/ARCHITECTURE.md)."""
 
 from __future__ import annotations
 

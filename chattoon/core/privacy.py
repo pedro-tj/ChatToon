@@ -1,4 +1,4 @@
-"""Hiding what must not appear on a live stream (docs/34-remote-access-privacy.md).
+"""Hiding what must not appear on a live stream (docs/SECURITY.md).
 
 The overlay token, the public IP and credentials are masked by default everywhere; the
 live privacy mode also hides local addresses, domains and account names. Revealing is a

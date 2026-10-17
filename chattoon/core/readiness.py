@@ -1,5 +1,5 @@
 """What the character can really do right now — the report shown when Start is pressed
-(docs/35-startup-report.md).
+(docs/ARCHITECTURE.md).
 
 Facts only, as codes (the interface words them in its language). ``blocking`` problems keep
 the live from starting; ``warnings`` are optional features left off or missing.

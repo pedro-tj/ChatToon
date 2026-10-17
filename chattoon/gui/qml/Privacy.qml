@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-// What may appear on screen during a live (docs/34-remote-access-privacy.md).
+// What may appear on screen during a live (docs/SECURITY.md).
 // Always masked: the token inside overlay addresses, the public IP, secrets.
 // Live privacy mode (default on) also masks local addresses, domains and account names.
 // "Reveal" shows one value for 15 seconds, after a warning; then everything is hidden again.

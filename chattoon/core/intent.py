@@ -540,7 +540,7 @@ def classify(text: str, has_memory: bool = False) -> Intent:
     return intent
 
 
-OBJECTIVE_TEMPERATURE = 0.3  # chosen by measurement: docs/27-performance-benchmarks.md
+OBJECTIVE_TEMPERATURE = 0.3  # chosen by measurement: docs/INTELLIGENCE.md
 
 
 def objective_temperature(user: float, intent: Intent) -> float:

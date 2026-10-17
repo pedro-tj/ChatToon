@@ -8,7 +8,7 @@
 * experimental — unofficial method; may break without notice;
 * unavailable — the platform offers no way to read it (the source stays disabled).
 
-Details and evidence: docs/14-platform-api-research.md.
+Details and evidence: docs/PLATFORMS.md.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ PLATFORMS: dict[str, dict] = {
         "events": ["message", "paid", "subscription", "raid"],
     },
     "kick": {
-        "label": "Kick", "color": "#53fc18", "glyph": "K", "support": "experimental", "auth": "optional",
+        "label": "Kick", "color": "#53fc18", "glyph": "K", "support": "limited", "auth": "optional",
         "accepts": "kick.com/channel, channel",
         "events": ["message", "subscription", "gift"],
     },

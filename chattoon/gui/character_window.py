@@ -1,5 +1,5 @@
 """The character on the desktop: a transparent, frameless window showing only the avatar
-(docs/30-wayland-floating-window.md).
+(docs/ARCHITECTURE.md).
 
 It loads the same overlay page as OBS with ``role=desktop``: it watches the engine's events
 (animations, expressions, speech bubble, lip sync) but never receives the audio, so a reply

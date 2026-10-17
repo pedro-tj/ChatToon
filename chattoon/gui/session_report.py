@@ -1,5 +1,5 @@
 """Start button: check what is ready, start only if nothing essential is missing, then show
-a short report of what the character really does (docs/35-startup-report.md)."""
+a short report of what the character really does (docs/ARCHITECTURE.md)."""
 
 from __future__ import annotations
 

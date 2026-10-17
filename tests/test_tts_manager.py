@@ -1,4 +1,4 @@
-"""Voice engines through TTS BigLinux's own modules (docs/32-tts-engine-management.md).
+"""Voice engines through TTS BigLinux's own modules (docs/INTELLIGENCE.md).
 TTS BigLinux is faked: nothing is installed or downloaded."""
 
 import sys

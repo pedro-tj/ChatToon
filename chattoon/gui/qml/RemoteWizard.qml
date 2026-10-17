@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import "."
 
 // Overlay for an OBS somewhere else on the internet, step by step
-// (docs/34-remote-access-privacy.md). The public IP is looked up only with consent and is
+// (docs/SECURITY.md). The public IP is looked up only with consent and is
 // never shown unmasked by default; the test proves the real path (DNS → port → HTTPS →
 // proxy → ChatToon → WebSocket) instead of trusting the filled-in form.
 ColumnLayout {

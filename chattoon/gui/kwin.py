@@ -1,4 +1,4 @@
-"""KWin window rules from a script, for the character window (docs/30-wayland-floating-window.md).
+"""KWin window rules from a script, for the character window (docs/ARCHITECTURE.md).
 
 Wayland lets no client place itself, stay above other windows or leave the taskbar — the
 compositor decides. KDE's compositor, KWin, runs small JavaScript programs loaded over

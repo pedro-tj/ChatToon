@@ -101,7 +101,7 @@ class AISettings:
 
 @dataclass
 class MemorySettings:
-    """What the avatar remembers about viewers (docs/23-conversation-memory.md)."""
+    """What the avatar remembers about viewers (docs/INTELLIGENCE.md)."""
 
     enabled: bool = True  # follow-ups within the live (RAM only)
     persist: bool = False  # also remember between lives (local SQLite file, never sent anywhere)
@@ -111,7 +111,7 @@ class MemorySettings:
 
 @dataclass
 class SpontaneousSettings:
-    """Lines the avatar says on its own when the chat is quiet (docs/25-spontaneous-interactions.md)."""
+    """Lines the avatar says on its own when the chat is quiet (docs/INTELLIGENCE.md)."""
 
     enabled: bool = False
     min_idle: int = 90  # seconds without chat messages before it may speak
@@ -237,7 +237,7 @@ class OverlaySettings:
     fps: int = 60
     bubble_seconds: float = 2.5  # bubble stays this long after speech ends
     background: str = "transparent"  # transparent | green (chroma key)
-    # Local network (docs/33-obs-network-access.md): off by default. When on, the overlay also
+    # Local network (docs/ARCHITECTURE.md): off by default. When on, the overlay also
     # listens on this one IPv4 address of this computer (never 0.0.0.0) and only answers
     # computers of that network.
     lan_enabled: bool = False
@@ -250,7 +250,7 @@ class OverlaySettings:
 
 @dataclass
 class DisplaySettings:
-    """Where the character appears (docs/30-wayland-floating-window.md)."""
+    """Where the character appears (docs/ARCHITECTURE.md)."""
 
     mode: str = "obs"  # obs | window | both
     window_open: bool = False  # the desktop window was open when ChatToon closed

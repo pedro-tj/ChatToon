@@ -4,7 +4,7 @@ Security model:
 * binds to 127.0.0.1; nothing is reachable from the network unless the person turns on the
   local-network mode, which adds ONE more listener on one private IPv4 address of this
   computer (never 0.0.0.0) that only answers computers of that same network
-  (docs/33-obs-network-access.md);
+  (docs/ARCHITECTURE.md);
 * every URL carries a random token (``/o/<token>/``) so other local web pages cannot
   read the avatar's events or audio;
 * the Host header must be a loopback name (blocks DNS-rebinding attacks), or the one

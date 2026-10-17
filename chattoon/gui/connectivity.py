@@ -1,5 +1,5 @@
 """Where the OBS is: this computer, the local network or the internet
-(docs/33-obs-network-access.md, docs/34-remote-access-privacy.md)."""
+(docs/ARCHITECTURE.md, docs/SECURITY.md)."""
 
 from __future__ import annotations
 

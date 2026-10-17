@@ -1,5 +1,5 @@
 """Voice engines of TTS BigLinux: what is installed, what is missing, and installing it
-(docs/32-tts-engine-management.md).
+(docs/INTELLIGENCE.md).
 
 ChatToon does not keep its own engine or voice manager. Everything reuses TTS BigLinux:
 ``voice_manager`` decides whether an engine is installed and has voices, its

@@ -1,6 +1,6 @@
 """Ollama management: every model is listed and classified, the service state is told apart
 (not installed / stopped / starting / running / error / remote), and a model the person chose
-is never replaced silently (docs/31-ollama-management.md)."""
+is never replaced silently (docs/ARCHITECTURE.md)."""
 
 import asyncio
 
