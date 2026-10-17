@@ -1,8 +1,8 @@
 import QtQuick
 import "."
 
-// Ícone vetorial colorido pelo tema (servido por gui/icons.py).
-// Item externo: Image não permite definir tamanho implícito, e layouts usam ele.
+// Vector icon coloured by the theme (served by gui/icons.py).
+// Outer Item: Image cannot set an implicit size, and layouts need one.
 Item {
     id: root
     property string name

@@ -68,14 +68,14 @@ Button {
             GradientStop { position: 1; color: Theme.accent2 }
         }
 
-        Rectangle {   // camada de hover/pressão
+        Rectangle {   // hover/press layer
             anchors.fill: parent
             radius: parent.radius
             color: control.variant === "primary" ? "white" : Theme.text
             opacity: control.pressed ? 0.14 : control.hovered ? 0.07 : 0
             Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
         }
-        Rectangle {   // anel de foco do teclado
+        Rectangle {   // keyboard focus ring
             anchors { fill: parent; margins: -3 }
             radius: parent.radius + 3
             color: "transparent"
