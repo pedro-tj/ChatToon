@@ -294,7 +294,7 @@ class ChatToonEngine:
                 await self.ollama.preload(self.settings.ai.model, self.settings.ai.keep_alive,
                                           self.settings.ai.context_window)
             except OllamaError as e:
-                self._error("ai", str(e))
+                self._ai_error(e)
 
     # -- state machine ----------------------------------------------------
 
@@ -774,7 +774,7 @@ class ChatToonEngine:
             reply = await self._ask([{"role": "system", "content": system}, {"role": "user", "content": prompt}],
                                     max(0.7, ai.temperature), max_chars, max_sentences, {"prompt": 0, "eval": 0})
         except OllamaError as e:
-            self._error("ai", str(e))
+            self._ai_error(e)
             return ""
         finally:
             if self.phase == "thinking":
@@ -946,7 +946,7 @@ class ChatToonEngine:
                     reply, problem = again, ""
         except OllamaError as e:
             self.stats.ai_failures += 1
-            self._error("ai", str(e))
+            self._ai_error(e)
             if announce:
                 self._set_phase("idle")
             return None
@@ -1386,6 +1386,11 @@ class ChatToonEngine:
         self.brain.forget()
         self.apply_settings()
         asyncio.create_task(self.warm_up())
+
+    def _ai_error(self, e: OllamaError) -> None:
+        # messages about one model name it; the rest carry Ollama's own words
+        named = e.code in ("ai-timeout", "ai-model-missing", "ai-empty")
+        self._error("ai", str(e), code=e.code, detail=self.settings.ai.model if named else str(e))
 
     def _error(self, source: str, message: str, code: str = "", detail: str = "") -> None:
         log.warning("%s: %s", source, message)

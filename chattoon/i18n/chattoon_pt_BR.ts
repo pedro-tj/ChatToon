@@ -112,7 +112,7 @@
     </message>
     <message>
       <source>Arithmetic in the chat (“how much is 15 times 3?”) is computed by ChatToon — never guessed — and the avatar says the result.</source>
-      <translation>Contas no chat (“quanto é 15 vezes 3?”) são calculadas pelo ChatToon — nunca no chute — e o avatar diz o resultado.</translation>
+      <translation>Contas no chat (“quanto é 15 vezes 3?”) são calculadas pelo ChatToon — nunca no chute — e o personagem diz o resultado.</translation>
     </message>
     <message>
       <source>Verified reference</source>
@@ -128,7 +128,7 @@
     </message>
     <message>
       <source>When a reply misses the verified result or repeats its own instructions, the avatar tries once more.</source>
-      <translation>Quando uma resposta não diz o resultado verificado ou repete as próprias instruções, o avatar tenta mais uma vez.</translation>
+      <translation>Quando uma resposta não diz o resultado verificado ou repete as próprias instruções, o personagem tenta mais uma vez.</translation>
     </message>
     <message>
       <source>Conversation memory</source>
@@ -136,7 +136,7 @@
     </message>
     <message>
       <source>The avatar remembers what each viewer told it — separately per platform and account, so two people with the same name never mix.</source>
-      <translation>O avatar lembra o que cada espectador contou — separado por plataforma e conta, então duas pessoas com o mesmo nome nunca se misturam.</translation>
+      <translation>O personagem lembra o que cada espectador contou — separado por plataforma e conta, então duas pessoas com o mesmo nome nunca se misturam.</translation>
     </message>
     <message>
       <source>See memories</source>
@@ -259,7 +259,7 @@
     </message>
     <message>
       <source>The language the avatar speaks (independent from the interface language).</source>
-      <translation>O idioma em que o avatar fala (independente do idioma da interface).</translation>
+      <translation>O idioma em que o personagem fala (independente do idioma da interface).</translation>
     </message>
   </context>
   <context>
@@ -379,6 +379,58 @@
     <message>
       <source>No spontaneous line is available for this category. Add curiosities or fill in the stream topic.</source>
       <translation>Não há fala espontânea disponível para esta categoria. Adicione curiosidades ou preencha o assunto da live.</translation>
+    </message>
+    <message>
+      <source>Add a streaming platform (and enable it) before starting, or use Demo mode.</source>
+      <translation>Adicione uma plataforma de streaming (e ative-a) antes de iniciar, ou use o modo Demonstração.</translation>
+    </message>
+    <message>
+      <source>Ollama is not answering. Start it on the AI page.</source>
+      <translation>O Ollama não está respondendo. Inicie-o na página Inteligência artificial.</translation>
+    </message>
+    <message>
+      <source>The model %1 took too long to answer. Try a smaller model or a longer timeout.</source>
+      <translation>O modelo %1 demorou demais para responder. Tente um modelo menor ou um tempo limite maior.</translation>
+    </message>
+    <message>
+      <source>The model %1 is not installed in Ollama. Choose another one on the AI page.</source>
+      <translation>O modelo %1 não está instalado no Ollama. Escolha outro na página Inteligência artificial.</translation>
+    </message>
+    <message>
+      <source>The model %1 gave an empty answer. Try again or choose another model.</source>
+      <translation>O modelo %1 deu uma resposta vazia. Tente de novo ou escolha outro modelo.</translation>
+    </message>
+    <message>
+      <source>The AI could not answer: %1</source>
+      <translation>A IA não conseguiu responder: %1</translation>
+    </message>
+    <message>
+      <source>TTS BigLinux is not installed. Install it on the Voice page.</source>
+      <translation>O TTS BigLinux não está instalado. Instale-o na página Voz.</translation>
+    </message>
+    <message>
+      <source>TTS BigLinux could not be loaded. Reinstall the tts-biglinux package.</source>
+      <translation>O TTS BigLinux não pôde ser carregado. Reinstale o pacote tts-biglinux.</translation>
+    </message>
+    <message>
+      <source>There was nothing to say after cleaning the text.</source>
+      <translation>Não sobrou nada para falar depois de limpar o texto.</translation>
+    </message>
+    <message>
+      <source>The voice %1 is not installed anymore. Choose another one on the Voice page.</source>
+      <translation>A voz %1 não está mais instalada. Escolha outra na página Voz.</translation>
+    </message>
+    <message>
+      <source>No audio player was found. Install pipewire-audio (or pulseaudio-utils).</source>
+      <translation>Nenhum reprodutor de áudio foi encontrado. Instale o pipewire-audio (ou pulseaudio-utils).</translation>
+    </message>
+    <message>
+      <source>No free port for the overlay. Close the program that uses it and restart ChatToon.</source>
+      <translation>Não há porta livre para o overlay. Feche o programa que a usa e reinicie o ChatToon.</translation>
+    </message>
+    <message>
+      <source>The system keyring refused the operation: %1</source>
+      <translation>O chaveiro do sistema recusou a operação: %1</translation>
     </message>
     <message>
       <source>Cartoon earthworm</source>
@@ -633,10 +685,6 @@
       <translation>O login falhou.</translation>
     </message>
     <message>
-      <source>This is not a YouTube video or live link.</source>
-      <translation>Isto não é um link de vídeo ou live do YouTube.</translation>
-    </message>
-    <message>
       <source>Defaults restored</source>
       <translation>Padrões restaurados</translation>
     </message>
@@ -671,6 +719,10 @@
     <message>
       <source>Copied to the clipboard</source>
       <translation>Copiado para a área de transferência</translation>
+    </message>
+    <message>
+      <source>Could not save the file: %1</source>
+      <translation>Não foi possível salvar o arquivo: %1</translation>
     </message>
     <message>
       <source>History saved</source>
@@ -1409,7 +1461,7 @@
     </message>
     <message>
       <source>Talk to the avatar</source>
-      <translation>Fale com o avatar</translation>
+      <translation>Fale com o personagem</translation>
     </message>
     <message>
       <source>Type as if you were a viewer. In demo mode this is the chat.</source>
@@ -1473,7 +1525,7 @@
     </message>
     <message>
       <source>Approve a suggestion to make the avatar say it.</source>
-      <translation>Aprove uma sugestão para o avatar falar.</translation>
+      <translation>Aprove uma sugestão para o personagem falar.</translation>
     </message>
     <message>
       <source>Messages chosen by the selection mode, best first.</source>
@@ -1879,7 +1931,7 @@
     </message>
     <message>
       <source>What viewers said and what the avatar answered in this session. Kept only in memory.</source>
-      <translation>O que os espectadores disseram e o que o avatar respondeu nesta sessão. Fica só na memória.</translation>
+      <translation>O que os espectadores disseram e o que o personagem respondeu nesta sessão. Fica só na memória.</translation>
     </message>
     <message>
       <source>Export</source>
@@ -2014,7 +2066,7 @@
     </message>
     <message>
       <source>Every platform in one place. Answer a message now or skip it — the avatar still speaks one at a time.</source>
-      <translation>Todas as plataformas num só lugar. Responda uma mensagem agora ou pule — o avatar continua falando uma de cada vez.</translation>
+      <translation>Todas as plataformas num só lugar. Responda uma mensagem agora ou pule — o personagem continua falando uma de cada vez.</translation>
     </message>
     <message>
       <source>Following</source>
@@ -2030,7 +2082,7 @@
     </message>
     <message>
       <source>What the avatar remembers about each viewer</source>
-      <translation>O que o avatar lembra de cada espectador</translation>
+      <translation>O que o personagem lembra de cada espectador</translation>
     </message>
     <message>
       <source>Clear the list (the queue is kept)</source>
@@ -2192,7 +2244,7 @@
     </message>
     <message>
       <source>No memories yet. They appear after the avatar really answers someone.</source>
-      <translation>Nenhuma memória ainda. Elas aparecem depois que o avatar responde alguém de verdade.</translation>
+      <translation>Nenhuma memória ainda. Elas aparecem depois que o personagem responde alguém de verdade.</translation>
     </message>
     <message>
       <source>Erase all memories…</source>
@@ -2204,7 +2256,7 @@
     </message>
     <message>
       <source>Everything the avatar remembers about this person is erased, in RAM and on disk.</source>
-      <translation>Tudo o que o avatar lembra desta pessoa é apagado, da RAM e do disco.</translation>
+      <translation>Tudo o que o personagem lembra desta pessoa é apagado, da RAM e do disco.</translation>
     </message>
     <message>
       <source>Erase all memories?</source>
@@ -2212,7 +2264,7 @@
     </message>
     <message>
       <source>The avatar forgets every viewer, in RAM and on disk. This cannot be undone.</source>
-      <translation>O avatar esquece todos os espectadores, da RAM e do disco. Não dá para desfazer.</translation>
+      <translation>O personagem esquece todos os espectadores, da RAM e do disco. Não dá para desfazer.</translation>
     </message>
   </context>
   <context>
@@ -2339,7 +2391,7 @@
     </message>
     <message>
       <source>Emergency stop: the avatar is silent. Press Start to continue.</source>
-      <translation>Parada de emergência: o avatar está em silêncio. Aperte Iniciar para continuar.</translation>
+      <translation>Parada de emergência: o personagem está em silêncio. Aperte Iniciar para continuar.</translation>
     </message>
   </context>
   <context>
@@ -2580,7 +2632,7 @@
     </message>
     <message>
       <source>Leave “Shutdown source when not visible” off so the avatar keeps its state.</source>
-      <translation>Deixe “Desligar fonte quando não visível” desmarcado para o avatar manter o estado.</translation>
+      <translation>Deixe “Desligar fonte quando não visível” desmarcado para o personagem manter o estado.</translation>
     </message>
     <message>
       <source>Enable “Control audio via OBS” — the voice will come from this source.</source>
@@ -3226,7 +3278,7 @@
     </message>
     <message>
       <source>How often the avatar may talk. Higher values make it chat less.</source>
-      <translation>Com que frequência o avatar pode falar. Valores maiores = fala menos.</translation>
+      <translation>Com que frequência o personagem pode falar. Valores maiores = fala menos.</translation>
     </message>
     <message>
       <source>Your own instructions (optional)</source>
@@ -3249,7 +3301,7 @@
     </message>
     <message>
       <source>Read the chat of every platform you stream to — at the same time, with one avatar.</source>
-      <translation>Leia o chat de todas as plataformas em que você transmite — ao mesmo tempo, com um só avatar.</translation>
+      <translation>Leia o chat de todas as plataformas em que você transmite — ao mesmo tempo, com um só personagem.</translation>
     </message>
     <message>
       <source>Add platform</source>
@@ -3277,7 +3329,7 @@
     </message>
     <message>
       <source>Add YouTube, Twitch, Kick, TikTok and more. The avatar answers all of them, one at a time.</source>
-      <translation>Adicione YouTube, Twitch, Kick, TikTok e outras. O avatar responde todas, uma de cada vez.</translation>
+      <translation>Adicione YouTube, Twitch, Kick, TikTok e outras. O personagem responde todas, uma de cada vez.</translation>
     </message>
     <message>
       <source>messages</source>
@@ -3357,7 +3409,7 @@
     </message>
     <message>
       <source>Busy chats send more than any avatar can answer. Choose how ChatToon picks — and how it shares replies between platforms.</source>
-      <translation>Chats movimentados mandam mais do que qualquer avatar consegue responder. Escolha como o ChatToon decide — e como divide as respostas entre as plataformas.</translation>
+      <translation>Chats movimentados mandam mais do que qualquer personagem consegue responder. Escolha como o ChatToon decide — e como divide as respostas entre as plataformas.</translation>
     </message>
     <message>
       <source>Smart — questions, mentions and paid messages first, fair to every platform</source>
@@ -3377,7 +3429,7 @@
     </message>
     <message>
       <source>Mentions — only when the avatar is called</source>
-      <translation>Menções — só quando chamarem o avatar</translation>
+      <translation>Menções — só quando chamarem o personagem</translation>
     </message>
     <message>
       <source>Questions first</source>
@@ -3465,7 +3517,7 @@
     </message>
     <message>
       <source>Off — the avatar answers directly.</source>
-      <translation>Desativado — o avatar responde direto.</translation>
+      <translation>Desativado — o personagem responde direto.</translation>
     </message>
     <message>
       <source>On — reads who wrote, then answers.</source>
@@ -3871,7 +3923,7 @@
     </message>
     <message>
       <source>Anyone with this link sees the avatar and hears its voice. Keep it private.</source>
-      <translation>Quem tiver este link vê o avatar e ouve a voz dele. Não compartilhe.</translation>
+      <translation>Quem tiver este link vê o personagem e ouve a voz dele. Não compartilhe.</translation>
     </message>
     <message>
       <source>Open ports on the router</source>
@@ -4073,7 +4125,7 @@
     </message>
     <message>
       <source>Restart ChatToon to apply. The avatar's language is set on the AI page.</source>
-      <translation>Reinicie o ChatToon para aplicar. O idioma do avatar fica na página de IA.</translation>
+      <translation>Reinicie o ChatToon para aplicar. O idioma do personagem fica na página de IA.</translation>
     </message>
     <message>
       <source>System default</source>
@@ -4085,7 +4137,7 @@
     </message>
     <message>
       <source>When the chat is quiet, the avatar speaks up on its own — invitations, curiosities, comments on the topic. Viewers always come first: a message cancels a line still being prepared.</source>
-      <translation>Quando o chat está quieto, o avatar fala por conta própria — convites, curiosidades, comentários sobre o assunto. Os espectadores vêm sempre primeiro: uma mensagem cancela uma fala que ainda está sendo preparada.</translation>
+      <translation>Quando o chat está quieto, o personagem fala por conta própria — convites, curiosidades, comentários sobre o assunto. Os espectadores vêm sempre primeiro: uma mensagem cancela uma fala que ainda está sendo preparada.</translation>
     </message>
     <message>
       <source>Try one now</source>
@@ -4121,7 +4173,7 @@
     </message>
     <message>
       <source>Seconds without any viewer message before the avatar may speak.</source>
-      <translation>Segundos sem nenhuma mensagem de espectador antes de o avatar poder falar.</translation>
+      <translation>Segundos sem nenhuma mensagem de espectador antes de o personagem poder falar.</translation>
     </message>
     <message>
       <source>At most one line every</source>
@@ -4237,7 +4289,7 @@
     </message>
     <message>
       <source>Everything the avatar remembers about viewers: this live and, if enabled, earlier ones.</source>
-      <translation>Tudo o que o avatar lembra dos espectadores: desta live e, se ativado, das anteriores.</translation>
+      <translation>Tudo o que o personagem lembra dos espectadores: desta live e, se ativado, das anteriores.</translation>
     </message>
     <message>
       <source>See and manage</source>
@@ -4253,7 +4305,7 @@
     </message>
     <message>
       <source>The avatar forgets every viewer, in RAM and on disk. This cannot be undone.</source>
-      <translation>O avatar esquece todos os espectadores, da RAM e do disco. Não dá para desfazer.</translation>
+      <translation>O personagem esquece todos os espectadores, da RAM e do disco. Não dá para desfazer.</translation>
     </message>
     <message>
       <source>Restore defaults</source>
@@ -4325,7 +4377,7 @@
     </message>
     <message>
       <source>Chat messages are never executed and cannot change the avatar's rules.</source>
-      <translation>Mensagens do chat nunca são executadas e não mudam as regras do avatar.</translation>
+      <translation>Mensagens do chat nunca são executadas e não mudam as regras do personagem.</translation>
     </message>
     <message>
       <source>History stays in memory and is lost when you close the app, unless you export it.</source>
@@ -4832,7 +4884,7 @@
     </message>
     <message>
       <source>About the avatar</source>
-      <translation>Sobre o avatar</translation>
+      <translation>Sobre o personagem</translation>
     </message>
     <message>
       <source>Follow-up</source>
@@ -5179,7 +5231,7 @@
     </message>
     <message>
       <source>Tell the avatar what your channel is about so the jokes fit. It never invents what is not here.</source>
-      <translation>Conte ao avatar do que se trata o canal para as piadas combinarem. Ele não inventa o que não estiver aqui.</translation>
+      <translation>Conte ao personagem do que se trata o canal para as piadas combinarem. Ele não inventa o que não estiver aqui.</translation>
     </message>
     <message>
       <source>About the channel</source>
@@ -5315,7 +5367,7 @@
     </message>
     <message>
       <source>Forbidden topics — the avatar dodges them with a joke</source>
-      <translation>Assuntos proibidos — o avatar desvia com uma piada</translation>
+      <translation>Assuntos proibidos — o personagem desvia com uma piada</translation>
     </message>
     <message>
       <source>Politics, religion…</source>

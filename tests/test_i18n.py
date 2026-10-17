@@ -43,3 +43,49 @@ def test_translator_loads(qapp=None):
     assert t.translate("Main", "Dashboard") == "Painel"
     assert t.translate("VoicePage", "%n voice(s) available", "", 3) == "%n vozes disponíveis"  # plural form
     assert t.translate("VoicePage", "%n voice(s) available", "", 1) == "%n voz disponível"
+
+
+def test_translations_keep_every_placeholder():
+    """A translation that drops or invents %1/%2/%n shows garbage (or the wrong number) on screen."""
+    marks = re.compile(r"%(?:\d|n)")
+    broken = []
+    for m in ET.parse(TS).getroot().iter("message"):
+        source = m.find("source").text or ""
+        tr = m.find("translation")
+        forms = [f.text or "" for f in tr.findall("numerusform")] or [tr.text or ""]
+        want = sorted(marks.findall(source))
+        for form in forms:
+            got = sorted(marks.findall(form))
+            # a singular plural form may spell the number out ("1 voz" written as "uma voz")
+            if got != want and not (m.get("numerus") == "yes" and set(got) <= set(want)):
+                broken.append(f"{source!r} -> {form!r}")
+    assert broken == []
+
+
+def test_python_interface_strings_are_translatable():
+    """Strings shown by the GUI's Python controllers go through self.tr(), never raw literals."""
+    gui = ROOT / "chattoon" / "gui"
+    offenders = []
+    for py in gui.glob("*.py"):
+        for i, line in enumerate(py.read_text(encoding="utf-8").splitlines(), 1):
+            if re.search(r"notify\(\s*\"[A-Z]", line) or re.search(r"toast\.emit\(\s*\"[A-Z]", line):
+                offenders.append(f"{py.name}:{i}")
+    assert offenders == []
+
+
+def test_interface_language_choice(monkeypatch):
+    from PySide6.QtCore import QCoreApplication, QLocale
+    from PySide6.QtWidgets import QApplication
+
+    from chattoon.gui.app import install_translator
+
+    app = QApplication.instance() or QApplication([])
+    pt = install_translator(app, "pt_BR")
+    assert pt is not None and QCoreApplication.translate("Main", "Dashboard") == "Painel"
+    app.removeTranslator(pt)
+    assert install_translator(app, "en") is None  # English is the source language: no catalogue
+    assert QCoreApplication.translate("Main", "Dashboard") == "Dashboard"
+    monkeypatch.setattr(QLocale, "system", staticmethod(lambda: QLocale("pt_BR")))
+    auto = install_translator(app, "system")  # follows the desktop's language
+    assert auto is not None
+    app.removeTranslator(auto)

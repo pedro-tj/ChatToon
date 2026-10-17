@@ -198,9 +198,12 @@ const bubbleLabel = bubble.querySelector(".label");
 const bubblePlatform = bubble.querySelector(".platform");
 let bubbleHideAt = 0;
 let swapTimer = 0;
+// the overlay follows the reply language (it is seen by viewers and in the app's preview)
 const LABELS = {
-  pt: { said: "no chat", asked: "pergunta", superchat: "Super Chat" },
-  en: { said: "in chat", asked: "question", superchat: "Super Chat" },
+  pt: { said: "no chat", asked: "pergunta", superchat: "Super Chat",
+        unlock: "Clique na página para liberar o áudio (no OBS não é preciso)", connecting: "Conectando ao ChatToon…" },
+  en: { said: "in chat", asked: "question", superchat: "Super Chat",
+        unlock: "Click the page to allow audio (not needed inside OBS)", connecting: "Connecting to ChatToon…" },
 };
 
 function labels() { return LABELS[(config.language || "pt").toLowerCase().startsWith("pt") ? "pt" : "en"]; }
@@ -373,7 +376,7 @@ function playAudio(msg, speech) {
       // Browsers block autoplay without a click; OBS does not. Fall back to the clock.
       speech.audio = null;
       send({ type: "ended", id: msg.id });
-      if (!audioUnlockHint) badge("Click the page to allow audio (not needed inside OBS)");
+      if (!audioUnlockHint) badge(labels().unlock, true);
       audioUnlockHint = true;
     });
   }
@@ -458,10 +461,11 @@ function send(data) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(data));
 }
 
-function badge(text) {
+// OBS shows no badge except the audio hint (a plain browser tab needs a click to play)
+function badge(text, audioHint = false) {
   const el = document.getElementById("badge");
   el.textContent = text;
-  el.hidden = !text || role === "obs" && !text.startsWith("Click");
+  el.hidden = !text || (role === "obs" && !audioHint);
 }
 
 let lastHeard = "";
@@ -505,7 +509,7 @@ function connect() {
   };
   ws.onclose = () => {
     state.connected = false;
-    if (role === "preview") badge("Connecting to ChatToon…");
+    if (role === "preview") badge(labels().connecting);
     retry = Math.min(retry + 1, 6);
     setTimeout(connect, 500 * 2 ** retry); // backoff up to ~30 s
   };

@@ -43,15 +43,24 @@ _MODEL_REF = re.compile(r"^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,80}/){0,2}[A-Za-z0-9][
 
 
 class OllamaError(Exception):
-    pass
+    """An Ollama problem. ``code`` lets the interface explain it in its own language."""
+
+    code = "ai-failed"
+
+    def __init__(self, message: str = "", code: str = ""):
+        super().__init__(message)
+        if code:
+            self.code = code
 
 
 class OllamaUnavailable(OllamaError):
     """The service is not running or not reachable."""
 
+    code = "ai-unreachable"
+
 
 class ModelNotFound(OllamaError):
-    pass
+    code = "ai-model-missing"
 
 
 @dataclass
@@ -158,7 +167,7 @@ class OllamaClient:
         except (aiohttp.ClientConnectorError, aiohttp.ServerDisconnectedError) as e:
             raise OllamaUnavailable(f"Ollama is not reachable at {self.host}") from e
         except asyncio.TimeoutError as e:
-            raise OllamaUnavailable(f"Ollama did not answer within {timeout:.0f}s") from e
+            raise OllamaUnavailable(f"Ollama did not answer within {timeout:.0f}s", "ai-timeout") from e
         except (aiohttp.ContentTypeError, json.JSONDecodeError) as e:
             raise OllamaError("Unexpected response from Ollama") from e
 
@@ -320,7 +329,7 @@ class OllamaClient:
                 raise OllamaUnavailable(f"Ollama is not reachable at {self.host}") from e
             text = "".join(parts).strip()
             if not text:
-                raise OllamaError("The model returned an empty answer")
+                raise OllamaError("The model returned an empty answer", "ai-empty")
             return ChatResult(
                 text=text, model=model, eval_count=int(final.get("eval_count") or 0),
                 total_seconds=(final.get("total_duration") or 0) / 1e9,
@@ -330,7 +339,7 @@ class OllamaClient:
         try:
             return await asyncio.wait_for(run(), timeout or self.timeout)
         except asyncio.TimeoutError as e:
-            raise OllamaError(f"The model took longer than {timeout or self.timeout:.0f}s") from e
+            raise OllamaError(f"The model took longer than {timeout or self.timeout:.0f}s", "ai-timeout") from e
 
 
 async def registry_size(model: str, session, timeout: float = 10) -> int:

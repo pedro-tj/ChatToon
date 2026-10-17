@@ -115,7 +115,7 @@ class BigLinuxTTS:
             return self._modules
         if not TTS_BIGLINUX_DIR.is_dir():
             self.error = "TTS BigLinux is not installed (package tts-biglinux)."
-            raise TTSError(self.error)
+            raise TTSError(self.error, "tts-missing")
         for p in (str(TTS_BIGLINUX_DIR), str(TTS_ENGINE_DIR)):
             if p not in sys.path:
                 sys.path.append(p)  # append: never shadow ChatToon's own modules
@@ -124,7 +124,7 @@ class BigLinuxTTS:
             from services.text_processor import process_text  # type: ignore[import-not-found]
         except Exception as e:  # noqa: BLE001 - any import failure means "unusable"
             self.error = f"Could not load TTS BigLinux: {e}"
-            raise TTSError(self.error) from e
+            raise TTSError(self.error, "tts-broken", str(e)[:200]) from e
         try:
             import tts_engine  # type: ignore[import-not-found]
         except ImportError:
@@ -236,7 +236,7 @@ class BigLinuxTTS:
         _, svc, _, engine = self._load()
         spoken = self.prepare_text(text, voice.language)
         if not spoken:
-            raise TTSError("Nothing to say after text cleanup")
+            raise TTSError("Nothing to say after text cleanup", "no-text")
         uid = utterance_id or f"u{int(time.time() * 1000)}"
         path = self.workdir / f"{uid}.wav"
         started = time.monotonic()
@@ -283,7 +283,7 @@ class BigLinuxTTS:
         if not model.endswith(".onnx") and os.path.isfile(model + ".onnx"):
             model += ".onnx"
         if not os.path.isfile(model):
-            raise TTSError("The selected Piper voice is not installed")
+            raise TTSError("The selected Piper voice is not installed", "voice-missing", voice.name)
         args = (svc.piper_length_scale(rate), svc.piper_noise_scale(pitch), 0.8, svc.volume_factor(volume))
         if engine is not None:
             wav = engine.synthesize_piper(text, model, *args)
@@ -294,7 +294,7 @@ class BigLinuxTTS:
 
         binary = _find_piper_binary()
         if not binary:
-            raise TTSError("Piper is not installed")
+            raise TTSError("Piper is not installed", "missing", "Piper")
         self._run([binary, "--model", model, "--output_file", str(path), "--length_scale", f"{args[0]:.2f}",
                    "--noise_scale", f"{args[1]:.3f}", "--noise_w", "0.8"], text)
 
@@ -600,7 +600,7 @@ class AudioPlayer:
     def play(self, path: Path) -> None:
         """Start playback (stopping anything still playing)."""
         if not self.command:
-            raise TTSError("No audio player found (pipewire, pulseaudio-utils or alsa-utils)")
+            raise TTSError("No audio player found (pipewire, pulseaudio-utils or alsa-utils)", "no-player")
         with self._lock:
             self._stop_locked()
             self._proc = subprocess.Popen([*self.command, str(path)], stdout=subprocess.DEVNULL,

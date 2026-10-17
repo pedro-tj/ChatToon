@@ -139,7 +139,7 @@ class Backend(QObject):
         try:
             await self.engine.startup()
         except OSError as e:
-            self.bus.emit("error", {"source": "overlay", "message": str(e)})
+            self.bus.emit("error", {"source": "overlay", "message": str(e), "code": "overlay-port"})
         await self.engine.check_services()
         if not self._closing:
             self.ai._set("_status", await self.ai.service.status(self.settings.ai.host), self.ai.serviceChanged)
@@ -367,6 +367,19 @@ class Backend(QObject):
             "failed": self.tr("The voice engine %1 failed."),
             "no-spontaneous": self.tr("No spontaneous line is available for this category. Add curiosities or fill in "
                                       "the stream topic."),
+            "no-sources": self.tr("Add a streaming platform (and enable it) before starting, or use Demo mode."),
+            "ai-unreachable": self.tr("Ollama is not answering. Start it on the AI page."),
+            "ai-timeout": self.tr("The model %1 took too long to answer. Try a smaller model or a longer timeout."),
+            "ai-model-missing": self.tr("The model %1 is not installed in Ollama. Choose another one on the AI page."),
+            "ai-empty": self.tr("The model %1 gave an empty answer. Try again or choose another model."),
+            "ai-failed": self.tr("The AI could not answer: %1"),
+            "tts-missing": self.tr("TTS BigLinux is not installed. Install it on the Voice page."),
+            "tts-broken": self.tr("TTS BigLinux could not be loaded. Reinstall the tts-biglinux package."),
+            "no-text": self.tr("There was nothing to say after cleaning the text."),
+            "voice-missing": self.tr("The voice %1 is not installed anymore. Choose another one on the Voice page."),
+            "no-player": self.tr("No audio player was found. Install pipewire-audio (or pulseaudio-utils)."),
+            "overlay-port": self.tr("No free port for the overlay. Close the program that uses it and restart ChatToon."),
+            "keyring": self.tr("The system keyring refused the operation: %1"),
         }
         text = known.get(code)
         return text.replace("%1", detail or message) if text else message
@@ -600,7 +613,8 @@ class Backend(QObject):
                 await asyncio.to_thread(store.set, key, {field: value.strip()})
                 self.bus.emit("toast", {"message": "saved"})
             except OSError as e:
-                self.bus.emit("error", {"source": "accounts", "message": str(e)})
+                self.bus.emit("error", {"source": "accounts", "message": str(e), "code": "keyring",
+                                        "detail": e.strerror or type(e).__name__})
             await self._refresh_accounts()
 
         self.runtime.submit(run())
@@ -934,7 +948,7 @@ class Backend(QObject):
         try:
             path.write_text(json.dumps(list(reversed(self._history)), ensure_ascii=False, indent=2), encoding="utf-8")
         except OSError as e:
-            self.toast.emit(str(e), "error")
+            self.notify(self.tr("Could not save the file: %1").replace("%1", e.strerror or str(e)), "error")
             return False
         self.toast.emit(self.tr("History saved"), "success")
         return True
@@ -982,7 +996,7 @@ class Backend(QObject):
         try:
             path.write_text(json.dumps(self.settings.export_profile(), ensure_ascii=False, indent=2), encoding="utf-8")
         except OSError as e:
-            self.toast.emit(str(e), "error")
+            self.notify(self.tr("Could not save the file: %1").replace("%1", e.strerror or str(e)), "error")
             return False
         self.toast.emit(self.tr("Profile exported (without secrets)"), "success")
         return True

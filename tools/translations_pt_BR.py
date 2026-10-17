@@ -1425,3 +1425,32 @@ PT_BR.update({
     "Clicks pass through": "Cliques atravessam",
     "With clicks passing through, turn it off again in ChatToon › Where to show.": "Com os cliques atravessando, desligue de novo no ChatToon › Onde mostrar.",
 })
+
+# error messages by code (3.0.0)
+PT_BR.update({
+    "Add a streaming platform (and enable it) before starting, or use Demo mode.": "Adicione uma plataforma de streaming (e ative-a) antes de iniciar, ou use o modo Demonstração.",
+    "Ollama is not answering. Start it on the AI page.": "O Ollama não está respondendo. Inicie-o na página Inteligência artificial.",
+    "The model %1 took too long to answer. Try a smaller model or a longer timeout.": "O modelo %1 demorou demais para responder. Tente um modelo menor ou um tempo limite maior.",
+    "The model %1 is not installed in Ollama. Choose another one on the AI page.": "O modelo %1 não está instalado no Ollama. Escolha outro na página Inteligência artificial.",
+    "The model %1 gave an empty answer. Try again or choose another model.": "O modelo %1 deu uma resposta vazia. Tente de novo ou escolha outro modelo.",
+    "The AI could not answer: %1": "A IA não conseguiu responder: %1",
+    "TTS BigLinux is not installed. Install it on the Voice page.": "O TTS BigLinux não está instalado. Instale-o na página Voz.",
+    "TTS BigLinux could not be loaded. Reinstall the tts-biglinux package.": "O TTS BigLinux não pôde ser carregado. Reinstale o pacote tts-biglinux.",
+    "There was nothing to say after cleaning the text.": "Não sobrou nada para falar depois de limpar o texto.",
+    "The voice %1 is not installed anymore. Choose another one on the Voice page.": "A voz %1 não está mais instalada. Escolha outra na página Voz.",
+    "No audio player was found. Install pipewire-audio (or pulseaudio-utils).": "Nenhum reprodutor de áudio foi encontrado. Instale o pipewire-audio (ou pulseaudio-utils).",
+    "No free port for the overlay. Close the program that uses it and restart ChatToon.": "Não há porta livre para o overlay. Feche o programa que a usa e reinicie o ChatToon.",
+    "The system keyring refused the operation: %1": "O chaveiro do sistema recusou a operação: %1",
+    "Could not save the file: %1": "Não foi possível salvar o arquivo: %1",
+})
+
+
+# One word for the character everywhere: older strings said "avatar", the newer ones
+# "personagem" (as on the Characters page). Masculine in both, so articles still agree.
+def _consistent(text: str) -> str:
+    import re
+    return re.sub(r"\bavatares\b", "personagens", re.sub(r"\bavatar\b", "personagem", text))
+
+
+PT_BR = {k: _consistent(v) for k, v in PT_BR.items()}
+PLURALS = {k: tuple(_consistent(f) for f in v) for k, v in PLURALS.items()}
