@@ -20,12 +20,6 @@ class SessionReport(Controller):
 
     report = Property("QVariantMap", lambda self: self._report, notify=reportChanged)
 
-    def _publish(self, report: dict) -> None:
-        def apply() -> None:
-            self._report = report
-            self.reportChanged.emit()
-        self.later(apply)
-
     @Slot()
     def check(self) -> None:
         """Health check: the same report, without going live."""
@@ -62,7 +56,7 @@ class SessionReport(Controller):
                 self.later(self.openRequested.emit)  # something essential is missing: say what
             elif not start:
                 report["state"] = "checked" if report["ok"] else "blocked"
-            self._publish(report)
+            self._set("_report", report, self.reportChanged)
             # proof: the model answers (only when nothing blocks) and the voice speaks — silently
             proof = await self.engine.verify(ai=report["ok"]) if report["ok"] or report["voice"]["status"] == "ok" else None
             if proof is None:
@@ -76,5 +70,5 @@ class SessionReport(Controller):
             if proof["voice"] is False:
                 report["voice"].update(status="warn", code="voice-failed")
                 report["warnings"] = [*report["warnings"], "voice-failed"]
-            self._publish(report)
+            self._set("_report", report, self.reportChanged)
         self.submit(run())

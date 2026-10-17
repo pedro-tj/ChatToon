@@ -36,6 +36,13 @@ class Controller(QObject):
         if not self.backend._closing:
             self._call.emit(fn)
 
+    def _set(self, attr: str, value, signal) -> None:
+        """Replace a property's value and notify QML, on the GUI thread."""
+        def apply() -> None:
+            setattr(self, attr, value)
+            signal.emit()
+        self.later(apply)
+
     def submit(self, coro) -> concurrent.futures.Future:
         future = self.backend.runtime.submit(coro)
         future.add_done_callback(self._log_failure)

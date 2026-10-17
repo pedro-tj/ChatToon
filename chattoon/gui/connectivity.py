@@ -10,7 +10,7 @@ import aiohttp
 from PySide6.QtCore import Property, Signal, Slot
 
 from ..core import network, remote_check, system
-from ..core.overlay_server import public_base, valid_lan_address
+from ..core.overlay_server import valid_lan_address
 from .controller import Controller
 
 
@@ -34,12 +34,6 @@ class Connectivity(Controller):
     publicIp = Property("QVariantMap", lambda self: self._public_ip, notify=publicIpChanged)  # noqa: N815
     remote = Property("QVariantMap", lambda self: self._remote, notify=remoteChanged)
     proxy = Property("QVariantMap", lambda self: self._proxy, notify=proxyChanged)
-
-    def _set(self, attr: str, value, signal) -> None:
-        def apply() -> None:
-            setattr(self, attr, value)
-            signal.emit()
-        self.later(apply)
 
     # -- local network ---------------------------------------------------------------------
 
@@ -156,10 +150,6 @@ class Connectivity(Controller):
     def forgetPublicIp(self) -> None:  # noqa: N802
         self._public_ip = {"known": False, "value": "", "cgnat": False, "state": "idle"}
         self.publicIpChanged.emit()
-
-    @Slot(str, result=str)
-    def normalizeAddress(self, text: str) -> str:  # noqa: N802
-        return public_base(text)
 
     @Slot(str, result=bool)
     def validDomain(self, text: str) -> bool:  # noqa: N802

@@ -33,12 +33,6 @@ class VoiceCenter(Controller):
     download = Property("QVariantMap", lambda self: self._download, notify=downloadChanged)
     available = Property(bool, lambda self: isinstance(self.backend.engine.tts, BigLinuxTTS), constant=True)
 
-    def _set(self, attr: str, value, signal) -> None:
-        def apply() -> None:
-            setattr(self, attr, value)
-            signal.emit()
-        self.later(apply)
-
     @property
     def tts(self):
         return self.engine.tts

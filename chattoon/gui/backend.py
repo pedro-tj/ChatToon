@@ -31,7 +31,6 @@ from ..core.streams import PLATFORMS
 from ..core.streams.base import ConnectorError
 from ..core.streams.twitch import TwitchAuth, client_id
 from ..core.streams.urls import UrlError, detect, source_key
-from ..core.youtube_chat import extract_video_id
 from .ai_center import OllamaCenter
 from .character_window import CharacterWindow
 from .connectivity import Connectivity
@@ -72,8 +71,6 @@ class Backend(QObject):
     statsChanged = Signal()
     queueChanged = Signal()
     historyChanged = Signal()
-    messagesChanged = Signal()
-    pullChanged = Signal()
     sourcesChanged = Signal()
     accountsChanged = Signal()
     loginChanged = Signal()
@@ -101,8 +98,6 @@ class Backend(QObject):
         self._stats: dict = {}
         self._queue: dict = {"pending": [], "suggestions": []}
         self._history: list[dict] = []
-        self._messages: list[dict] = []
-        self._pull = {"model": "", "status": "", "progress": -1.0}
         self._sources: list[dict] = []
         self._connected: list[str] = []
         self._accounts: dict = {"store": "", "encrypted": False}
@@ -218,7 +213,6 @@ class Backend(QObject):
         elif kind == "message":
             data = dict(data, receivedAt=time.time())
             self._feed_pending.append(row_from_message(data))
-            self._messages = ([data] + self._messages)[:120]
             if not self._feed_timer.isActive():
                 self._feed_timer.start()
         elif kind == "message_state":
@@ -264,9 +258,6 @@ class Backend(QObject):
             self._state["lastErrorSource"] = data.get("source", "")
             self.runtimeChanged.emit()
             self.notify(message, "error")
-        elif kind == "pull":
-            self._pull = data
-            self.pullChanged.emit()
         elif kind == "probe":
             self.probeFinished.emit(data.get("id", ""), data)
         elif kind == "toast":
@@ -275,7 +266,6 @@ class Backend(QObject):
     def _flush_feed(self) -> None:
         rows, self._feed_pending = self._feed_pending, []
         self._feed.append(rows)
-        self.messagesChanged.emit()
 
     def _message_state(self, data: dict) -> None:
         uid, state = data.get("id", ""), data.get("state", "")
@@ -319,8 +309,6 @@ class Backend(QObject):
     stats = Property("QVariantMap", lambda self: self._stats, notify=statsChanged)
     queue = Property("QVariantMap", lambda self: self._queue, notify=queueChanged)
     history = Property("QVariantList", lambda self: self._history, notify=historyChanged)
-    messages = Property("QVariantList", lambda self: self._messages, notify=messagesChanged)
-    pull = Property("QVariantMap", lambda self: self._pull, notify=pullChanged)
     sources = Property("QVariantList", lambda self: self._sources, notify=sourcesChanged)
     connectedPlatforms = Property("QVariantList", lambda self: self._connected, notify=sourcesChanged)  # noqa: N815
     accounts = Property("QVariantMap", lambda self: self._accounts, notify=accountsChanged)
@@ -419,7 +407,6 @@ class Backend(QObject):
         return labels.get(gesture, gesture)
 
     characters = Property("QVariantList", _characters, constant=True)
-    recommendedModels = Property("QVariantList", lambda self: list(RECOMMENDED_MODELS), constant=True)
 
     # -- settings ----------------------------------------------------------
 
@@ -694,17 +681,6 @@ class Backend(QObject):
     @Slot()
     def clearFeed(self) -> None:  # noqa: N802
         self._feed.clear()
-
-    @Slot(str, result=str)
-    def validateUrl(self, url: str) -> str:  # noqa: N802
-        """Empty string when valid, else a message for the user."""
-        if not url.strip():
-            return ""
-        try:
-            extract_video_id(url)
-            return ""
-        except ValueError:
-            return self.tr("This is not a YouTube video or live link.")
 
     @Slot()
     def finishFirstRun(self) -> None:  # noqa: N802

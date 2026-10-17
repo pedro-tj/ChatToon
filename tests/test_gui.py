@@ -86,12 +86,10 @@ def test_set_config_paths_types_and_persistence(backend):
     assert backend.config["current"]["personality"]["preset"] == "geek"
 
 
-def test_select_character_and_url_validation(backend):
+def test_select_character(backend):
     backend.selectCharacter("tux")
     assert backend.config["character"] == "tux"
     assert pump(2, lambda: "pinguim" in backend.engine.selector.config.names)
-    assert backend.validateUrl("https://youtu.be/AbCdEfGhIjK") == ""
-    assert backend.validateUrl("https://example.com") != ""
 
 
 def test_demo_flow_through_backend(backend):

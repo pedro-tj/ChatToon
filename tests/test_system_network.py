@@ -43,14 +43,6 @@ def test_package_info_reads_pacman_in_c_locale():
     assert all(c[0] == "pacman" for c in r.calls) and len(r.calls) == 2
 
 
-def test_spelling_variants_prefer_installed_then_available():
-    r = Runner({("pacman", "-Q", "--", "piper-voices-pt-BR"): (0, "piper-voices-pt-BR 1.0-1", ""),
-                ("pacman", "-Si", "--", "piper-voices-pt-br"): (0, SI_OLLAMA, "")})
-    assert system.pick_spelling(["piper-voices-pt-br", "piper-voices-pt-BR"], r) == "piper-voices-pt-BR"
-    r2 = Runner({("pacman", "-Si", "--", "piper-voices-pt-br"): (0, SI_OLLAMA, "")})
-    assert system.pick_spelling(["piper-voices-pt-br", "piper-voices-pt-BR"], r2) == "piper-voices-pt-br"
-
-
 @pytest.mark.parametrize("code,output,expected", [
     (126, "", "cancelled"),
     (1, "error: target not found: ollama-x", "not-found"),

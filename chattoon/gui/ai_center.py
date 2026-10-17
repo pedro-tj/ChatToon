@@ -54,12 +54,6 @@ class OllamaCenter(Controller):
 
     # -- state ---------------------------------------------------------------------------
 
-    def _set(self, attr: str, value, signal) -> None:
-        def apply() -> None:
-            setattr(self, attr, value)
-            signal.emit()
-        self.later(apply)
-
     @Slot()
     def refresh(self) -> None:
         """Check the service again (and the models, through the engine)."""
@@ -218,8 +212,6 @@ class OllamaCenter(Controller):
         meter = {"t": time.monotonic(), "bytes": 0, "speed": 0.0, "last": 0.0}
         self._pull = dict(_IDLE_PULL, model=model, state="downloading", status="pulling manifest")
         self.pullChanged.emit()
-        self.backend._pull = {"model": model, "status": "pulling manifest", "progress": -1.0}  # legacy property
-        self.backend.pullChanged.emit()
 
         def event(e: dict) -> None:
             digest = str(e.get("digest") or "")
@@ -238,7 +230,6 @@ class OllamaCenter(Controller):
             state = dict(self._pull, status=str(e.get("status") or ""), completed=done, total=total,
                          progress=done / total if total else -1.0, speed=max(0.0, meter["speed"]))
             self._set("_pull", state, self.pullChanged)
-            self.later(lambda: self._legacy(state))
 
         async def run() -> None:
             try:
@@ -246,7 +237,6 @@ class OllamaCenter(Controller):
                     await client.pull(model, on_event=event)
                 final = dict(self._pull, state="done", status="success", progress=1.0)
                 self._set("_pull", final, self.pullChanged)
-                self.later(lambda: self._legacy(final))
                 self.toast(self.tr("%1 downloaded and installed").replace("%1", model), "success")
                 await self.engine.check_services()
                 if not self.settings.ai.model:
@@ -254,20 +244,13 @@ class OllamaCenter(Controller):
             except asyncio.CancelledError:
                 gone = dict(self._pull, state="cancelled", progress=-1.0)
                 self._set("_pull", gone, self.pullChanged)
-                self.later(lambda: self._legacy(gone))
                 raise
             except (OllamaError, aiohttp.ClientError, OSError, ValueError) as e:
                 failed = dict(self._pull, state="error", error=str(e)[:200], progress=-1.0)
                 self._set("_pull", failed, self.pullChanged)
-                self.later(lambda: self._legacy(failed))
                 self.toast(self.tr("The download failed: %1").replace("%1", str(e)[:120]), "error")
 
         self._pull_future = self.submit(run())
-
-    def _legacy(self, state: dict) -> None:
-        status = {"done": "success", "error": "error"}.get(state["state"], state["status"])
-        self.backend._pull = {"model": state["model"], "status": status, "progress": state["progress"]}
-        self.backend.pullChanged.emit()
 
     @Slot()
     def cancelPull(self) -> None:  # noqa: N802

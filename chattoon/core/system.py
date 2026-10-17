@@ -141,18 +141,6 @@ def package_info(name: str, runner=run) -> PackageInfo:
     return info
 
 
-def pick_spelling(names: list[str], runner=run) -> str:
-    """The first of several spellings that is installed, else the first that is available
-    (BigLinux stable has ``piper-voices-pt-br``, testing ``piper-voices-pt-BR``)."""
-    for n in names:
-        if installed_version(n, runner):
-            return n
-    for n in names:
-        if package_info(n, runner).available:
-            return n
-    return ""
-
-
 @dataclass
 class InstallResult:
     ok: bool
