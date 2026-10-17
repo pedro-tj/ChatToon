@@ -6,11 +6,19 @@ import "pages"
 
 ApplicationWindow {
     id: win
+
+    component LazyPage: Loader {
+        required property int index
+        readonly property bool current: stack.currentIndex === index
+        active: false  // switched on once, on the first visit (never bound: no binding loop)
+        onCurrentChanged: if (current) active = true
+        Component.onCompleted: if (current) active = true
+    }
     readonly property var cfg: backend.config
     readonly property var rt: backend.runtimeState
     readonly property bool running: rt.state === "running"
     readonly property bool paused: rt.state === "paused"
-    property alias currentPage: nav.currentIndex
+    property int currentPage: 0  // index in the page stack (see pageIndex)
     // platform id -> { label, color, glyph, support, … } (PlatformBadge, pages)
     readonly property var platformInfo: {
         const map = {}
@@ -18,8 +26,29 @@ ApplicationWindow {
         return map
     }
     readonly property var pageIndex: ({ dashboard: 0, characters: 1, personality: 2, ai: 3, platforms: 4, livechat: 5,
-                                        voice: 6, context: 7, obs: 8, history: 9, settings: 10 })
-    function go(name) { nav.currentIndex = pageIndex[name] }
+                                        voice: 6, context: 7, obs: 8, display: 8, history: 9, settings: 10 })
+    function go(name) { currentPage = pageIndex[name] }
+    // menu: the simple mode shows the essentials; the advanced mode adds the technical pages
+    readonly property var pages: [
+        { id: "dashboard", icon: "dashboard", label: qsTr("Dashboard") },
+        { id: "characters", icon: "smile", label: qsTr("Characters") },
+        { id: "personality", icon: "sparkles", label: qsTr("Personality"), advanced: true },
+        { id: "ai", icon: "bot", label: qsTr("Artificial intelligence") },
+        { id: "voice", icon: "volume", label: qsTr("Voice") },
+        { id: "platforms", icon: "layers", label: qsTr("Streaming platforms") },
+        { id: "display", icon: "monitor", label: qsTr("Where to show") },
+        { id: "livechat", icon: "chat", label: qsTr("Live chat") },
+        { id: "context", icon: "book", label: qsTr("Stream context"), advanced: true },
+        { id: "history", icon: "history", label: qsTr("History"), advanced: true },
+        { id: "settings", icon: "settings", label: qsTr("Settings") },
+    ]
+    readonly property var visiblePages: pages.filter(p => !p.advanced || cfg.advanced || pageIndex[p.id] === currentPage)
+    function ask(options, callback) { confirm.ask(options, callback) }
+    function askReveal(key) {
+        confirm.ask({ title: qsTr("Show this information?"), icon: "eye", danger: true, confirm: qsTr("Show for 15 seconds"),
+                      message: qsTr("It stays visible for 15 seconds. If you are streaming or sharing your screen, viewers will see it too.") },
+                    () => Privacy.reveal(key))
+    }
 
     width: 1360
     height: 880
@@ -43,6 +72,8 @@ ApplicationWindow {
     palette.placeholderText: Theme.textFaint
 
     Binding { target: Theme; property: "mode"; value: win.cfg.theme }
+    Binding { target: Privacy; property: "live"; value: win.cfg.privacy_mode }
+    Binding { target: Theme; property: "reducedMotion"; value: win.cfg.animation.reduce_motion }
 
     // sources that need the streamer (login, error) — shown as a badge on the menu
     readonly property int attention: backend.sources.filter(s => s.enabled && ["auth_required", "error"].indexOf(s.status.state) >= 0).length
@@ -64,7 +95,7 @@ ApplicationWindow {
         model: 9
         Item {
             required property int index
-            Shortcut { sequence: "Ctrl+" + (index + 1); onActivated: nav.currentIndex = index }
+            Shortcut { sequence: "Ctrl+" + (index + 1); onActivated: if (index < win.visiblePages.length) win.go(win.visiblePages[index].id) }
         }
     }
 
@@ -103,34 +134,60 @@ ApplicationWindow {
                     id: nav
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    interactive: false
+                    // short windows (or large fonts): the menu scrolls instead of running under
+                    // the cards below it
+                    clip: true
+                    interactive: contentHeight > height
+                    boundsBehavior: Flickable.StopAtBounds
+                    ScrollIndicator.vertical: ScrollIndicator { active: nav.interactive }
                     spacing: 2
                     keyNavigationEnabled: true
                     activeFocusOnTab: true
-                    model: [
-                        { icon: "dashboard", label: qsTr("Dashboard") },
-                        { icon: "smile", label: qsTr("Characters") },
-                        { icon: "sparkles", label: qsTr("Personality") },
-                        { icon: "bot", label: qsTr("Artificial intelligence") },
-                        { icon: "layers", label: qsTr("Streaming platforms") },
-                        { icon: "chat", label: qsTr("Live chat") },
-                        { icon: "volume", label: qsTr("Voice") },
-                        { icon: "book", label: qsTr("Stream context") },
-                        { icon: "broadcast", label: qsTr("OBS Studio") },
-                        { icon: "history", label: qsTr("History") },
-                        { icon: "settings", label: qsTr("Settings") },
-                    ]
+                    model: win.visiblePages
+                    currentIndex: win.visiblePages.findIndex(p => win.pageIndex[p.id] === win.currentPage)
+                    // arrow keys on the menu open the page (the binding above follows clicks and shortcuts)
+                    onCurrentIndexChanged: if (activeFocus && currentIndex >= 0 && win.pageIndex[win.visiblePages[currentIndex].id] !== win.currentPage)
+                                               win.go(win.visiblePages[currentIndex].id)
                     delegate: NavButton {
                         required property var modelData
                         required property int index
                         width: ListView.view.width
                         text: modelData.label
                         iconName: modelData.icon
-                        current: nav.currentIndex === index
-                        badge: index === 0 && (backend.queue.suggestions || []).length > 0 ? String(backend.queue.suggestions.length)
-                             : index === 4 && win.attention > 0 ? "!" : ""
-                        onClicked: nav.currentIndex = index
+                        current: win.pageIndex[modelData.id] === win.currentPage
+                        badge: modelData.id === "dashboard" && (backend.queue.suggestions || []).length > 0 ? String(backend.queue.suggestions.length)
+                             : modelData.id === "platforms" && win.attention > 0 ? "!" : ""
+                        onClicked: win.go(modelData.id)
                     }
+                }
+
+                // live privacy: always visible, one click away
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 34
+                    radius: Theme.radiusSmall
+                    color: win.cfg.privacy_mode ? Theme.tint(Theme.success, 0.12) : Theme.tint(Theme.warning, 0.12)
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.CheckBox
+                    Accessible.name: qsTr("Live privacy mode")
+                    Accessible.checked: win.cfg.privacy_mode
+                    Keys.onSpacePressed: backend.setConfig("privacy_mode", !win.cfg.privacy_mode)
+                    RowLayout {
+                        anchors { fill: parent; leftMargin: 10; rightMargin: 10 }
+                        spacing: 8
+                        Icon { name: win.cfg.privacy_mode ? "shield" : "eye"; size: 15; color: win.cfg.privacy_mode ? Theme.success : Theme.warning }
+                        Text {
+                            Layout.fillWidth: true
+                            text: win.cfg.privacy_mode ? qsTr("Live privacy: on") : qsTr("Live privacy: off")
+                            color: win.cfg.privacy_mode ? Theme.success : Theme.warning; font.pixelSize: 12; font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+                    }
+                    HoverHandler { id: privHover; cursorShape: Qt.PointingHandCursor }
+                    TapHandler { onTapped: backend.setConfig("privacy_mode", !win.cfg.privacy_mode) }
+                    ToolTip.visible: privHover.hovered
+                    ToolTip.text: qsTr("Hides addresses, IPs and account names on every page — safe to show on stream.")
+                    ToolTip.delay: 400
                 }
 
                 // live state + main control, always reachable
@@ -148,7 +205,7 @@ ApplicationWindow {
                                 color: win.running ? Theme.success : win.rt.state === "emergency" ? Theme.danger
                                      : win.paused ? Theme.warning : Theme.textFaint
                                 SequentialAnimation on opacity {
-                                    running: win.running; loops: Animation.Infinite
+                                    running: win.running && !Theme.reducedMotion; loops: Animation.Infinite
                                     NumberAnimation { to: 0.35; duration: 700 }
                                     NumberAnimation { to: 1; duration: 700 }
                                 }
@@ -190,19 +247,21 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.margins: 22
-            currentIndex: nav.currentIndex
+            currentIndex: win.currentPage
 
+            // Pages are built on their first visit and then kept (faster start-up). The two
+            // pages with a 3D preview are unloaded when left, so only one renderer runs.
             DashboardPage {}
             Loader { active: stack.currentIndex === 1; sourceComponent: CharactersPage {} }
-            PersonalityPage {}
-            AiPage {}
-            PlatformsPage {}
-            LiveChatPage {}
-            VoicePage {}
-            StreamPage {}
+            LazyPage { index: 2; sourceComponent: PersonalityPage {} }
+            LazyPage { index: 3; sourceComponent: AiPage {} }
+            LazyPage { index: 4; sourceComponent: PlatformsPage {} }
+            LazyPage { index: 5; sourceComponent: LiveChatPage {} }
+            LazyPage { index: 6; sourceComponent: VoicePage {} }
+            LazyPage { index: 7; sourceComponent: StreamPage {} }
             Loader { active: stack.currentIndex === 8; sourceComponent: ObsPage {} }
-            HistoryPage {}
-            SettingsPage {}
+            LazyPage { index: 9; sourceComponent: HistoryPage {} }
+            LazyPage { index: 10; sourceComponent: SettingsPage {} }
         }
     }
 
@@ -223,10 +282,22 @@ ApplicationWindow {
     }
 
     Toast { id: toast }
-
-    FirstRunWizard {
-        id: wizard
-        anchors.centerIn: parent
+    ConfirmDialog { id: confirm }
+    // the start report and the first-run wizard exist only when needed
+    function openReport() {
+        reportLoader.active = true
+        reportLoader.item.open()
     }
-    Component.onCompleted: if (!cfg.first_run_done) wizard.open()
+    Loader { id: reportLoader; active: false; sourceComponent: StartReport {} }
+    Connections {
+        target: backend.sessionReport
+        function onOpenRequested() { win.openReport() }
+    }
+
+    Loader {
+        id: wizardLoader
+        active: !win.cfg.first_run_done
+        sourceComponent: FirstRunWizard {}
+        onLoaded: item.open()
+    }
 }

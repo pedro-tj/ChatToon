@@ -1,7 +1,7 @@
 import QtQuick
 import "."
 
-// Controle segmentado: model = [{ value, label }]
+// Segmented control: model = [{ value, label }]
 Rectangle {
     id: root
     property var model: []

@@ -70,3 +70,12 @@ body.preview.light { background: radial-gradient(120% 90% at 50% 15%, #ffffff 0%
 #bubble.side-right::after { left: -10px; top: var(--tail, 50%); bottom: auto; transform: translateY(-50%) rotate(45deg); border-radius: 0 0 0 8px; }
 #bubble.side-left::after { left: auto; right: -24px; top: var(--tail, 50%); bottom: auto; transform: translateY(-50%) rotate(45deg); border-radius: 0 8px 0 0; }
 body.capture #bubble, body.capture #bubble .text, body.capture #bubble .head { transition: none !important; }
+
+/* the character window on the desktop: a narrow window, so a compact bubble */
+body.desktop #bubble { max-width: 88vw; min-width: 90px; padding: 10px 14px 12px; border-radius: 16px;
+  font-size: clamp(13px, 3.9vw, 20px); line-height: 1.24;
+  /* QtWebEngine in a transparent desktop window blends promoted (will-change) layers with
+     partial alpha wrongly: the bubble came out see-through. No promotion, opaque fill. */
+  will-change: auto; background: #ffffff; }
+body.desktop #bubble.viewer { background: #f4f1ff; }
+body.desktop #bubble::after { width: 18px; height: 18px; bottom: -9px; }

@@ -56,6 +56,7 @@ def create_engine(backend: Backend, warnings: list[str] | None = None) -> QQmlAp
     ctx.setContextProperty("backend", backend)
     ctx.setContextProperty("webEngineAvailable", webengine_available())
     engine.load(QUrl.fromLocalFile(str(QML_DIR / "Main.qml")))
+    backend.window.attach(engine)  # the character window on the desktop uses the same engine
     return engine
 
 
@@ -79,6 +80,7 @@ def run(argv: list[str] | None = None) -> int:
         backend.shutdown()
         return 1
     code = app.exec()
+    backend.window.shutdown()  # the character window belongs to the QML engine: close it first
     del engine  # destroy QML before the backend so bindings never see a dead object
     backend.shutdown()
     return code

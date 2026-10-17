@@ -11,13 +11,19 @@ import { Dog } from "./characters/dog.js";
 
 const CHARACTERS = { worm: Worm, alien: Alien, tux: Tux, cat: Cat, owl: Owl, dog: Dog };
 const params = new URLSearchParams(location.search);
-const role = params.get("role") === "preview" ? "preview" : "obs";
+// preview: the app's dashboard · desktop: the character window on the desktop · obs: OBS
+const role = ["preview", "desktop"].includes(params.get("role")) ? params.get("role") : "obs";
 // OBS (and other obs-browser hosts) inject window.obsstudio; a plain browser tab shows the same
 // overlay but joins as "browser", so opening the link to check it never takes the voice from OBS
 const socketRole = role === "obs" && !window.obsstudio && params.get("role") !== "obs" ? "browser" : role;
+// the desktop window frames the character itself (frameDesktop), whatever OBS uses
+const DESKTOP = { x: 0, y: 0, scale: 1, rotation: 0, zoom: 1, background: "transparent" };
+// share of the window height the whole character uses; the space above is for the bubble
+const DESKTOP_FILL = 0.6, DESKTOP_BOTTOM = 0.035, DESKTOP_WIDTH = 0.8;
 const demo = params.get("demo"); // standalone mode: ?demo=worm&emotion=happy&talk=1
 if ((role === "preview" || demo) && !params.has("transparent")) document.body.classList.add("preview");
 if (params.get("theme") === "light") document.body.classList.add("light");
+if (role === "desktop") document.body.classList.add("desktop");
 
 const config = {
   character: demo || "worm", color: params.get("color") || "", showBubble: params.get("bubble") !== "0", showAuthor: true,
@@ -89,21 +95,54 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / Math.max(1, h);
   camera.updateProjectionMatrix();
+  if (role === "desktop") frameDesktop();
+}
+
+// Desktop window: every species has its own size (the dog's head is huge, the worm is tall),
+// so the camera is fitted to the character's real bounding box: whole body in the lower part
+// of the window, feet just above the bottom edge, free space above the head for the bubble.
+let desktopBox = null;
+
+function measureCharacter() {
+  if (!character) return;
+  desktopBox = new THREE.Box3().setFromObject(character.root, true);
+  if (desktopBox.isEmpty()) desktopBox = null;
+}
+
+function frameDesktop() {
+  if (!camera || !desktopBox) return;
+  const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const size = desktopBox.getSize(new THREE.Vector3());
+  const height = size.y * 1.08; // jumps, ears and hats move a little above the rest pose
+  const width = Math.max(size.x, size.z * 0.6) * 1.15; // arms and wings open sideways
+  const byHeight = height / (DESKTOP_FILL * 2 * tan);
+  const byWidth = width / (DESKTOP_WIDTH * 2 * tan * Math.max(0.2, camera.aspect));
+  const distance = Math.max(byHeight, byWidth) + size.z / 2;
+  const visible = 2 * (distance - size.z / 2) * tan;
+  const centerY = desktopBox.min.y - DESKTOP_BOTTOM * visible + visible / 2;
+  const centerX = (desktopBox.min.x + desktopBox.max.x) / 2;
+  camera.position.set(centerX, centerY, distance);
+  camera.lookAt(centerX, centerY, 0);
 }
 
 function applyConfig(next) {
   const qualityChanged = next.quality && next.quality !== config.quality;
   const characterChanged = next.character && (next.character !== config.character || next.color !== config.color);
   Object.assign(config, next);
+  if (role === "desktop") Object.assign(config, DESKTOP, { showBubble: params.get("bubble") !== "0" });
   if (qualityChanged) createRenderer();
   if (characterChanged || !character || qualityChanged) loadCharacter();
   character?.configure(animationConfig());
   stage.position.set(config.x * 2.4, config.y * 1.6, 0);
   stage.scale.setScalar(config.scale);
   stage.rotation.y = THREE.MathUtils.degToRad(config.rotation);
-  const z = 6.6 / Math.max(0.3, config.zoom);
-  camera.position.set(0, 1.45, z);
-  camera.lookAt(0, 1.3, 0);
+  if (role === "desktop") {
+    frameDesktop();
+  } else {
+    const z = 6.6 / Math.max(0.3, config.zoom);
+    camera.position.set(0, 1.45, z);
+    camera.lookAt(0, 1.3, 0);
+  }
   hemi.intensity = 0.4 * config.light;
   keyLight.intensity = 1.7 * config.light;
   rimLight.intensity = 1.2 * config.light;
@@ -128,6 +167,7 @@ function loadCharacter() {
     }
     character = next;
     stage.add(character.root);
+    if (role === "desktop") { measureCharacter(); frameDesktop(); }
     rimLight.color.set(config.color || RIM[id] || "#8fd8ff");
     document.documentElement.style.setProperty("--accent", config.color || ACCENT[id] || "#7c5cff");
   };
@@ -158,9 +198,12 @@ const bubbleLabel = bubble.querySelector(".label");
 const bubblePlatform = bubble.querySelector(".platform");
 let bubbleHideAt = 0;
 let swapTimer = 0;
+// the overlay follows the reply language (it is seen by viewers and in the app's preview)
 const LABELS = {
-  pt: { said: "no chat", asked: "pergunta", superchat: "Super Chat" },
-  en: { said: "in chat", asked: "question", superchat: "Super Chat" },
+  pt: { said: "no chat", asked: "pergunta", superchat: "Super Chat",
+        unlock: "Clique na página para liberar o áudio (no OBS não é preciso)", connecting: "Conectando ao ChatToon…" },
+  en: { said: "in chat", asked: "question", superchat: "Super Chat",
+        unlock: "Click the page to allow audio (not needed inside OBS)", connecting: "Connecting to ChatToon…" },
 };
 
 function labels() { return LABELS[(config.language || "pt").toLowerCase().startsWith("pt") ? "pt" : "en"]; }
@@ -245,13 +288,14 @@ function placeBubble() {
   const bw = bubble.offsetWidth, bh = bubble.offsetHeight, gap = 18, margin = 12;
   // hysteresis: a head bobbing near the limit must not flip the bubble back and forth
   const roomAbove = head.y - gap - bh - margin;
-  bubbleAbove = bubbleAbove ? roomAbove >= -6 : roomAbove >= 18;
+  bubbleAbove = role === "desktop" || (bubbleAbove ? roomAbove >= -6 : roomAbove >= 18);
   bubble.classList.remove("side-left", "side-right");
   if (bubbleAbove) {
     // above the head (preferred)
     const cx = Math.min(w - bw / 2 - margin, Math.max(bw / 2 + margin, head.x));
     bubble.style.left = `${cx}px`;
-    bubble.style.top = `${head.y - gap}px`;
+    // the desktop window is narrow: a long line may cover the forehead, never leave the window
+    bubble.style.top = `${role === "desktop" ? Math.max(bh + margin, head.y - gap) : head.y - gap}px`;
     bubble.style.setProperty("--tail", `${Math.min(bw - 24, Math.max(24, bw / 2 + (head.x - cx)))}px`);
     return;
   }
@@ -332,7 +376,7 @@ function playAudio(msg, speech) {
       // Browsers block autoplay without a click; OBS does not. Fall back to the clock.
       speech.audio = null;
       send({ type: "ended", id: msg.id });
-      if (!audioUnlockHint) badge("Click the page to allow audio (not needed inside OBS)");
+      if (!audioUnlockHint) badge(labels().unlock, true);
       audioUnlockHint = true;
     });
   }
@@ -383,7 +427,9 @@ let lastFrame = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   if (document.hidden) return; // OBS hides inactive sources: no work at all
-  const minDelta = 1000 / Math.max(10, config.fps) - 1;
+  // the app's own preview is a small view: 30 fps look the same there and cost half
+  const fps = role === "preview" ? Math.min(30, config.fps) : config.fps;
+  const minDelta = 1000 / Math.max(10, fps) - 1;
   if (!capture && now - lastFrame < minDelta) return;
   lastFrame = now;
   timer.update(now);
@@ -415,10 +461,11 @@ function send(data) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(data));
 }
 
-function badge(text) {
+// OBS shows no badge except the audio hint (a plain browser tab needs a click to play)
+function badge(text, audioHint = false) {
   const el = document.getElementById("badge");
   el.textContent = text;
-  el.hidden = !text || role === "obs" && !text.startsWith("Click");
+  el.hidden = !text || (role === "obs" && !audioHint);
 }
 
 let lastHeard = "";
@@ -462,7 +509,7 @@ function connect() {
   };
   ws.onclose = () => {
     state.connected = false;
-    if (role === "preview") badge("Connecting to ChatToon…");
+    if (role === "preview") badge(labels().connecting);
     retry = Math.min(retry + 1, 6);
     setTimeout(connect, 500 * 2 ** retry); // backoff up to ~30 s
   };

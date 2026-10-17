@@ -6,12 +6,15 @@
 # Remove: sudo pacman -R chattoon
 
 pkgname=chattoon
-pkgver=2.3.0
+pkgver=3.0.0
 pkgrel=1
 pkgdesc="3D avatar co-host for live streams on YouTube, Twitch, Kick, TikTok and more at once, powered by local AI (Ollama) and TTS BigLinux"
 arch=('any')
+url='https://github.com/ruscher/ChatToon'
 license=('GPL-3.0-or-later')
-depends=('python' 'pyside6' 'python-aiohttp' 'qt6-svg' 'qt6-webengine')
+# qt6-svg: icons (QtSvg) · iproute2: the `ip` command lists the home network addresses
+depends=('python' 'pyside6' 'python-aiohttp' 'qt6-declarative' 'qt6-svg' 'qt6-webengine' 'iproute2'
+         'hicolor-icon-theme')
 optdepends=('tts-biglinux: speech synthesis (BigLinux repository) — without it replies are shown only as text'
             'biglinux-kokoro-tts: Kokoro neural voices for TTS BigLinux (pf_dora, pm_alex…)'
             'ollama: local AI engine (or point ChatToon to an Ollama server on your network)'
@@ -19,10 +22,14 @@ optdepends=('tts-biglinux: speech synthesis (BigLinux repository) — without it
             'obs-studio: to show the avatar on your stream'
             'python-gobject: keep platform logins in the system keyring (with libsecret)'
             'libsecret: keep platform logins in the system keyring (KWallet/GNOME Keyring)'
-            'python-cryptography: verify official Kick webhooks')
+            'python-cryptography: verify official Kick webhooks'
+            'python-numpy: faster audio conversion (comes with biglinux-kokoro-tts)'
+            'polkit: install Ollama and voices, start Ollama and allow the home network in the firewall from the app'
+            'caddy: HTTPS reverse proxy to show the overlay on an OBS over the internet')
 makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel' 'qt6-tools')
 
-# the source is this repository, two levels up
+# The source is this repository, two levels up (namcap reports the reference to the start
+# directory: intended, the package is built from the checkout it lives in).
 _root="$(realpath "$startdir/../..")"
 
 build() {
@@ -37,6 +44,7 @@ package() {
   /usr/bin/python -m installer --destdir="$pkgdir" "$srcdir"/dist/*.whl
   install -Dm644 "$_root/data/chattoon.desktop" "$pkgdir/usr/share/applications/chattoon.desktop"
   install -Dm644 "$_root/data/chattoon.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/chattoon.svg"
+  install -Dm644 "$_root/data/chattoon.metainfo.xml" "$pkgdir/usr/share/metainfo/io.github.ruscher.ChatToon.metainfo.xml"
   install -Dm644 "$_root/README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
   install -Dm644 "$_root/chattoon/web/vendor/three/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/three.js-LICENSE"
 }

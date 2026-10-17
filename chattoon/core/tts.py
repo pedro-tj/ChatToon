@@ -115,7 +115,7 @@ class BigLinuxTTS:
             return self._modules
         if not TTS_BIGLINUX_DIR.is_dir():
             self.error = "TTS BigLinux is not installed (package tts-biglinux)."
-            raise TTSError(self.error)
+            raise TTSError(self.error, "tts-missing")
         for p in (str(TTS_BIGLINUX_DIR), str(TTS_ENGINE_DIR)):
             if p not in sys.path:
                 sys.path.append(p)  # append: never shadow ChatToon's own modules
@@ -124,7 +124,7 @@ class BigLinuxTTS:
             from services.text_processor import process_text  # type: ignore[import-not-found]
         except Exception as e:  # noqa: BLE001 - any import failure means "unusable"
             self.error = f"Could not load TTS BigLinux: {e}"
-            raise TTSError(self.error) from e
+            raise TTSError(self.error, "tts-broken", str(e)[:200]) from e
         try:
             import tts_engine  # type: ignore[import-not-found]
         except ImportError:
@@ -236,7 +236,7 @@ class BigLinuxTTS:
         _, svc, _, engine = self._load()
         spoken = self.prepare_text(text, voice.language)
         if not spoken:
-            raise TTSError("Nothing to say after text cleanup")
+            raise TTSError("Nothing to say after text cleanup", "no-text")
         uid = utterance_id or f"u{int(time.time() * 1000)}"
         path = self.workdir / f"{uid}.wav"
         started = time.monotonic()
@@ -283,7 +283,7 @@ class BigLinuxTTS:
         if not model.endswith(".onnx") and os.path.isfile(model + ".onnx"):
             model += ".onnx"
         if not os.path.isfile(model):
-            raise TTSError("The selected Piper voice is not installed")
+            raise TTSError("The selected Piper voice is not installed", "voice-missing", voice.name)
         args = (svc.piper_length_scale(rate), svc.piper_noise_scale(pitch), 0.8, svc.volume_factor(volume))
         if engine is not None:
             wav = engine.synthesize_piper(text, model, *args)
@@ -294,7 +294,7 @@ class BigLinuxTTS:
 
         binary = _find_piper_binary()
         if not binary:
-            raise TTSError("Piper is not installed")
+            raise TTSError("Piper is not installed", "missing", "Piper")
         self._run([binary, "--model", model, "--output_file", str(path), "--length_scale", f"{args[0]:.2f}",
                    "--noise_scale", f"{args[1]:.3f}", "--noise_w", "0.8"], text)
 
@@ -325,12 +325,38 @@ class BigLinuxTTS:
     def _kokoro_synth(self, text, voice, rate, volume, path) -> None:
         if volume <= 0:
             raise TTSError("The voice volume is zero", "no-audio")
-        raw = path.with_suffix(".koko.wav")
+        chunks = self._kokoro_chunks(text)
+        temps: list[Path] = []
         try:
-            self._kokoro_render(text, voice, rate, raw)
-            to_pcm16(raw, path, gain=_volume_gain(volume))
+            for i, chunk in enumerate(chunks):
+                if self._is_cancelled():
+                    raise TTSCancelled()
+                raw = path.with_suffix(f".koko{i}.wav")
+                part = path.with_suffix(f".part{i}.wav")
+                temps += [raw, part]
+                self._kokoro_render(chunk, voice, rate, raw)
+                to_pcm16(raw, part if len(chunks) > 1 else path, gain=_volume_gain(volume))
+            if len(chunks) > 1:
+                _join_wavs([path.with_suffix(f".part{i}.wav") for i in range(len(chunks))], path)
         finally:
-            raw.unlink(missing_ok=True)
+            for f in temps:
+                f.unlink(missing_ok=True)
+
+    def _kokoro_chunks(self, text: str) -> list[str]:
+        """koko panics past ~510 tokens in one call ("index out of bounds"): long texts are
+        rendered piece by piece. prepare_koko_text already cuts them at sentence boundaries
+        (KOKO_MAX_SEGMENT_CHARS); the pieces are packed back up to that size."""
+        kvs = self._kokoro_service()
+        limit = int(getattr(kvs, "KOKO_MAX_SEGMENT_CHARS", 220))
+        chunks: list[str] = []
+        for piece in (ln.strip() for ln in kvs.prepare_koko_text(text).split("\n")):
+            if not piece:
+                continue
+            if chunks and len(chunks[-1]) + 1 + len(piece) <= limit:
+                chunks[-1] += " " + piece
+            else:
+                chunks.append(piece)
+        return chunks or [text]
 
     def _kokoro_render(self, text: str, voice: Voice, rate: int, output: Path) -> None:
         kvs = self._kokoro_service()
@@ -447,6 +473,20 @@ def _kill(proc: subprocess.Popen) -> None:
             return
         except subprocess.TimeoutExpired:
             continue
+
+
+def _join_wavs(parts: list[Path], dst: Path) -> None:
+    """Concatenate 16-bit PCM WAV files with the same format (pieces of one Kokoro line)."""
+    tmp = dst.with_suffix(".join")
+    with wave.open(str(parts[0]), "rb") as first:
+        params = first.getparams()
+    with wave.open(str(tmp), "wb") as out:
+        out.setparams(params)
+        for part in parts:
+            with wave.open(str(part), "rb") as w:
+                out.writeframes(w.readframes(w.getnframes()))
+    os.chmod(tmp, 0o600)
+    tmp.replace(dst)
 
 
 def _volume_gain(volume: int) -> float:
@@ -600,7 +640,7 @@ class AudioPlayer:
     def play(self, path: Path) -> None:
         """Start playback (stopping anything still playing)."""
         if not self.command:
-            raise TTSError("No audio player found (pipewire, pulseaudio-utils or alsa-utils)")
+            raise TTSError("No audio player found (pipewire, pulseaudio-utils or alsa-utils)", "no-player")
         with self._lock:
             self._stop_locked()
             self._proc = subprocess.Popen([*self.command, str(path)], stdout=subprocess.DEVNULL,

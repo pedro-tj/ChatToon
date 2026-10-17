@@ -7,88 +7,61 @@ Page {
     id: page
     readonly property var cfg: backend.config
     readonly property var ollama: backend.services.ollama
-    readonly property var models: ollama.models || []
-    readonly property var pull: backend.pull
+    readonly property var hw: backend.aiCenter.hardware
     readonly property var mem: backend.memory.stats || ({})
 
-    onVisibleChanged: if (visible) backend.refreshMemory()
+    onVisibleChanged: if (visible) { backend.refreshMemory(); backend.aiCenter.refresh() }
+    Component.onCompleted: backend.aiCenter.refresh()
 
     title: qsTr("Artificial intelligence")
     subtitle: qsTr("ChatToon thinks with Ollama, running on this computer. Nothing is sent to the cloud.")
-    header: AppButton { iconName: "refresh"; text: qsTr("Check again"); onClicked: backend.refreshServices() }
 
     Section {
         title: qsTr("Ollama")
         iconName: "bot"
-        description: ollama.ok === true ? qsTr("Running — version %1").arg(ollama.version)
-                   : ollama.ok === false ? qsTr("Not reachable: %1").arg(ollama.error || "") : qsTr("Checking…")
+        description: qsTr("The character's brain. Install, start and stop it here — no terminal needed.")
+        OllamaPanel {}
         SettingRow {
-            label: qsTr("Address")
-            description: qsTr("Keep the default unless Ollama runs on another computer of your network.")
+            visible: cfg.advanced
+            label: qsTr("Server address")
+            description: qsTr("Keep the default unless Ollama runs on another computer of your network. A remote Ollama is used, never controlled.")
             AppTextField {
                 width: 280
                 text: cfg.ai.host
-                onEditingFinished: { backend.setConfig("ai.host", text); backend.refreshServices() }
+                onEditingFinished: if (text.trim() !== cfg.ai.host) backend.aiCenter.useHost(text.trim())
+                Accessible.name: qsTr("Server address")
             }
         }
+    }
+
+    Section {
+        title: qsTr("Model in use")
+        iconName: "sparkles"
+        description: qsTr("Every model installed in this Ollama. The green one answers your chat.")
+        actions: AppButton { compact: true; variant: "ghost"; iconName: "refresh"; text: qsTr("Update list"); onClicked: backend.refreshServices() }
+        ModelCatalog {}
+    }
+
+    Section {
+        title: qsTr("Suggested models")
+        iconName: "download"
+        description: qsTr("Good Portuguese and light. These still need to be downloaded; you can use any other model too.")
         Text {
             Layout.fillWidth: true
-            visible: ollama.ok === false
-            text: qsTr("Start it with:  sudo systemctl start ollama   (or install it in BigLinux Settings → AI).")
-            color: Theme.warning; font.pixelSize: 12; font.family: Theme.mono; wrapMode: Text.WordWrap
+            visible: !!page.hw.cpu
+            wrapMode: Text.WordWrap
+            color: Theme.textFaint; font.pixelSize: 12
+            text: page.hw.cpu ? qsTr("Your computer: %1 · %2 of memory").arg(page.hw.cpu.name || qsTr("processor")).arg(Status.memory(page.hw.memory.total))
+                                + (page.hw.vram > 0 ? " · " + qsTr("graphics card with %1").arg(Status.memory(page.hw.vram)) : "") : ""
         }
+        ModelSuggestions {}
     }
 
     Section {
-        title: qsTr("Model")
-        iconName: "sparkles"
-        description: qsTr("Smaller models answer faster; bigger ones know more facts. With a dedicated GPU, a 7–8 billion parameter model answers about as fast as a small one.")
-        SettingRow {
-            label: qsTr("Model in use")
-            AppCombo {
-                implicitWidth: 260
-                model: page.models
-                enabled: page.models.length > 0
-                currentIndex: Math.max(0, page.models.indexOf(cfg.ai.model))
-                displayText: page.models.length ? currentText : qsTr("No model installed")
-                onActivated: backend.setConfig("ai.model", currentText)
-            }
-        }
-        Text { text: qsTr("Suggested models (good Portuguese, light):"); color: Theme.textMuted; font.pixelSize: 12 }
-        Flow {
-            Layout.fillWidth: true
-            spacing: 8
-            Repeater {
-                model: backend.recommendedModels
-                AppButton {
-                    required property string modelData
-                    readonly property bool installed: page.models.indexOf(modelData) >= 0
-                    compact: true
-                    variant: installed ? "ghost" : "secondary"
-                    iconName: installed ? "check" : "download"
-                    text: modelData
-                    enabled: !installed && !(page.pull.model && page.pull.progress >= 0 && page.pull.progress < 1)
-                    tip: installed ? qsTr("Installed") : qsTr("Download with Ollama")
-                    onClicked: backend.pullModel(modelData)
-                }
-            }
-        }
-        ColumnLayout {
-            Layout.fillWidth: true
-            visible: page.pull.model !== undefined && page.pull.model !== ""
-            spacing: 4
-            Text {
-                text: qsTr("Downloading %1: %2").arg(page.pull.model || "").arg(page.pull.status || "")
-                      + (page.pull.progress >= 0 ? "  " + Math.round(page.pull.progress * 100) + "%" : "")
-                color: Theme.text; font.pixelSize: 12
-            }
-            ProgressGlow { Layout.fillWidth: true; value: page.pull.progress === undefined ? -1 : page.pull.progress; implicitHeight: 6 }
-        }
-    }
-
-    Section {
+        visible: cfg.advanced
         title: qsTr("Generation")
         iconName: "settings"
+        actions: AppButton { compact: true; variant: "ghost"; iconName: "undo"; text: qsTr("Restore defaults"); onClicked: backend.resetSection("ai.generation") }
         GridLayout {
             Layout.fillWidth: true
             columns: 2
@@ -136,6 +109,7 @@ Page {
     }
 
     Section {
+        visible: cfg.advanced
         title: qsTr("Answer quality")
         iconName: "check"
         description: qsTr("Correct first, funny second: a funny wrong answer is worse than a correct plain one.")
@@ -201,6 +175,7 @@ Page {
     }
 
     Section {
+        visible: cfg.advanced
         title: qsTr("Generation diagnostics")
         iconName: "activity"
         description: qsTr("The latest replies: what kind of message it was, the settings used and the time spent. Nothing leaves this computer.")

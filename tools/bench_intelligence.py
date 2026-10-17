@@ -4,7 +4,7 @@
 
 Measures the classifier and calculator per message, and the memory with a long live:
 recording, retrieving and searching with thousands of saved exchanges, the database size
-and the RAM it takes. Development tool only; results go to docs/27-performance-benchmarks.md.
+and the RAM it takes. Development tool only; results go to docs/INTELLIGENCE.md.
 """
 
 from __future__ import annotations

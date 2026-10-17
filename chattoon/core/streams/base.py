@@ -37,10 +37,9 @@ log = logging.getLogger(__name__)
 # connected: reading · waiting: channel offline / live not started (polls slowly)
 STATES = ("idle", "connecting", "connected", "reconnecting", "waiting", "ended", "auth_required", "error",
           "unsupported", "stopped", "disabled")
-ACTIVE_STATES = ("connecting", "connected", "reconnecting", "waiting")
 WAIT_POLL = 60.0  # seconds between "is it live now?" checks
 
-# support levels shown to the streamer, decided from evidence (docs/14-platform-api-research.md)
+# support levels shown to the streamer, decided from evidence (docs/PLATFORMS.md)
 SUPPORT = ("functional", "limited", "experimental", "unavailable")
 
 

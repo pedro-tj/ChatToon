@@ -11,7 +11,7 @@ To measure another checkout (e.g. the code before a change), point PYTHONPATH at
     PYTHONPATH=/path/to/old/checkout python tools/eval_intelligence.py --label before ...
 
 Objective cases have verifiable answers and give the accuracy figure. The other cases
-are checked with the documented criteria of each check type (docs/28-validation-results.md);
+are checked with the documented criteria of each check type (docs/INTELLIGENCE.md);
 they are reported separately and never mixed into the accuracy percentage.
 """
 

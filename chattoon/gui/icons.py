@@ -6,8 +6,10 @@ icons legible in light and dark themes without depending on the system icon them
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtCore import QByteArray, QRectF, QSize, Qt
-from PySide6.QtGui import QImage, QPainter
+from PySide6.QtGui import QIcon, QImage, QPainter
 from PySide6.QtQuick import QQuickImageProvider
 from PySide6.QtSvg import QSvgRenderer
 
@@ -90,6 +92,33 @@ _ICONS = {
     "layers": '<path d="m12 2 10 5-10 5L2 7l10-5z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/>',
     "hourglass": '<path d="M5 22h14M5 2h14M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22'
                  'M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>',
+    "eye": '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/>'
+           '<circle cx="12" cy="12" r="3"/>',
+    "eyeOff": '<path d="M10.73 5.08a10.74 10.74 0 0 1 11.2 6.57 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.44 2.49"/>'
+              '<path d="M14.08 14.16a3 3 0 0 1-4.24-4.24"/><path d="M17.48 17.5a10.75 10.75 0 0 1-15.42-5.15 1 1 0 0 1 0-.7'
+              ' 10.75 10.75 0 0 1 4.45-5.14"/><path d="m2 2 20 20"/>',
+    "cpu": '<rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/>'
+           '<path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/>',
+    "package": '<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8'
+               'a2 2 0 0 0 1 1.73z"/><path d="M12 22V12M3.29 7 12 12l8.71-5M7.5 4.27l9 5.15"/>',
+    "server": '<rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/>'
+              '<path d="M6 6h.01M6 18h.01"/>',
+    "wifi": '<path d="M12 20h.01M2 8.82a15 15 0 0 1 20 0M5 12.86a10 10 0 0 1 14 0M8.5 16.43a5 5 0 0 1 7 0"/>',
+    "appWindow": '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4M2 8h20M6 4v4"/>',
+    "network": '<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/>'
+               '<rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3M12 12V8"/>',
+    "checkCircle": '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    "cloud": '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
+    "router": '<rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6.01 18H6M10.01 18H10M15 10v4M17.84 7.17a4 4 0 0 0'
+              '-5.66 0M20.66 4.34a8 8 0 0 0-11.31 0"/>',
+    "pin": '<path d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76'
+           'a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',
+    "undo": '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+    "move": '<path d="M12 2v20M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M5 9l-3 3 3 3M9 5l3-3 3 3"/>',
+    "pointer": '<path d="M12.59 12.59 19 19M3.69 3.04a.5.5 0 0 0-.65.65l6.5 16a.5.5 0 0 0 .95-.06l1.57-6.08a2 2 0 0 1 1.45-1.48'
+               'l6.12-1.58a.5.5 0 0 0 .06-.95z"/>',
+    "heart": '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2'
+             ' 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
 }
 
 
@@ -122,3 +151,48 @@ class IconProvider(QQuickImageProvider):
         QSvgRenderer(QByteArray(svg_for(name, f"#{hex_color}"))).render(painter, QRectF(0, 0, w, h))
         painter.end()
         return image
+
+
+CHARACTER_DIR = Path(__file__).resolve().parent / "qml" / "assets" / "characters"
+ICON_SIZES = (16, 22, 24, 32, 48, 64, 128, 256)
+
+
+def character_icon(character_id: str) -> QIcon:
+    """Window icon of a character: its portrait, trimmed and centred on a square at every
+    size a taskbar or window switcher asks for (the PNGs are 300×340 portraits)."""
+    from PySide6.QtGui import QPixmap
+
+    source = QImage(str(CHARACTER_DIR / f"{character_id}.png"))
+    icon = QIcon()
+    if source.isNull():
+        return icon
+    box = _opaque_box(source)
+    portrait = source.copy(box)
+    for size in ICON_SIZES:
+        canvas = QImage(size, size, QImage.Format.Format_ARGB32_Premultiplied)
+        canvas.fill(Qt.GlobalColor.transparent)
+        scaled = portrait.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio,
+                                 Qt.TransformationMode.SmoothTransformation)
+        painter = QPainter(canvas)
+        painter.drawImage((size - scaled.width()) // 2, (size - scaled.height()) // 2, scaled)
+        painter.end()
+        icon.addPixmap(QPixmap.fromImage(canvas))
+    return icon
+
+
+def _opaque_box(image: QImage):
+    """Smallest rectangle holding every visible pixel (sampled every 2 px; fast enough)."""
+    from PySide6.QtCore import QRect
+
+    w, h = image.width(), image.height()
+    xs, ys = [], []
+    for y in range(0, h, 2):
+        for x in range(0, w, 2):
+            if image.pixelColor(x, y).alpha() > 24:
+                xs.append(x)
+                ys.append(y)
+    if not xs:
+        return QRect(0, 0, w, h)
+    pad = 4
+    left, top = max(0, min(xs) - pad), max(0, min(ys) - pad)
+    return QRect(left, top, min(w, max(xs) + pad) - left, min(h, max(ys) + pad) - top)

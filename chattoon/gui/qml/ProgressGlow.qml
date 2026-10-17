@@ -1,7 +1,7 @@
 import QtQuick
 import "."
 
-// Barra de progresso com gradiente; value < 0 = indeterminado (faixa deslizante).
+// Gradient progress bar; value < 0 = indeterminate (sliding band).
 Item {
     id: root
     property real value: 0

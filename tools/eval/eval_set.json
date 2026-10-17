@@ -1,5 +1,5 @@
 {
- "about": "ChatToon intelligence evaluation (docs/22 and docs/28). Each case is one viewer message, optionally after a 'setup' conversation. 'objective' cases have verifiable answers and count for the accuracy goal; the others are checked by documented criteria (emotion, safety, no invention) and reported separately. Text checks are case and accent insensitive.",
+ "about": "ChatToon intelligence evaluation (docs/INTELLIGENCE.md and docs/INTELLIGENCE.md). Each case is one viewer message, optionally after a 'setup' conversation. 'objective' cases have verifiable answers and count for the accuracy goal; the others are checked by documented criteria (emotion, safety, no invention) and reported separately. Text checks are case and accent insensitive.",
  "cases": [
   {
    "id": "math-01",

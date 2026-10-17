@@ -65,9 +65,34 @@ def test_vendored_three_is_intact_and_licensed():
         assert hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest, name
 
 
+def _tracked_text_files():
+    """Every text file in the repository (git ls-files), or the source tree without git."""
+    try:
+        names = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
+        paths = [ROOT / n for n in names]
+    except (OSError, subprocess.CalledProcessError):
+        paths = [p for p in ROOT.rglob("*") if ".git" not in p.parts]
+    return [p for p in paths if p.is_file() and p.suffix not in (".png", ".qm", ".whl")]
+
+
 def test_no_secrets_or_shell_in_code():
     code = "\n".join(p.read_text(encoding="utf-8") for p in PKG.rglob("*.py"))
     assert "os.system" not in code and "shell=True" not in code
-    everything = code + "\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in (ROOT / "legacy").glob("*"))
-    assert "dzQkOLTg" not in everything  # the exposed Rumble key must never come back
+    everything = "\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in _tracked_text_files())
+    assert "dzQk" + "OLTg" not in everything  # the Rumble key exposed by an early prototype must never come back
     assert not re.search(r"AIza[0-9A-Za-z_-]{30}", everything)  # Google API keys
+    assert not re.search(r"(?i)(client_secret|api_key|bearer_token|access_token)\s*[=:]\s*['\"][A-Za-z0-9_\-]{16,}", everything)
+
+
+def test_appstream_metainfo_is_valid_and_installed():
+    meta = ROOT / "data" / "chattoon.metainfo.xml"
+    text = (ROOT / "packaging" / "arch" / "PKGBUILD").read_text(encoding="utf-8")
+    assert "data/chattoon.metainfo.xml" in text and "metainfo/io.github.ruscher.ChatToon.metainfo.xml" in text
+    import xml.etree.ElementTree as ET
+    root = ET.parse(meta).getroot()
+    assert root.find("id").text == "io.github.ruscher.ChatToon"
+    assert root.find("launchable").text == "chattoon.desktop"
+    assert root.find("releases/release").get("version") == _cfg()["project"]["version"]  # bumped with the app
+    if shutil.which("appstreamcli"):
+        r = subprocess.run(["appstreamcli", "validate", "--no-net", str(meta)], capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr

@@ -46,16 +46,20 @@ ComboBox {
         }
         background: Rectangle { color: item.highlighted ? Theme.hover : "transparent"; radius: 6 }
     }
+    // margins keep the list inside the window and the scroll bar shows that there are more
+    // items (long lists used to be cut silently: e.g. many installed models)
     popup: Popup {
         y: control.height + 4
         width: control.width
         padding: 4
-        implicitHeight: Math.min(contentItem.implicitHeight + 8, 300)
+        margins: 8
+        implicitHeight: Math.min(contentItem.implicitHeight + 8, 360)
         contentItem: ListView {
             clip: true
             implicitHeight: contentHeight
             model: control.popup.visible ? control.delegateModel : null
             currentIndex: control.highlightedIndex
+            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
         }
         background: Rectangle {
             radius: Theme.radiusSmall

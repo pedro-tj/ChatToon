@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass, field
 
 from ..config import SourceConfig
 from ..messages import ChatMessage
-from .base import ACTIVE_STATES, Connector, ConnectorContext, ProbeResult, SourceStatus
+from .base import Connector, ConnectorContext, ProbeResult, SourceStatus
 
 log = logging.getLogger(__name__)
 
@@ -102,10 +102,6 @@ class MultiStreamManager:
             elif not self.running and status.state == "disabled":
                 self._set(sid, "idle")
         self.on_change()
-
-    def _alive(self, sid: str) -> bool:
-        task = self._tasks.get(sid)
-        return bool(task and not task.done())
 
     def _set(self, sid: str, state: str, code: str = "", detail: str = "") -> None:
         status = self.statuses[sid]
@@ -229,9 +225,6 @@ class MultiStreamManager:
     def connected_platforms(self) -> set[str]:
         return {self.sources[s].platform for s, st in self.statuses.items()
                 if st.state == "connected" and s in self.sources}
-
-    def active_count(self) -> int:
-        return sum(1 for st in self.statuses.values() if st.state in ACTIVE_STATES)
 
     def snapshot(self) -> list[dict]:
         now = time.monotonic()

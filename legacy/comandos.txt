@@ -1,8 +1,0 @@
-comandos
-source venv/bin/activate
-python3 bot_chat1.py
-python3 -m http.server 8000
-O CHAT_BOT USAR O GEMININI ONLINE
-CAT1 USA LOCAL OLLMA PESADO 
-CHAT3 USAR O QWEN MAIS LEVE
-node index.js pra rodar no rumble

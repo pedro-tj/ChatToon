@@ -1,2 +1,3 @@
 singleton Theme 1.0 Theme.qml
 singleton Status 1.0 Status.qml
+singleton Privacy 1.0 Privacy.qml

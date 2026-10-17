@@ -1,0 +1,12 @@
+{
+  "name": "et-desktop",
+  "version": "1.0.0",
+  "description": "ET Pet Virtual flutuante para desktop",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
+  }
+}

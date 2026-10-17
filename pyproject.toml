@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chattoon"
-version = "2.3.0"
+version = "3.0.0"
 description = "Virtual 3D co-host for live streams on YouTube, Twitch, Kick, TikTok and more at the same time, powered by local AI (Ollama) and TTS BigLinux."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 dependencies = ["PySide6>=6.6", "aiohttp>=3.9"]
 
 [project.optional-dependencies]

@@ -7,7 +7,7 @@ Rectangle {
     border.width: 1
     border.color: Theme.border
 
-    // brilho sutil na borda superior, como vidro
+    // subtle glass-like highlight on the top edge
     Rectangle {
         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 1 }
         height: Math.min(parent.height / 2, 40)
