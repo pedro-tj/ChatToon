@@ -6,12 +6,12 @@
 # Remove: sudo pacman -R chattoon
 
 pkgname=chattoon
-pkgver=2.3.0
+pkgver=2.4.1
 pkgrel=1
 pkgdesc="3D avatar co-host for live streams on YouTube, Twitch, Kick, TikTok and more at once, powered by local AI (Ollama) and TTS BigLinux"
 arch=('any')
 license=('GPL-3.0-or-later')
-depends=('python' 'pyside6' 'python-aiohttp' 'qt6-svg' 'qt6-webengine')
+depends=('python' 'pyside6' 'python-aiohttp' 'qt6-svg' 'qt6-webengine' 'iproute2')
 optdepends=('tts-biglinux: speech synthesis (BigLinux repository) — without it replies are shown only as text'
             'biglinux-kokoro-tts: Kokoro neural voices for TTS BigLinux (pf_dora, pm_alex…)'
             'ollama: local AI engine (or point ChatToon to an Ollama server on your network)'
@@ -19,7 +19,9 @@ optdepends=('tts-biglinux: speech synthesis (BigLinux repository) — without it
             'obs-studio: to show the avatar on your stream'
             'python-gobject: keep platform logins in the system keyring (with libsecret)'
             'libsecret: keep platform logins in the system keyring (KWallet/GNOME Keyring)'
-            'python-cryptography: verify official Kick webhooks')
+            'python-cryptography: verify official Kick webhooks'
+            'polkit: install Ollama and voices, start Ollama and allow the home network in the firewall from the app'
+            'caddy: HTTPS reverse proxy to show the overlay on an OBS over the internet')
 makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel' 'qt6-tools')
 
 # the source is this repository, two levels up

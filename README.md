@@ -1,4 +1,4 @@
-# ChatToon 2.3.0
+# ChatToon 2.4.1
 
 **Um personagem 3D que participa da sua live — no YouTube, na Twitch, na Kick, no TikTok e em
 outras plataformas ao mesmo tempo:** ele lê os chats — inclusive em voz alta, dizendo quem
@@ -226,13 +226,13 @@ makepkg -si
 ```
 
 Depois abra **ChatToon** pelo menu (ou rode `chattoon`). Para conferir a versão:
-`chattoon --version` → `chattoon 2.3.0`. Para remover: `sudo pacman -R chattoon`.
+`chattoon --version` → `chattoon 2.4.1`. Para remover: `sudo pacman -R chattoon`.
 
 | Tipo | Pacotes |
 |---|---|
-| Obrigatórios | `python`, `pyside6`, `python-aiohttp`, `qt6-svg`, `qt6-webengine` |
+| Obrigatórios | `python`, `pyside6`, `python-aiohttp`, `qt6-svg`, `qt6-webengine`, `iproute2` |
 | Para compilar | `python-build`, `python-installer`, `python-setuptools`, `python-wheel`, `qt6-tools` |
-| Opcionais | `tts-biglinux` (voz, repositório do BigLinux), `ollama` (IA — ou um Ollama em outra máquina da rede), `pipewire-audio` / `pulseaudio-utils` / `alsa-utils` (áudio no desktop), `obs-studio`, `python-gobject` + `libsecret` (logins no chaveiro do sistema), `python-cryptography` (webhooks oficiais da Kick) |
+| Opcionais | `tts-biglinux` (voz, repositório do BigLinux), `ollama` (IA — ou um Ollama em outra máquina da rede), `pipewire-audio` / `pulseaudio-utils` / `alsa-utils` (áudio no desktop), `obs-studio`, `python-gobject` + `libsecret` (logins no chaveiro do sistema), `python-cryptography` (webhooks oficiais da Kick), `polkit` (instalar Ollama e vozes e liberar a rede de casa pelo app), `caddy` (overlay pela internet com HTTPS) |
 | Extra (TikTok) | `chattoon extras install tiktok` — instala a biblioteca TikTokLive numa pasta privada (`~/.local/share/chattoon/extras`), sem mexer no sistema |
 
 O PKGBUILD compila a partir deste repositório (nada é baixado durante o build): gera a tradução
