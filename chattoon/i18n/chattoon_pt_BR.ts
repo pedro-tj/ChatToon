@@ -285,8 +285,8 @@
       <translation>EventSub oficial com login na Twitch, ou modo visitante só de leitura, sem login.</translation>
     </message>
     <message>
-      <source>Public chat socket used by kick.com (unofficial). Official webhooks need your own Kick app and a public HTTPS address.</source>
-      <translation>Conexão pública de chat usada pelo kick.com (não oficial). Os webhooks oficiais exigem seu próprio app da Kick e um endereço HTTPS público.</translation>
+      <source>Official webhooks with your own Kick app and a public HTTPS address. The unofficial public socket was retired by Kick in October 2026.</source>
+      <translation>Webhooks oficiais com o seu próprio app do Kick e um endereço HTTPS público. O socket público não oficial foi desativado pelo Kick em outubro de 2026.</translation>
     </message>
     <message>
       <source>Unofficial TikTokLive library; uses the Euler Stream signing service. Optional install.</source>

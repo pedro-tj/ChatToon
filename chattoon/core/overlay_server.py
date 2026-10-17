@@ -112,7 +112,7 @@ class OverlayServer:
             except OSError:
                 continue
             self.port = site._server.sockets[0].getsockname()[1]  # type: ignore[union-attr]
-            log.info("overlay at %s", self.url)
+            log.info("overlay on 127.0.0.1:%d", self.port)  # never the address: it carries the token
             return
         raise OSError("No free local port for the overlay server")
 

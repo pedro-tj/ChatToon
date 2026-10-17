@@ -330,7 +330,7 @@ class Backend(QObject):
         notes = {
             "youtube": self.tr("Public live chat, no login. Paste a live link or your @channel to follow every new live."),
             "twitch": self.tr("Official EventSub with a Twitch login, or read-only guest mode without login."),
-            "kick": self.tr("Public chat socket used by kick.com (unofficial). Official webhooks need your own Kick app and a public HTTPS address."),
+            "kick": self.tr("Official webhooks with your own Kick app and a public HTTPS address. The unofficial public socket was retired by Kick in October 2026."),
             "tiktok": self.tr("Unofficial TikTokLive library; uses the Euler Stream signing service. Optional install."),
             "facebook": self.tr("Facebook Pages only, with a token from your own Meta app. Personal profiles cannot be read."),
             "instagram": self.tr("Professional accounts linked to a Facebook Page, with a token from your own Meta app."),
