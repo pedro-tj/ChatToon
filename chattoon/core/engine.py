@@ -18,7 +18,7 @@ import uuid
 from collections import OrderedDict, deque
 from dataclasses import dataclass, field
 
-from . import assistant, knowledge
+from . import assistant, knowledge, network
 from . import emotion as feelings
 from .brain import REPLY_SCHEMA, Brain, Reply, token_budget
 from .characters import EMOTIONS, Character, get_character
@@ -193,6 +193,7 @@ class ChatToonEngine:
         await self.server.start()
         self._started = True
         self._worker = asyncio.create_task(self._work(), name="chattoon-worker")
+        await self.apply_network(emit=False)
         self._emit_overlay_address()
         self._emit_overlay_config()
         await self.server.broadcast({"type": "state", "phase": "idle", "state": self.state}, keep=True)
@@ -219,18 +220,40 @@ class ChatToonEngine:
         report: dict = {"ollama": {}, "tts": {}, "player": self.player.available}
         try:
             version = await self.ollama.version()
-            models = await self.ollama.list_models()
-            report["ollama"] = {"ok": True, "version": version, "models": [m.name for m in models],
+            catalog_fn = getattr(self.ollama, "catalog", None)
+            if catalog_fn is not None:  # every installed model, with what it can do
+                catalog = await catalog_fn()
+                models = [m for m in catalog if m.chat]
+            else:
+                catalog = models = await self.ollama.list_models()
+            try:
+                loaded = await self.ollama.running() if hasattr(self.ollama, "running") else []
+            except OllamaError:
+                loaded = []
+            report["ollama"] = {"ok": True, "version": version, "host": self.settings.ai.host,
+                                "models": [m.name for m in models],
+                                "catalog": [m.to_dict() for m in catalog] if catalog_fn is not None else [],
+                                "loaded": [m["name"] for m in loaded],
                                 "details": [{"name": m.name, "size": m.size_gb, "parameters": m.parameters}
                                             for m in models]}
         except OllamaError as e:
-            report["ollama"] = {"ok": False, "error": str(e), "models": []}
+            report["ollama"] = {"ok": False, "error": str(e), "models": [], "catalog": [], "loaded": [],
+                                "host": self.settings.ai.host}
         try:
+            if isinstance(self.tts, BigLinuxTTS):
+                from . import tts_manager
+
+                # one discovery for both: engine states also refresh the voice list
+                states = await asyncio.to_thread(tts_manager.states, self.tts, self.settings.ai.reply_language)
+                if not states["installed"]:
+                    raise TTSError(states["error"])
+            else:
+                states = {}
             voices = await asyncio.to_thread(self.tts.voices)
             report["tts"] = {"ok": True, "voices": [v.to_dict() for v in voices],
-                             "engines": sorted({v.backend for v in voices})}
+                             "engines": sorted({v.backend for v in voices}), "states": states.get("engines", {})}
         except TTSError as e:
-            report["tts"] = {"ok": False, "error": str(e), "voices": [], "engines": []}
+            report["tts"] = {"ok": False, "error": str(e), "voices": [], "engines": [], "states": {}}
         self.bus.emit("services", report)
         return report
 
@@ -1280,7 +1303,64 @@ class ChatToonEngine:
         return {"platform": msg.platform, "platformLabel": info["label"], "platformColor": info["color"]}
 
     def _emit_overlay_address(self) -> None:
-        self.bus.emit("overlay", {"url": self.server.url, "publicUrl": self.server.public_url})
+        self.bus.emit("overlay", {"url": self.server.url, "publicUrl": self.server.public_url,
+                                  "lanUrl": self.server.lan_url, "lanError": self.server.lan_error,
+                                  "port": self.server.port})
+
+    async def apply_network(self, emit: bool = True) -> None:
+        """Turn the local-network listener on or off to match the settings."""
+        o = self.settings.overlay
+        wanted = o.lan_address if o.lan_enabled else ""
+        if wanted == self.server.lan_address and not (wanted and self.server.lan_error):
+            if emit:
+                self._emit_overlay_address()
+            return
+        prefix = 24
+        if wanted:
+            found = next((a for a in await asyncio.to_thread(network.addresses) if a.ip == wanted), None)
+            if found is None:
+                await self.server.set_lan("")
+                self.server.lan_error = "address-unavailable"  # the network changed (Wi-Fi, cable…)
+                if emit:
+                    self._emit_overlay_address()
+                return
+            prefix = found.prefix
+        await self.server.set_lan(wanted, prefix)
+        if emit:
+            self._emit_overlay_address()
+
+    async def rotate_token(self, token: str) -> None:
+        """New secret overlay address: every old link (OBS, browser, proxy) stops working."""
+        self.settings.overlay.token = token
+        await self.server.restart(token)
+        self._emit_overlay_address()
+        self._emit_overlay_config()
+        await self.server.broadcast({"type": "state", "phase": self.phase, "state": self.state}, keep=True)
+
+    async def verify(self, ai: bool = True) -> dict:
+        """Prove the model answers and the voice speaks, without anyone hearing it."""
+        out: dict = {"ai": None, "aiSeconds": 0.0, "aiError": "", "voice": None, "voiceSeconds": 0.0, "voiceError": ""}
+        if ai and self.settings.ai.model:
+            started = time.monotonic()
+            try:
+                await self.ollama.preload(self.settings.ai.model, self.settings.ai.keep_alive,
+                                          self.settings.ai.context_window)
+                out["ai"] = True
+            except OllamaError as e:
+                out["ai"], out["aiError"] = False, str(e)[:200]
+            out["aiSeconds"] = round(time.monotonic() - started, 2)
+        voice = self.voice_for() if self.settings.voice.enabled else None
+        if voice is not None:
+            started = time.monotonic()
+            try:
+                utterance = await asyncio.to_thread(self.tts.synthesize, "Oi!", voice, 0, 0, 50,
+                                                    f"check{uuid.uuid4().hex[:6]}")
+                utterance.path.unlink(missing_ok=True)
+                out["voice"] = True
+            except TTSError as e:
+                out["voice"], out["voiceError"] = False, str(e)[:200]
+            out["voiceSeconds"] = round(time.monotonic() - started, 2)
+        return out
 
     def _emit_overlay_config(self) -> None:
         o = self.settings.overlay
