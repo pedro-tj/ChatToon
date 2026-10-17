@@ -107,7 +107,17 @@ def test_kokoro_renders_with_koko_text_and_converts_to_pcm16(kokoro):
         assert (w.getnchannels(), w.getsampwidth(), w.getframerate()) == (1, 2, 24000)
     assert u.duration == pytest.approx(0.5, abs=0.01)
     assert len(u.envelope) == 25 and max(u.envelope) > 0.8 and u.envelope[0] == 0.0  # lip sync data
-    assert not list(kokoro.workdir.glob("*.koko.wav"))  # raw float file removed
+    assert not list(kokoro.workdir.glob("*.koko*.wav"))  # raw float file removed
+
+
+def test_long_text_is_rendered_in_pieces_and_joined(kokoro):
+    # the real koko panics past ~510 tokens per call ("index out of bounds")
+    sentence = "Hoje a gente vai falar de Linux e de software livre com calma. "
+    u = kokoro.synthesize(sentence * 12, DORA, utterance_id="long")
+    texts = [c[0] for c in calls(kokoro)]
+    assert len(texts) >= 3 and all(len(t) < 400 for t in texts)  # several short calls
+    assert u.duration == pytest.approx(0.5 * len(texts), abs=0.02)  # every piece is in the one file
+    assert sorted(f.name for f in kokoro.workdir.iterdir()) == ["long.wav"]  # no pieces left behind
 
 
 def test_kokoro_unavailable_voice_or_model_is_reported(kokoro):
